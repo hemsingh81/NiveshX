@@ -1,10 +1,10 @@
 # Node.js (React Frontend)
-**/node_modules/
-**/build/
-**/.env
-**/.DS_Store
-**/coverage/
-**/dist/
+node_modules/
+build/
+dist/
+coverage/
+.env
+.DS_Store
 
 # ASP.NET (Backend)
 **/bin/
@@ -13,10 +13,10 @@
 **/*.suo
 **/*.cache
 **/*.log
-**/TestResults/
-**/.vs/
-**/packages/
-**/wwwroot/
+TestResults/
+.vs/
+packages/
+wwwroot/
 
 # OS-specific
 Thumbs.db
@@ -29,5 +29,8 @@ Desktop.ini
 *.swp
 *.sln.docstates
 
-# Git
+# Git artifacts
 *.orig
+*.rej
+*.bak
+*.tmp

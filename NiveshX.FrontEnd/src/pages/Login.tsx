@@ -56,10 +56,10 @@ const Login: React.FC = () => {
           Login
         </button>
 
-        <div className="flex justify-between mt-4 text-sm text-blue-600">
+        {/* <div className="flex justify-between mt-4 text-sm text-blue-600">
           <a href="/forgot-password">Forgot Password?</a>
           <a href="/register">Register</a>
-        </div>
+        </div> */}
       </form>
     </div>
   );
