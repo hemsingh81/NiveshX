@@ -4,6 +4,8 @@ import { loginUser } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 import toast, { Toaster } from 'react-hot-toast';
 
+import loginBg from '../assets/images/login-bg.png';
+
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -31,6 +33,7 @@ const Login: React.FC = () => {
   return (
     <div
       className="min-h-screen bg-cover bg-center flex items-center justify-center"
+      style={{ backgroundImage: `url(${loginBg})` }}
     >
       <Toaster />
       <div className="bg-white bg-opacity-90 backdrop-blur-sm p-8 rounded-lg shadow-lg w-full max-w-md">
