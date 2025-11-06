@@ -7,14 +7,20 @@ import toast, { Toaster } from 'react-hot-toast';
 import loginBg from '../assets/images/login-bg.png';
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setError('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const { username, password } = formData;
+
     if (!username || !password) {
       setError('Both fields are required');
       return;
@@ -43,17 +49,19 @@ const Login: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
             placeholder="Username"
+            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           <input
-            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            name="password"
             type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
+            value={formData.password}
+            onChange={handleChange}
             placeholder="Password"
+            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           <button
             type="submit"
@@ -63,10 +71,10 @@ const Login: React.FC = () => {
           </button>
         </form>
 
-        <div className="flex justify-between mt-6 text-sm text-blue-600">
+        {/* <div className="flex justify-between mt-6 text-sm text-blue-600">
           <a href="/forgot-password" className="hover:underline">Forgot Password?</a>
           <a href="/register" className="hover:underline">Register</a>
-        </div>
+        </div> */}
       </div>
     </div>
   );
