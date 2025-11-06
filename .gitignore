@@ -1,0 +1,33 @@
+# Node.js (React Frontend)
+**/node_modules/
+**/build/
+**/.env
+**/.DS_Store
+**/coverage/
+**/dist/
+
+# ASP.NET (Backend)
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+**/*.cache
+**/*.log
+**/TestResults/
+**/.vs/
+**/packages/
+**/wwwroot/
+
+# OS-specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.sln.docstates
+
+# Git
+*.orig
