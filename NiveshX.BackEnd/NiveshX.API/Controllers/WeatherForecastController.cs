@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Runtime.InteropServices;
 
 namespace NiveshX.API.Controllers
 {
@@ -10,6 +11,9 @@ namespace NiveshX.API.Controllers
         {
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
+
+        private int _counter = 0;
+        private static readonly object _lock = new object();
 
         private readonly ILogger<WeatherForecastController> _logger;
 
