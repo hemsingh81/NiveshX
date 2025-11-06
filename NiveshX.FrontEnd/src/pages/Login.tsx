@@ -29,38 +29,42 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+    <div
+      className="min-h-screen bg-cover bg-center flex items-center justify-center"
+    >
       <Toaster />
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-80">
-        <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
+      <div className="bg-white bg-opacity-90 backdrop-blur-sm p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">Login</h2>
 
-        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
+        {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
 
-        <input
-          className="w-full p-2 mb-3 border rounded"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-          placeholder="Username"
-        />
-        <input
-          className="w-full p-2 mb-3 border rounded"
-          type="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          placeholder="Password"
-        />
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
-        >
-          Login
-        </button>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            placeholder="Username"
+          />
+          <input
+            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="Password"
+          />
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition duration-200"
+          >
+            Login
+          </button>
+        </form>
 
-        {/* <div className="flex justify-between mt-4 text-sm text-blue-600">
-          <a href="/forgot-password">Forgot Password?</a>
-          <a href="/register">Register</a>
-        </div> */}
-      </form>
+        <div className="flex justify-between mt-6 text-sm text-blue-600">
+          <a href="/forgot-password" className="hover:underline">Forgot Password?</a>
+          <a href="/register" className="hover:underline">Register</a>
+        </div>
+      </div>
     </div>
   );
 };
