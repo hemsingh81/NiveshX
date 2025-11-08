@@ -5,6 +5,7 @@ import { useAuth } from '../components/AuthContext';
 import toast, { Toaster } from 'react-hot-toast';
 
 import loginBg from '../assets/images/login-bg.png';
+import axios from 'axios';
 
 interface FormData {
   email: string;
@@ -29,7 +30,7 @@ const Login: React.FC = () => {
     const { email, password } = formData;
 
     if (!email || !password) {
-      setError('Both fields are required');
+      setError('Please enter both email and password.');
       return;
     }
 
@@ -41,15 +42,27 @@ const Login: React.FC = () => {
       toast.success('Login successful!');
       navigate('/dashboard');
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || 'Invalid credentials');
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+
+        if (status === 400) {
+          setError('Invalid input. Please check your email and password format.');
+        } else if (status === 401) {
+          setError('Invalid email or password. Please try again.');
+        } else if (status === 500) {
+          setError('Server error. Please try again later.');
+        } else {
+          setError('Login failed. Please try again.');
+        }
       } else {
-        setError('Login failed. Please try again.');
+        setError('Unexpected error occurred. Please try again.');
       }
     } finally {
       setLoading(false);
     }
   };
+
+
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
@@ -102,11 +115,10 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 rounded transition duration-200 flex items-center justify-center ${
-                loading
-                  ? 'bg-blue-300 cursor-not-allowed text-white'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
+              className={`w-full py-3 rounded transition duration-200 flex items-center justify-center ${loading
+                ? 'bg-blue-300 cursor-not-allowed text-white'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
             >
               {loading ? (
                 <span className="flex items-center gap-2">

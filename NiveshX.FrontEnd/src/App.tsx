@@ -7,7 +7,6 @@ import ProtectedRoute from './ProtectedRoute';
 const App: React.FC = () => {
   return (
     <Routes>
-      {/* <Route path="/" element={<Home />} /> */}
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
       <Route
