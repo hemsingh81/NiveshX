@@ -1,9 +1,6 @@
 ﻿using NiveshX.Core.Interfaces;
 using NiveshX.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace NiveshX.Infrastructure.Repositories
@@ -11,6 +8,7 @@ namespace NiveshX.Infrastructure.Repositories
     public class UnitOfWork : IUnitOfWork
     {
         private readonly AppDbContext _context;
+
         public IUserRepository Users { get; }
 
         public UnitOfWork(AppDbContext context)
@@ -19,6 +17,12 @@ namespace NiveshX.Infrastructure.Repositories
             Users = new UserRepository(context);
         }
 
-        public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();
+        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+            => await _context.SaveChangesAsync(cancellationToken);
+
+        // Optional transaction support
+        public async Task BeginTransactionAsync() => await _context.Database.BeginTransactionAsync();
+        public async Task CommitAsync() => await _context.Database.CommitTransactionAsync();
+        public async Task RollbackAsync() => await _context.Database.RollbackTransactionAsync();
     }
 }
