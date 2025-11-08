@@ -1,0 +1,15 @@
+import React from 'react';
+import NavBar from './Navbar';
+import Footer from './Footer';
+
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <NavBar />
+      <main className="flex-grow p-6 bg-gray-50">{children}</main>
+      <Footer />
+    </div>
+  );
+};
+
+export default Layout;

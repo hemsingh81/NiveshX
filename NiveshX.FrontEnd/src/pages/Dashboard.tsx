@@ -1,14 +1,12 @@
 import React from 'react';
-import { useAuth } from '../components/AuthContext';
+import Layout from '../components/Layout';
 
 const Dashboard: React.FC = () => {
-  const { logout } = useAuth();
-
   return (
-    <div>
-      <h2>Welcome to Dashboard</h2>
-      <button onClick={logout}>Logout</button>
-    </div>
+    <Layout>
+      <h1 className="text-2xl font-bold mb-4">Welcome to your Dashboard</h1>
+      <p className="text-gray-700">This is your secure area. Add widgets, charts, or insights here.</p>
+    </Layout>
   );
 };
 
