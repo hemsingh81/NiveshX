@@ -1,9 +1,8 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { FiBell, FiDownload, FiSearch } from 'react-icons/fi';
-import profileImg from '../assets/images/default_trader.png.png';
-import logoImg from '../assets/images/logo.png';
+import { FiBell, FiDownload } from 'react-icons/fi';
+import { profileImg, logoImg } from '../assets/images';
 
 const NavBar: React.FC = () => {
     const { logout } = useAuth();
@@ -27,8 +26,8 @@ const NavBar: React.FC = () => {
                 </Link>
                 <div className="flex gap-6 text-sm font-medium">
                     <Link to="/dashboard" className="border-b-2 border-topMenu pb-1">Dashboard</Link>
-                    <Link to="/admin" className="hover:text-gray-300">admin</Link>
-                    <Link to="/master" className="hover:text-gray-300">master</Link>
+                    <Link to="/admin" className="hover:text-gray-300">Admin</Link>
+                    <Link to="/master" className="hover:text-gray-300">Master</Link>
                 </div>
             </div>
 
