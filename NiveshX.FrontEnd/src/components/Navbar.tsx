@@ -1,17 +1,29 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { FiBell, FiDownload } from 'react-icons/fi';
+import { FiBell, FiDownload, FiChevronDown } from 'react-icons/fi';
 import { profileImg, logoImg } from '../assets/images';
 
 const NavBar: React.FC = () => {
     const { logout } = useAuth();
     const navigate = useNavigate();
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     return (
         <nav className="bg-gray-900 text-white px-6 py-3 shadow-lg flex items-center justify-between">
@@ -31,8 +43,8 @@ const NavBar: React.FC = () => {
                 </div>
             </div>
 
-            {/* Right: Search + Icons */}
-            <div className="flex items-center gap-6">
+            {/* Right: Search + Icons + Profile */}
+            <div className="flex items-center gap-6 relative" ref={dropdownRef}>
                 {/* Search Bar */}
                 <div className="relative">
                     <input
@@ -40,21 +52,39 @@ const NavBar: React.FC = () => {
                         placeholder="Search"
                         className="bg-gray-800 text-sm text-white placeholder-gray-400 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
-                    {/* <FiSearch className="absolute left-3 top-2.5 text-gray-400" /> */}
                 </div>
-
-                {/* Bell Icon */}
+                <div className="h-6 w-px bg-gray-600 mx-1" />
+                
+                {/* Bell & Download Icons */}
                 <FiBell className="text-xl cursor-pointer hover:text-gray-300" />
+                <div className="h-6 w-px bg-gray-600 mx-1" />
+                {/* Profile + Dropdown Arrow */}
+                <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="flex items-center gap-2 focus:outline-none"
+                >
+                    <img
+                        src={profileImg}
+                        alt="Profile"
+                        className="w-8 h-8 rounded-full border-2 border-white bg-white object-cover"
+                    />
+                    <FiChevronDown className={`transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+                </button>
 
-                {/* Download Icon */}
-                <FiDownload className="text-xl cursor-pointer hover:text-gray-300" />
-
-                {/* Profile Image */}
-                <img
-                    src={profileImg}
-                    alt="Profile"
-                    className="w-8 h-8 rounded-full border-2 border-white bg-white object-cover cursor-pointer"
-                />
+                {/* Dropdown Menu */}
+                {showDropdown && (
+                    <div className="absolute right-0 top-14 w-48 bg-gray-800 text-white rounded shadow-lg z-50 border border-topMenu">
+                        <Link to="/profile" className="block px-4 py-2 hover:bg-gray-700">Profile</Link>
+                        <Link to="/settings" className="block px-4 py-2 hover:bg-gray-700">Settings</Link>
+                        <hr className="border-gray-600 my-1" />
+                        <button
+                            onClick={handleLogout}
+                            className="w-full text-left px-4 py-2 hover:bg-gray-700"
+                        >
+                            Logout
+                        </button>
+                    </div>
+                )}
             </div>
         </nav>
     );
