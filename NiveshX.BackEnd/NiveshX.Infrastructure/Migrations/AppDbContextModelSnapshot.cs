@@ -74,6 +74,10 @@ namespace NiveshX.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedOn")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -115,6 +119,7 @@ namespace NiveshX.Infrastructure.Migrations
                             IsEmailConfirmed = true,
                             IsLockedOut = false,
                             IsPhoneConfirmed = false,
+                            Name = "Hem Singh",
                             PasswordHash = "$2a$11$7SacvvnY60SyyWyDD/lmsuNvANz/cR5.763EBaidcDmL.y53UjOXS",
                             RefreshToken = "",
                             RefreshTokenExpiry = new DateTime(2025, 12, 8, 0, 0, 0, 0, DateTimeKind.Utc),

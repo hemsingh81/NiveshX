@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NiveshX.Core.Config;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -18,6 +19,9 @@ namespace NiveshX.Core.Models
         [Key]
         public Guid Id { get; set; }
 
+        /// <summary>Trader Name address used for communication.</summary>
+        public string Name { get; set; } = string.Empty;
+
         /// <summary>Email address used for login and communication.</summary>
         public string Email { get; set; } = string.Empty;
 
@@ -28,7 +32,7 @@ namespace NiveshX.Core.Models
         public string PasswordHash { get; set; } = string.Empty;
 
         /// <summary>Role assigned to the user (e.g., Admin, User).</summary>
-        public string Role { get; set; } = "User";
+        public UserRole Role { get; set; } = UserRole.None;
 
         /// <summary>Refresh token used to renew access tokens.</summary>
         public string RefreshToken { get; set; } = string.Empty;
@@ -53,8 +57,6 @@ namespace NiveshX.Core.Models
 
         /// <summary>Number of consecutive failed login attempts.</summary>
         public int FailedLoginAttempts { get; set; } = 0;
-
-
 
     }
 

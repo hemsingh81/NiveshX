@@ -16,8 +16,9 @@ namespace NiveshX.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    IsEmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    IsEmailConfirmed = table.Column<bool>(type: "bit", nullable: false), 
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -42,8 +43,8 @@ namespace NiveshX.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "Users",
-                columns: new[] { "Id", "CreatedBy", "CreatedOn", "Email", "FailedLoginAttempts", "IsActive", "IsEmailConfirmed", "IsLockedOut", "IsPhoneConfirmed", "LastLoginOn", "ModifiedBy", "ModifiedOn", "PasswordHash", "PhoneNumber", "ProfilePictureUrl", "RefreshToken", "RefreshTokenExpiry", "Role" },
-                values: new object[] { new Guid("11111111-1111-1111-1111-111111111111"), "system", new DateTime(2025, 11, 8, 0, 0, 0, 0, DateTimeKind.Utc), "admin@niveshx.com", 0, true, true, false, false, null, null, null, "$2a$11$7SacvvnY60SyyWyDD/lmsuNvANz/cR5.763EBaidcDmL.y53UjOXS", null, null, "", new DateTime(2025, 12, 8, 0, 0, 0, 0, DateTimeKind.Utc), "Admin" });
+                columns: new[] { "Id", "CreatedBy", "CreatedOn", "Email", "FailedLoginAttempts", "IsActive", "IsEmailConfirmed", "IsLockedOut", "IsPhoneConfirmed", "LastLoginOn", "ModifiedBy", "ModifiedOn", "Name", "PasswordHash", "PhoneNumber", "ProfilePictureUrl", "RefreshToken", "RefreshTokenExpiry", "Role" },
+                values: new object[] { new Guid("11111111-1111-1111-1111-111111111111"), "system", new DateTime(2025, 11, 8, 0, 0, 0, 0, DateTimeKind.Utc), "admin@niveshx.com", 0, true, true, false, false, null, null, null, "Hem Singh", "$2a$11$7SacvvnY60SyyWyDD/lmsuNvANz/cR5.763EBaidcDmL.y53UjOXS", null, null, "", new DateTime(2025, 12, 8, 0, 0, 0, 0, DateTimeKind.Utc), "Admin" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",

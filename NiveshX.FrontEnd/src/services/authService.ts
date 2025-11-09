@@ -5,6 +5,8 @@ const API_URL = `${process.env.REACT_APP_API_BASE_URL}/auth`;
 interface LoginResponse {
   token: string;
   refreshToken: string;
+  role: string;
+  name: string;
 }
 
 interface RefreshResponse {
@@ -17,8 +19,9 @@ export const loginUser = async (email: string, password: string): Promise<string
     const { token, refreshToken } = response.data;
 
     if (token && refreshToken) {
-      localStorage.setItem('accessToken', token);
+      localStorage.setItem('token',  token);
       localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(response.data));
       return token;
     } else {
       throw new Error('Invalid login response');

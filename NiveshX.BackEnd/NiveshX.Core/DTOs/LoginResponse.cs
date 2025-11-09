@@ -1,4 +1,6 @@
-﻿namespace NiveshX.Core.DTOs
+﻿using NiveshX.Core.Config;
+
+namespace NiveshX.Core.DTOs
 {
     /// <summary>
     /// Represents the response returned after successful authentication.
@@ -14,5 +16,15 @@
         /// Refresh token used to obtain a new access token.
         /// </summary>
         public string RefreshToken { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Name
+        /// </summary>
+        public string Name { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Name
+        /// </summary>
+        public UserRole Role { get; set; } = UserRole.None;
     }
 }

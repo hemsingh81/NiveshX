@@ -12,7 +12,7 @@ using NiveshX.Infrastructure.Data;
 namespace NiveshX.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251108062058_InitialCreate")]
+    [Migration("20251109131651_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -77,6 +77,10 @@ namespace NiveshX.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedOn")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -118,6 +122,7 @@ namespace NiveshX.Infrastructure.Migrations
                             IsEmailConfirmed = true,
                             IsLockedOut = false,
                             IsPhoneConfirmed = false,
+                            Name = "Hem Singh",
                             PasswordHash = "$2a$11$7SacvvnY60SyyWyDD/lmsuNvANz/cR5.763EBaidcDmL.y53UjOXS",
                             RefreshToken = "",
                             RefreshTokenExpiry = new DateTime(2025, 12, 8, 0, 0, 0, 0, DateTimeKind.Utc),

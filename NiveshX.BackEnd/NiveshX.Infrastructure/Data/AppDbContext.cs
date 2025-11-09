@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using NiveshX.Core.Config;
 using NiveshX.Core.Models;
 using System;
 using System.Threading;
@@ -24,6 +25,8 @@ namespace NiveshX.Infrastructure.Data
             modelBuilder.Entity<User>().Property(u => u.IsDeleted).HasDefaultValue(false);
             modelBuilder.Entity<User>().Property(u => u.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
             modelBuilder.Entity<User>().Property(u => u.CreatedBy).HasDefaultValue("system");
+            modelBuilder.Entity<User>().Property(u => u.Role).HasConversion<string>();
+
 
             // Unique index on Email
             modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
@@ -33,11 +36,12 @@ namespace NiveshX.Infrastructure.Data
             modelBuilder.Entity<User>().HasData(new User
             {
                 Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                Name = "Hem Singh",
                 Email = "admin@niveshx.com",
                 IsEmailConfirmed = true,
                 PasswordHash = passwordHash,
-                Role = "Admin",
-                RefreshToken = string.Empty,    
+                Role = UserRole.Admin,
+                RefreshToken = string.Empty,
                 RefreshTokenExpiry = new DateTime(2025, 12, 8, 0, 0, 0, DateTimeKind.Utc),
                 PhoneNumber = null,
                 IsPhoneConfirmed = false,

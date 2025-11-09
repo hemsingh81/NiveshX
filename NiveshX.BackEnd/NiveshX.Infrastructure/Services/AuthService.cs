@@ -49,7 +49,9 @@ namespace NiveshX.Infrastructure.Services
                 return new LoginResponse
                 {
                     Token = accessToken,
-                    RefreshToken = refreshToken
+                    RefreshToken = refreshToken,
+                    Role = user.Role,
+                    Name = user.Name
                 };
             }
             catch (Exception ex)
@@ -119,17 +121,17 @@ namespace NiveshX.Infrastructure.Services
                 {
                     Subject = new ClaimsIdentity(new[]
                     {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
-            }),
+                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                        new Claim(ClaimTypes.Email, user.Email),
+                        new Claim(ClaimTypes.Role, user.Role.ToString())
+                    }),
                     Expires = DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
                     Issuer = _jwtOptions.Issuer,
                     Audience = _jwtOptions.Audience,
                     SigningCredentials = new SigningCredentials(
                         new SymmetricSecurityKey(key),
                         SecurityAlgorithms.HmacSha256Signature)
-                };
+                    };
 
                 var token = tokenHandler.CreateToken(tokenDescriptor);
                 return tokenHandler.WriteToken(token);
