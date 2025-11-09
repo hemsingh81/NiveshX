@@ -55,33 +55,7 @@ const Profile: React.FC = () => {
   const savePassword = async (
     payload: { currentPassword: string; newPassword: string }
   ): Promise<void> => {
-    try {
-      console.log('Saving password with payload:', payload);
-      await changePassword(payload);
-      console.log('Password updated successfully');
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-
-        switch (status) {
-          case 400:
-            console.error('Bad Request: Invalid password or missing fields.');
-            throw new Error('Invalid input. Please check your password.');
-          case 401:
-            console.error('Unauthorized: Invalid credentials or session expired.');
-            throw new Error('Unauthorized. Please log in again.');
-          case 500:
-            console.error('Server Error: Something went wrong on the server.');
-            throw new Error('Server error. Please try again later.');
-          default:
-            console.error('Unexpected error:', error.message);
-            throw new Error('Failed to update password. Please try again.');
-        }
-      } else {
-        console.error('Unknown error:', error);
-        throw new Error('Unexpected error occurred. Please try again.');
-      }
-    }
+    await changePassword(payload);
   };
 
   const resetPasswords = () => {

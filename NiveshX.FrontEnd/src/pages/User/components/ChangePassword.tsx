@@ -49,12 +49,10 @@ const ChangePassword: React.FC<Props> = ({ passwords, onChange, onSave, resetPas
           try {
                setLoading(true);
                await onSave({ currentPassword: current, newPassword: newPass });
-               toast.success('Password updated successfully!');
                resetPasswords(); 
           } catch (error: any) {
-               debugger;
-               const message = error?.message || 'Failed to update password.';
-               toast.error(message);
+               // const message = error?.message || 'Failed to update password.';
+               // toast.error(message);
           } finally {
                setLoading(false);
           }

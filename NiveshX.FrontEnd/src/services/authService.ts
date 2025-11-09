@@ -1,7 +1,7 @@
-import axios from 'axios';
+import axiosInstance from './axiosInstance';
+import toast from 'react-hot-toast';
 import { store } from '../store';
-import { setUser } from '../store/userSlice';
-import { clearUser } from '../store/userSlice';
+import { setUser, clearUser } from '../store/userSlice';
 
 const API_URL = `${process.env.REACT_APP_API_BASE_URL}/auth`;
 
@@ -18,7 +18,19 @@ interface RefreshResponse {
 
 export const loginUser = async (email: string, password: string): Promise<string> => {
   try {
-    const response = await axios.post<LoginResponse>(`${API_URL}/login`, { email, password });
+    const response = await toast.promise(
+      axiosInstance.post<LoginResponse>(
+        `${API_URL}/login`,
+        { email, password },
+        { headers: { 'x-skip-error-toaster': 'true' } } // ✅ suppress global toast
+      ),
+      {
+        loading: 'Logging in...',
+        success: 'Login successful!',
+        error: 'Login failed. Please check your credentials.',
+      }
+    );
+
     const { token, refreshToken, name, role } = response.data;
 
     if (token && refreshToken) {
@@ -39,7 +51,7 @@ export const loginUser = async (email: string, password: string): Promise<string
 
 export const refreshToken = async (refreshToken: string | null): Promise<RefreshResponse> => {
   try {
-    const response = await axios.post<RefreshResponse>(`${API_URL}/refresh`, { refreshToken });
+    const response = await axiosInstance.post<RefreshResponse>(`${API_URL}/refresh`, { refreshToken });
     return response.data;
   } catch (error) {
     console.error('Token refresh failed:', error);
@@ -53,7 +65,6 @@ export const logoutUser = (): void => {
   window.location.href = '/login';
 };
 
-
 interface UserProfileResponse {
   name: string;
   email: string;
@@ -64,15 +75,7 @@ interface UserProfileResponse {
 
 export const getUserProfile = async (): Promise<UserProfileResponse> => {
   try {
-    const token = sessionStorage.getItem('token');
-    if (!token) throw new Error('No token found');
-
-    const response = await axios.get<UserProfileResponse>(`${API_URL}/profile`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
+    const response = await axiosInstance.get<UserProfileResponse>(`${API_URL}/profile`);
     return response.data;
   } catch (error) {
     console.error('Failed to fetch user profile:', error);
@@ -86,19 +89,14 @@ interface ChangePasswordRequest {
 }
 
 export const changePassword = async (payload: ChangePasswordRequest): Promise<void> => {
-  try {
-    const token = sessionStorage.getItem('token');
-    if (!token) throw new Error('No token found');
-
-    await axios.post(`${API_URL}/change-password`, payload, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    console.log('Password changed successfully');
-  } catch (error) {
-    console.error('Failed to change password:', error);
-    throw error;
-  }
+  await toast.promise(
+    axiosInstance.post(`${API_URL}/change-password`, payload, {
+      headers: { 'x-skip-error-toaster': 'true' }, 
+    }),
+    {
+      loading: 'Updating password...',
+      success: 'Password updated successfully!',
+      error: 'Failed to update password.',
+    }
+  );
 };

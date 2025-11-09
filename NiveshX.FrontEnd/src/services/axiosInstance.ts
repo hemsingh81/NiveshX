@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import toast from 'react-hot-toast';
 import { logoutUser, refreshToken } from './authService';
 import { store } from '../store';
 
@@ -10,7 +11,7 @@ const axiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL,
 });
 
-// Request interceptor: attach access token
+// Attach access token to requests
 axiosInstance.interceptors.request.use(config => {
   const token = store.getState().user.token;
   if (token && config.headers) {
@@ -19,13 +20,15 @@ axiosInstance.interceptors.request.use(config => {
   return config;
 });
 
-// Response interceptor: handle 401 and refresh token
+// Handle 401 and global error toasts
 axiosInstance.interceptors.response.use(
   response => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig;
+    const status = error.response?.status;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Refresh token on 401
+    if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       const refresh = sessionStorage.getItem('refreshToken');
 
@@ -34,7 +37,7 @@ axiosInstance.interceptors.response.use(
         const newToken = res?.token;
 
         if (newToken) {
-          sessionStorage.setItem('accessToken', newToken);
+          sessionStorage.setItem('token', newToken);
           if (originalRequest.headers) {
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
           }
@@ -43,10 +46,27 @@ axiosInstance.interceptors.response.use(
           throw new Error('Invalid refresh response');
         }
       } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
+        toast.error('Session expired. Please log in again.');
         logoutUser();
         return Promise.reject(error);
       }
+    }
+
+    // ✅ Suppress global toast if flagged
+    const headers = error.config?.headers as Record<string, string> | undefined;
+    const skipToast = headers?.['x-skip-error-toaster'] === 'true';
+
+    if (!skipToast) {
+      const data = error.response?.data as { message?: string };
+      const message =
+        data?.message ||
+        (status === 400 && 'Bad request.') ||
+        (status === 401 && 'Unauthorized.') ||
+        (status === 403 && 'Forbidden.') ||
+        (status === 404 && 'Resource not found.') ||
+        (status === 500 && 'Server error. Please try again later.') ||
+        'Unexpected error occurred.';
+      toast.error(message);
     }
 
     return Promise.reject(error);
