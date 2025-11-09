@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
+import { CustomButton } from '../../../controls';
 
 interface Props {
      passwords: { current: string; new: string; confirm: string };
@@ -49,10 +50,9 @@ const ChangePassword: React.FC<Props> = ({ passwords, onChange, onSave, resetPas
           try {
                setLoading(true);
                await onSave({ currentPassword: current, newPassword: newPass });
-               resetPasswords(); 
-          } catch (error: any) {
-               // const message = error?.message || 'Failed to update password.';
-               // toast.error(message);
+               resetPasswords();
+          } catch (err) {
+               console.error('Password update failed:', err);
           } finally {
                setLoading(false);
           }
@@ -81,8 +81,8 @@ const ChangePassword: React.FC<Props> = ({ passwords, onChange, onSave, resetPas
                               value={(passwords as any)[name]}
                               onChange={handleChange}
                               className={`w-full px-4 py-2 rounded text-white border focus:outline-none ${errorField === name
-                                        ? 'bg-red-900 border-red-500 focus:ring-2 focus:ring-red-500'
-                                        : 'primary-siteColor primary-siteBdColor focus:ring-2 focus:ring-purple-500'
+                                   ? 'bg-red-900 border-red-500 focus:ring-2 focus:ring-red-500'
+                                   : 'primary-siteColor primary-siteBdColor focus:ring-2 focus:ring-purple-500'
                                    }`}
                          />
                          {errorField === name && errorMessage && (
@@ -96,17 +96,26 @@ const ChangePassword: React.FC<Props> = ({ passwords, onChange, onSave, resetPas
                     <label className="block text-sm mb-1">Password Strength</label>
                     <div
                          className={`w-full h-2 rounded ${strength === 'Weak'
-                                   ? 'bg-red-500'
-                                   : strength === 'Medium'
-                                        ? 'bg-yellow-500'
-                                        : 'bg-green-500'
+                              ? 'bg-red-500'
+                              : strength === 'Medium'
+                                   ? 'bg-yellow-500'
+                                   : 'bg-green-500'
                               }`}
                     />
                     <p className="text-xs mt-1 text-gray-300">{strength}</p>
                </div>
 
                <div className="flex justify-end pt-2">
-                    <button
+                    <CustomButton
+                         loading={loading}
+                         label="Save Password"
+                         loadingLabel="Saving..."
+                         type="button"
+                         color="green"
+                         onClick={handleSubmit}
+                    />
+
+                    {/* <button
                          type="button"
                          onClick={handleSubmit}
                          disabled={loading}
@@ -114,7 +123,7 @@ const ChangePassword: React.FC<Props> = ({ passwords, onChange, onSave, resetPas
                               }`}
                     >
                          {loading ? 'Saving...' : 'Save Password'}
-                    </button>
+                    </button> */}
                </div>
           </div>
      );

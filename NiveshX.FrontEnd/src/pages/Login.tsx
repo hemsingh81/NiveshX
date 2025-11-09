@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { loginUser } from '../services/authService';
 import { setUser } from '../store/userSlice';
-import toast, { Toaster } from 'react-hot-toast';
 import loginBg from '../assets/images/login-bg.png';
+import { CustomButton } from '../controls';
+
 import axios from 'axios';
 
 interface FormData {
@@ -36,10 +37,9 @@ const Login: React.FC = () => {
 
     setLoading(true);
     try {
-      const token = await loginUser(email, password);
+      const token = await loginUser(email, password); // ✅ toast handled inside
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       dispatch(setUser({ token, user }));
-      toast.success('Login successful!');
       navigate('/dashboard');
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
@@ -63,8 +63,6 @@ const Login: React.FC = () => {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
-      <Toaster />
-
       {/* Background */}
       <div className="absolute inset-0 z-0">
         <img src={loginBg} alt="Login background" className="w-full h-full object-cover" />
@@ -103,29 +101,13 @@ const Login: React.FC = () => {
               aria-label="Password"
               className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
-            <button
+            <CustomButton
+              loading={loading}
+              label="Login"
+              loadingLabel="Logging in…"
               type="submit"
-              disabled={loading}
-              className={`w-full py-3 rounded transition duration-200 flex items-center justify-center ${
-                loading ? 'bg-blue-300 cursor-not-allowed text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v8z"
-                    />
-                  </svg>
-                  Logging in…
-                </span>
-              ) : (
-                'Login'
-              )}
-            </button>
+              color="blue"
+            />
           </form>
         </div>
       </div>

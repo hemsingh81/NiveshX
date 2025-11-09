@@ -11,7 +11,6 @@ const axiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL,
 });
 
-// Attach access token to requests
 axiosInstance.interceptors.request.use(config => {
   const token = store.getState().user.token;
   if (token && config.headers) {
@@ -20,14 +19,12 @@ axiosInstance.interceptors.request.use(config => {
   return config;
 });
 
-// Handle 401 and global error toasts
 axiosInstance.interceptors.response.use(
   response => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig;
     const status = error.response?.status;
 
-    // Refresh token on 401
     if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       const refresh = sessionStorage.getItem('refreshToken');
@@ -52,7 +49,6 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    // ✅ Suppress global toast if flagged
     const headers = error.config?.headers as Record<string, string> | undefined;
     const skipToast = headers?.['x-skip-error-toaster'] === 'true';
 

@@ -3,7 +3,6 @@ import Layout from '../../components/Layout';
 import { profileImg } from '../../assets/images';
 import { getUserProfile, changePassword } from '../../services/authService';
 import { ProfileDetails, ProfileImageUpload, ChangePassword } from './components';
-import axios from 'axios';
 
 const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
