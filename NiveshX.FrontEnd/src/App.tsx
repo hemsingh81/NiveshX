@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from './store/userSlice';
+import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
 import { Dashboard, Admin, Master, Profile } from './pages';
 import ProtectedRoute from './ProtectedRoute';
@@ -35,21 +36,24 @@ const App: React.FC = () => {
   }, [dispatch]);
 
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<Login />} />
-      {protectedRoutes.map(({ path, element, allowedRoles }) => (
-        <Route
-          key={path}
-          path={path}
-          element={
-            <ProtectedRoute allowedRoles={allowedRoles}>
-              {element}
-            </ProtectedRoute>
-          }
-        />
-      ))}
-    </Routes>
+    <>
+      <Toaster position="top-right" reverseOrder={false} />
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<Login />} />
+        {protectedRoutes.map(({ path, element, allowedRoles }) => (
+          <Route
+            key={path}
+            path={path}
+            element={
+              <ProtectedRoute allowedRoles={allowedRoles}>
+                {element}
+              </ProtectedRoute>
+            }
+          />
+        ))}
+      </Routes>
+    </>
   );
 };
 

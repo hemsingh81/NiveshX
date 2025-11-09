@@ -65,8 +65,8 @@ const Profile: React.FC = () => {
 
         switch (status) {
           case 400:
-            console.error('Bad Request: Invalid password format or missing fields.');
-            throw new Error('Invalid input. Please check your password format.');
+            console.error('Bad Request: Invalid password or missing fields.');
+            throw new Error('Invalid input. Please check your password.');
           case 401:
             console.error('Unauthorized: Invalid credentials or session expired.');
             throw new Error('Unauthorized. Please log in again.');
