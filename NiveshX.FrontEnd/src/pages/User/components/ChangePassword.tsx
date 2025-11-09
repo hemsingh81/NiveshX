@@ -114,16 +114,6 @@ const ChangePassword: React.FC<Props> = ({ passwords, onChange, onSave, resetPas
                          color="green"
                          onClick={handleSubmit}
                     />
-
-                    {/* <button
-                         type="button"
-                         onClick={handleSubmit}
-                         disabled={loading}
-                         className={`px-4 py-2 btn-sitePrimary rounded shadow ${loading ? 'opacity-50 cursor-not-allowed' : ''
-                              }`}
-                    >
-                         {loading ? 'Saving...' : 'Save Password'}
-                    </button> */}
                </div>
           </div>
      );

@@ -107,6 +107,7 @@ const Login: React.FC = () => {
               loadingLabel="Logging in…"
               type="submit"
               color="blue"
+              fullWidth={true}
             />
           </form>
         </div>

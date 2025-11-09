@@ -8,6 +8,7 @@ interface CustomButtonProps {
   onClick?: () => void;
   className?: string;
   color?: 'blue' | 'green' | 'red' | 'gray';
+  fullWidth?: boolean;
 }
 
 const colorClasses: Record<string, { base: string; loading: string }> = {
@@ -37,6 +38,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   onClick,
   className = '',
   color = 'blue',
+  fullWidth = false
 }) => {
   const styles = colorClasses[color] || colorClasses.blue;
 
@@ -45,9 +47,10 @@ const CustomButton: React.FC<CustomButtonProps> = ({
       type={type}
       disabled={loading}
       onClick={onClick}
-      className={`w-full py-3 rounded transition duration-200 flex items-center justify-center ${
-        loading ? styles.loading : styles.base
-      } ${className}`}
+      className={`${fullWidth ? 'w-full' : 'w-auto'
+        } py-3 px-6 rounded transition duration-200 flex items-center justify-center ${loading ? styles.loading : styles.base
+        } ${className}`}
+
     >
       {loading ? (
         <span className="flex items-center gap-2">
