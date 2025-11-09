@@ -17,7 +17,7 @@ code {
 }
 
 
-.border-topMenu {
+.primary-siteColor {
   --tw-border-opacity: 1;
   border-color: rgb(255 79 122 / var(--tw-border-opacity));
 }

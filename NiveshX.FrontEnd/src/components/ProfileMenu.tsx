@@ -41,7 +41,7 @@ const ProfileMenu: React.FC = () => {
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 top-12 w-48 bg-gray-800 text-white rounded shadow-lg z-50 border border-topMenu">
+        <div className="absolute right-0 top-12 w-48 bg-gray-800 text-white rounded shadow-lg z-50 border primary-siteColor">
           <Link to="/profile" className="block px-4 py-2 hover:bg-gray-700">Profile</Link>
           <Link to="/settings" className="block px-4 py-2 hover:bg-gray-700">Settings</Link>
           <hr className="border-gray-600 my-1" />
