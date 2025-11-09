@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { logoutUser, refreshToken } from './authService';
+import { store } from '../store';
 
 interface CustomAxiosRequestConfig extends AxiosRequestConfig {
   _retry?: boolean;
@@ -11,7 +12,7 @@ const axiosInstance = axios.create({
 
 // Request interceptor: attach access token
 axiosInstance.interceptors.request.use(config => {
-  const token = localStorage.getItem('accessToken');
+  const token = store.getState().user.token;
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -26,14 +27,14 @@ axiosInstance.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      const refresh = localStorage.getItem('refreshToken');
+      const refresh = sessionStorage.getItem('refreshToken');
 
       try {
         const res = await refreshToken(refresh);
         const newToken = res?.token;
 
         if (newToken) {
-          localStorage.setItem('accessToken', newToken);
+          sessionStorage.setItem('accessToken', newToken);
           if (originalRequest.headers) {
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
           }

@@ -1,4 +1,7 @@
 import axios from 'axios';
+import { store } from '../store';
+import { setUser } from '../store/userSlice';
+import { clearUser } from '../store/userSlice';
 
 const API_URL = `${process.env.REACT_APP_API_BASE_URL}/auth`;
 
@@ -16,12 +19,14 @@ interface RefreshResponse {
 export const loginUser = async (email: string, password: string): Promise<string> => {
   try {
     const response = await axios.post<LoginResponse>(`${API_URL}/login`, { email, password });
-    const { token, refreshToken } = response.data;
+    const { token, refreshToken, name, role } = response.data;
 
     if (token && refreshToken) {
-      localStorage.setItem('token',  token);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(response.data));
+      sessionStorage.setItem('token', token);
+      sessionStorage.setItem('refreshToken', refreshToken);
+      sessionStorage.setItem('user', JSON.stringify({ name, role }));
+
+      store.dispatch(setUser({ token, user: { name, role } }));
       return token;
     } else {
       throw new Error('Invalid login response');
@@ -43,6 +48,7 @@ export const refreshToken = async (refreshToken: string | null): Promise<Refresh
 };
 
 export const logoutUser = (): void => {
-  localStorage.clear();
-  window.location.href = '/login'; 
+  sessionStorage.clear();
+  store.dispatch(clearUser());
+  window.location.href = '/login';
 };

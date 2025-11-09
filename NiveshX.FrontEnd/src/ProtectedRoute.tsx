@@ -1,10 +1,23 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from './components/AuthContext';
+import { useSelector } from 'react-redux';
+import { RootState } from './store';
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token } = useAuth();
-  return token ? <>{children}</> : <Navigate to="/login" />;
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  allowedRoles?: string[];
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
+  const { token, user } = useSelector((state: RootState) => state.user);
+
+  if (!token) return <Navigate to="/login" />;
+
+  if (allowedRoles && (!user?.role || !allowedRoles.includes(user.role))) {
+    return <Navigate to="/unauthorized" />;
+  }
+
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

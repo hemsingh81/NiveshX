@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { loginUser } from '../services/authService';
-import { useAuth } from '../components/AuthContext';
+import { setUser } from '../store/userSlice';
 import toast, { Toaster } from 'react-hot-toast';
-
 import loginBg from '../assets/images/login-bg.png';
 import axios from 'axios';
 
@@ -16,7 +16,7 @@ const Login: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, setToken } = useAuth();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,14 +37,13 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       const token = await loginUser(email, password);
-      login(token);
-      setToken(token);
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      dispatch(setUser({ token, user }));
       toast.success('Login successful!');
       navigate('/dashboard');
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
-
         if (status === 400) {
           setError('Invalid input. Please check your email and password format.');
         } else if (status === 401) {
@@ -62,22 +61,14 @@ const Login: React.FC = () => {
     }
   };
 
-
-
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       <Toaster />
 
-      {/* Fullscreen Background Image */}
+      {/* Background */}
       <div className="absolute inset-0 z-0">
-        <img
-          src={loginBg}
-          alt="Login background"
-          className="w-full h-full object-cover"
-        />
+        <img src={loginBg} alt="Login background" className="w-full h-full object-cover" />
       </div>
-
-      {/* Optional Overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-0" />
 
       {/* Login Form */}
@@ -115,26 +106,14 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 rounded transition duration-200 flex items-center justify-center ${loading
-                ? 'bg-blue-300 cursor-not-allowed text-white'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
+              className={`w-full py-3 rounded transition duration-200 flex items-center justify-center ${
+                loading ? 'bg-blue-300 cursor-not-allowed text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
             >
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <svg
-                    className="animate-spin h-5 w-5 text-white"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
+                  <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path
                       className="opacity-75"
                       fill="currentColor"

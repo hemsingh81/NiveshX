@@ -1,18 +1,21 @@
-// src/components/ProfileMenu.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiChevronDown } from 'react-icons/fi';
+import { FaHandsPraying } from 'react-icons/fa6';
 import { profileImg } from '../assets/images';
-import { useAuth } from './AuthContext';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
+import { logoutUser } from '../services/authService';
 
 const ProfileMenu: React.FC = () => {
-  const { logout } = useAuth();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const user = useSelector((state: RootState) => state.user.user);
+  const firstName = user?.name?.split(' ')[0] || 'User';
 
   const handleLogout = () => {
-    logout();
+    logoutUser();
     navigate('/login');
   };
 
@@ -29,9 +32,13 @@ const ProfileMenu: React.FC = () => {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center gap-2 focus:outline-none"
+        onClick={() => setShowDropdown(prev => !prev)}
+        className="flex items-center gap-2 focus:outline-none whitespace-nowrap"
       >
+        <span className="flex items-center gap-1 text-sm text-white">
+          Ram Ram <FaHandsPraying /> {firstName}
+        </span>
+
         <img
           src={profileImg}
           alt="Profile"
