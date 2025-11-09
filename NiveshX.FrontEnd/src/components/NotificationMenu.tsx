@@ -25,7 +25,7 @@ const NotificationMenu: React.FC = () => {
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 top-10 w-64 bg-gray-800 text-white rounded shadow-lg z-50 border primary-siteColor">
+        <div className="absolute right-0 top-10 w-64 bg-gray-800 text-white rounded shadow-lg z-50 border primary-siteBdColor">
           <div className="px-4 py-3 text-sm text-gray-300">No notifications</div>
         </div>
       )}

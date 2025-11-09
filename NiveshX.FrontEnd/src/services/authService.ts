@@ -52,3 +52,53 @@ export const logoutUser = (): void => {
   store.dispatch(clearUser());
   window.location.href = '/login';
 };
+
+
+interface UserProfileResponse {
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  profileImageUrl?: string;
+}
+
+export const getUserProfile = async (): Promise<UserProfileResponse> => {
+  try {
+    const token = sessionStorage.getItem('token');
+    if (!token) throw new Error('No token found');
+
+    const response = await axios.get<UserProfileResponse>(`${API_URL}/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch user profile:', error);
+    throw error;
+  }
+};
+
+interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export const changePassword = async (payload: ChangePasswordRequest): Promise<void> => {
+  try {
+    const token = sessionStorage.getItem('token');
+    if (!token) throw new Error('No token found');
+
+    await axios.post(`${API_URL}/change-password`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log('Password changed successfully');
+  } catch (error) {
+    console.error('Failed to change password:', error);
+    throw error;
+  }
+};

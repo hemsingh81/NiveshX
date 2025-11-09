@@ -17,8 +17,50 @@ code {
 }
 
 
-.primary-siteColor {
+.primary-siteBdColor {
   --tw-border-opacity: 1;
   border-color: rgb(255 79 122 / var(--tw-border-opacity));
 }
 
+.primary-siteColor {
+  --tw-border-opacity: 1;
+  color: rgb(255 79 122 / var(--tw-border-opacity));
+}
+
+
+.btn-sitePrimary {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 79 122 / var(--tw-bg-opacity));
+  color: white;
+  transition: background-color 0.2s ease;
+}
+
+.btn-sitePrimary:hover {
+  background-color: rgb(230 70 110 / var(--tw-bg-opacity));
+}
+
+.btn-siteCancel {
+  --tw-bg-opacity: 1;
+  background-color: rgb(75 85 99 / var(--tw-bg-opacity));
+  color: white;
+  transition: background-color 0.2s ease;
+}
+
+.btn-siteCancel:hover {
+  background-color: rgb(55 65 81 / var(--tw-bg-opacity));
+}
+
+
+.input-sitePrimary {
+  --tw-border-opacity: 1;
+  border: 1px solid rgb(255 79 122 / var(--tw-border-opacity));
+  background-color: #1f1f1f;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+}
+
+.input-sitePrimary:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(255 79 122 / 0.5);
+}

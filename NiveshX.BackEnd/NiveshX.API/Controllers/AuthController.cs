@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using NiveshX.Core.DTOs;
 using NiveshX.Core.Interfaces;
+using NiveshX.Infrastructure.Repositories;
+using System.Security.Claims;
 
 namespace NiveshX.API.Controllers
 {
@@ -62,6 +64,64 @@ namespace NiveshX.API.Controllers
                 return StatusCode(500, new { error = "An unexpected error occurred during login." });
             }
         }
+
+        [HttpGet("profile")]
+        [Authorize]
+        [ProducesResponseType(typeof(UserProfileResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetProfile(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                {
+                    _logger.LogWarning("Invalid or missing user ID claim");
+                    return Unauthorized("Invalid token");
+                }
+
+                var profile = await _authService.GetUserProfileAsync(userId, cancellationToken);
+                if (profile == null)
+                    return NotFound("User not found");
+
+                return Ok(profile);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled exception while retrieving profile");
+                return StatusCode(500, new { error = "An unexpected error occurred while retrieving profile." });
+            }
+        }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                    return Unauthorized("Invalid token");
+
+                var success = await _authService.ChangePasswordAsync(userId, request, cancellationToken);
+                if (!success)
+                    return BadRequest("Current password is incorrect or user not found");
+
+                return Ok("Password changed successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error changing password");
+                return StatusCode(500, new { error = "An unexpected error occurred while changing password." });
+            }
+        }
+
 
         /// <summary>
         /// Refreshes access token using a valid refresh token

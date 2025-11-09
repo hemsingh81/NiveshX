@@ -59,5 +59,21 @@ namespace NiveshX.Infrastructure.Repositories
             return Task.CompletedTask;
         }
 
+        public async Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return await _context.Users.FindAsync(new object[] { id }, cancellationToken);
+        }
+
+        public async Task UpdatePasswordAsync(Guid userId, string newPasswordHash, CancellationToken cancellationToken = default)
+        {
+            var user = await _context.Users.FindAsync(new object[] { userId }, cancellationToken);
+            if (user != null)
+            {
+                user.PasswordHash = newPasswordHash;
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+        }
+
+
     }
 }

@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import { profileImg } from '../../assets/images';
+import { getUserProfile, changePassword } from '../../services/authService';
+import { ProfileDetails, ProfileImageUpload, ChangePassword } from './components';
+import axios from 'axios';
 
 const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
-    name: 'Hem Singh',
-    email: 'hem@example.com',
-    phone: '+91 9876543210',
-    role: 'Trader',
+    name: '',
+    email: '',
+    phone: '',
+    role: '',
   });
 
   const [passwords, setPasswords] = useState({
@@ -19,14 +22,70 @@ const Profile: React.FC = () => {
 
   const [imagePreview, setImagePreview] = useState(profileImg);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setProfile((prev) => ({ ...prev, [name]: value }));
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await getUserProfile();
+        setProfile(data);
+        if (data.profileImageUrl) setImagePreview(data.profileImageUrl);
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const updateField = (setter: React.Dispatch<React.SetStateAction<any>>) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setter((prev: any) => ({ ...prev, [name]: value }));
+    };
+
+  const saveProfileDetails = () => {
+    console.log('Saved profile details:', profile);
+    // TODO: Call updateProfile API
   };
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPasswords((prev) => ({ ...prev, [name]: value }));
+  const saveProfileImage = () => {
+    console.log('Saved profile image');
+    // TODO: Upload image to server
+  };
+
+  const savePassword = async (
+    payload: { currentPassword: string; newPassword: string }
+  ): Promise<void> => {
+    try {
+      console.log('Saving password with payload:', payload);
+      await changePassword(payload);
+      console.log('Password updated successfully');
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+
+        switch (status) {
+          case 400:
+            console.error('Bad Request: Invalid password format or missing fields.');
+            throw new Error('Invalid input. Please check your password format.');
+          case 401:
+            console.error('Unauthorized: Invalid credentials or session expired.');
+            throw new Error('Unauthorized. Please log in again.');
+          case 500:
+            console.error('Server Error: Something went wrong on the server.');
+            throw new Error('Server error. Please try again later.');
+          default:
+            console.error('Unexpected error:', error.message);
+            throw new Error('Failed to update password. Please try again.');
+        }
+      } else {
+        console.error('Unknown error:', error);
+        throw new Error('Unexpected error occurred. Please try again.');
+      }
+    }
+  };
+
+  const resetPasswords = () => {
+    setPasswords({ current: '', new: '', confirm: '' });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,121 +97,58 @@ const Profile: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsEditing(false);
-    console.log('Updated profile:', profile);
-    console.log('Password change:', passwords);
-  };
-
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto mt-10 p-6 rounded-lg shadow-xl border primary-siteColor">
+      <div className="max-w-5xl mx-auto mt-10 p-6 rounded-lg shadow-xl border primary-siteBdColor">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold">My Profile</h2>
-          {!isEditing && (
+          {!isEditing ? (
             <button
               type="button"
               onClick={() => setIsEditing(true)}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-white"
+              className="px-4 py-2 btn-sitePrimary rounded shadow"
             >
               Edit Profile
             </button>
+          ) : (
+            <div className="flex justify-end pt-4">
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="px-4 py-2 btn-siteCancel rounded shadow"
+              >
+                Cancel
+              </button>
+            </div>
           )}
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Left Panel: Profile Image */}
-            <div className="flex flex-col items-center md:items-start">
-              <img
-                src={imagePreview}
-                alt="Profile"
-                className="w-56 h-56 rounded-full border-4 border-white object-cover mb-4"
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ProfileImageUpload
+            imagePreview={imagePreview}
+            isEditing={isEditing}
+            onUpload={handleImageUpload}
+            onSave={saveProfileImage}
+          />
+
+          <div className="md:col-span-2 space-y-4">
+            <ProfileDetails
+              profile={profile}
+              isEditing={isEditing}
+              onChange={updateField(setProfile)}
+              onSave={saveProfileDetails}
+            />
+
+            {isEditing && (
+              <ChangePassword
+                passwords={passwords}
+                onChange={updateField(setPasswords)}
+                onSave={savePassword}
+                resetPasswords={resetPasswords}
               />
-              {isEditing && (
-                <div>
-                  <label className="block text-sm mb-1">Change Profile Image</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="text-sm text-gray-300"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Right Panel: Info and Password */}
-            <div className="md:col-span-2 space-y-4">
-              {/* Profile Fields */}
-              {['name', 'email', 'phone', 'role'].map((field) => {
-                const isEditable = field === 'name' && isEditing;
-                return (
-                  <div key={field}>
-                    <label className="block text-sm mb-1 capitalize">{field}</label>
-                    <input
-                      type={field === 'email' ? 'email' : 'text'}
-                      name={field}
-                      value={(profile as any)[field]}
-                      onChange={handleChange}
-                      readOnly={!isEditable}
-                      className={`w-full px-4 py-2 rounded text-white border focus:outline-none ${
-                        isEditable
-                          ? 'bg-purple-900 border-purple-500 focus:ring-2 focus:ring-purple-500'
-                          : 'bg-gray-800 border-gray-700'
-                      }`}
-                    />
-                  </div>
-                );
-              })}
-
-              {/* Password Section */}
-              {isEditing && (
-                <>
-                  <hr className="border-gray-700 my-4" />
-                  <h3 className="text-lg font-medium mb-2">Change Password</h3>
-
-                  {[
-                    { label: 'Current Password', name: 'current' },
-                    { label: 'New Password', name: 'new' },
-                    { label: 'Confirm Password', name: 'confirm' },
-                  ].map(({ label, name }) => (
-                    <div key={name}>
-                      <label className="block text-sm mb-1">{label}</label>
-                      <input
-                        type="password"
-                        name={name}
-                        value={(passwords as any)[name]}
-                        onChange={handlePasswordChange}
-                        className="w-full px-4 py-2 rounded bg-purple-900 text-white border border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      />
-                    </div>
-                  ))}
-                </>
-              )}
-
-              {/* Save/Cancel Buttons */}
-              {isEditing && (
-                <div className="flex justify-end gap-4 pt-4">
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-white"
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-white"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-            </div>
+            )}
           </div>
-        </form>
+        </div>
       </div>
     </Layout>
   );

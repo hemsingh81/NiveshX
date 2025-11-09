@@ -8,5 +8,7 @@ namespace NiveshX.Core.Interfaces
     {
         Task<LoginResponse?> AuthenticateAsync(LoginRequest request, CancellationToken cancellationToken = default);
         Task<LoginResponse?> RefreshTokenAsync(string refreshToken);
+        Task<UserProfileResponse?> GetUserProfileAsync(Guid userId, CancellationToken cancellationToken = default);
+        Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken cancellationToken = default);
     }
 }

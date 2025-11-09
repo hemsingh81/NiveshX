@@ -61,6 +61,57 @@ namespace NiveshX.Infrastructure.Services
             }
         }
 
+        public async Task<UserProfileResponse?> GetUserProfileAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var user = await _unitOfWork.Users.GetByIdAsync(userId, cancellationToken);
+                if (user == null)
+                {
+                    _logger.LogWarning("User not found for ID: {UserId}", userId);
+                    return null;
+                }
+
+                _logger.LogInformation("Profile retrieved for user: {Email}", user.Email);
+
+                return new UserProfileResponse
+                {
+                    Id = user.Id,
+                    Name = user.Name,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving profile for user ID: {UserId}", userId);
+                throw;
+            }
+        }
+
+        public async Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken cancellationToken = default)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId, cancellationToken);
+            if (user == null)
+            {
+                _logger.LogWarning("User not found for password change: {UserId}", userId);
+                return false;
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            {
+                _logger.LogWarning("Invalid current password for user: {Email}", user.Email);
+                return false;
+            }
+
+            var newHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            await _unitOfWork.Users.UpdatePasswordAsync(userId, newHash, cancellationToken);
+
+            _logger.LogInformation("Password changed successfully for user: {Email}", user.Email);
+            return true;
+        }
+
+
 
         public async Task<LoginResponse?> RefreshTokenAsync(string refreshToken)
         {

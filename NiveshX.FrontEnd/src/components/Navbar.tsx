@@ -17,7 +17,7 @@ const NavBar: React.FC = () => {
                     />
                 </Link>
                 <div className="flex gap-6 text-sm font-medium">
-                    <Link to="/dashboard" className="border-b-2 primary-siteColor pb-1">Dashboard</Link>
+                    <Link to="/dashboard" className="border-b-2 primary-siteBdColor pb-1">Dashboard</Link>
                     <Link to="/admin" className="hover:text-gray-300">Admin</Link>
                     <Link to="/master" className="hover:text-gray-300">Master</Link>
                 </div>
