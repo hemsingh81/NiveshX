@@ -6,7 +6,7 @@ import NotificationMenu from './NotificationMenu';
 
 const NavBar: React.FC = () => {
     return (
-        <nav className="bg-gray-900 text-white px-6 py-3 shadow-2xl flex items-center justify-between">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-900 text-white px-6 py-3 shadow-2xl flex items-center justify-between">
             {/* Left: Logo + Links */}
             <div className="flex items-center gap-8">
                 <Link to="/dashboard" className="text-2xl font-bold tracking-wide text-white">

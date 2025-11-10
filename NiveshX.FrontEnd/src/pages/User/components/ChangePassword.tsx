@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import toast from 'react-hot-toast';
 import { CustomButton } from '../../../controls';
 import { validatePassword } from '../utils/validatePassword';
 
