@@ -6,12 +6,9 @@ import { ProfileDetails, ProfileImageUpload, ChangePassword } from './components
 
 const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    name: '',
-    email: '',
-    phoneNumber: '',
-    role: '',
-  });
+
+  const [profile, setProfile] = useState({ name: '', email: '', phoneNumber: '', role: '' });
+  const [defaultProfile, setDefaultProfile] = useState(profile);
 
   const [passwords, setPasswords] = useState({
     current: '',
@@ -26,6 +23,7 @@ const Profile: React.FC = () => {
       try {
         const data = await getUserProfile();
         setProfile(data);
+        setDefaultProfile(data);
         if (data.profileImageUrl) setImagePreview(data.profileImageUrl);
       } catch (err) {
         console.error('Failed to load profile:', err);
@@ -89,7 +87,12 @@ const Profile: React.FC = () => {
             <div className="flex justify-end pt-4">
               <button
                 type="button"
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  setIsEditing(false);
+                  setProfile(defaultProfile); 
+                  setPasswords({ current: '', new: '', confirm: '' });
+                  //setImagePreview(defaultProfile.profileImageUrl || profileImg); // ✅ reset image
+                }}
                 className="px-4 py-2 btn-siteCancel rounded shadow"
               >
                 Cancel
