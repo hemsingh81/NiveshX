@@ -74,6 +74,18 @@ namespace NiveshX.Infrastructure.Repositories
             }
         }
 
+        public async Task UpdateProfileAsync(Guid userId, string name, string? phoneNumber, CancellationToken cancellationToken = default)
+        {
+            var user = await _context.Users.FindAsync([userId], cancellationToken);
+            if (user != null)
+            {
+                user.Name = name;
+                user.PhoneNumber = phoneNumber;
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+        }
+
+
 
     }
 }

@@ -95,6 +95,37 @@ namespace NiveshX.API.Controllers
             }
         }
 
+        [HttpPut("profile")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                {
+                    _logger.LogWarning("Invalid or missing user ID claim");
+                    return Unauthorized("Invalid token");
+                }
+
+                var success = await _authService.UpdateUserProfileAsync(userId, request, cancellationToken);
+                if (!success)
+                    return BadRequest("User not found or update failed");
+
+                return Ok("Profile updated successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled exception while updating profile");
+                return StatusCode(500, new { error = "An unexpected error occurred while updating profile." });
+            }
+        }
+
+
         [HttpPost("change-password")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]

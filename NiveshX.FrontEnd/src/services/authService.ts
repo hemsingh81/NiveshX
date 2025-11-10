@@ -58,7 +58,7 @@ export const logoutUser = (): void => {
 interface UserProfileResponse {
   name: string;
   email: string;
-  phone: string;
+  phoneNumber: string;
   role: string;
   profileImageUrl?: string;
 }
@@ -67,6 +67,26 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
   const response = await axiosInstance.get<UserProfileResponse>(`${API_URL}/profile`);
   return response.data;
 };
+
+interface UpdateProfileRequest {
+  name: string;
+  phoneNumber: string;
+}
+
+export const updateProfile = async (payload: UpdateProfileRequest): Promise<void> => {
+  await withToast(
+    () => axiosInstance.put(`${API_URL}/profile`, payload, {
+      headers: { 'x-skip-error-toaster': 'true' },
+    }),
+    {
+      loading: 'Updating profile...',
+      success: 'Profile updated successfully!',
+      error: 'Failed to update profile.',
+      suppressGlobalError: true,
+    }
+  );
+};
+
 
 interface ChangePasswordRequest {
   currentPassword: string;

@@ -79,7 +79,8 @@ namespace NiveshX.Infrastructure.Services
                     Id = user.Id,
                     Name = user.Name,
                     Email = user.Email,
-                    PhoneNumber = user.PhoneNumber
+                    PhoneNumber = user.PhoneNumber,
+                    Role = user.Role.ToString()
                 };
             }
             catch (Exception ex)
@@ -88,6 +89,21 @@ namespace NiveshX.Infrastructure.Services
                 throw;
             }
         }
+
+        public async Task<bool> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken = default)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId, cancellationToken);
+            if (user == null)
+            {
+                _logger.LogWarning("User not found for profile update: {UserId}", userId);
+                return false;
+            }
+
+            await _unitOfWork.Users.UpdateProfileAsync(userId, request.Name, request.PhoneNumber, cancellationToken);
+            _logger.LogInformation("Profile updated for user: {Email}", user.Email);
+            return true;
+        }
+
 
         public async Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken cancellationToken = default)
         {
@@ -182,7 +198,7 @@ namespace NiveshX.Infrastructure.Services
                     SigningCredentials = new SigningCredentials(
                         new SymmetricSecurityKey(key),
                         SecurityAlgorithms.HmacSha256Signature)
-                    };
+                };
 
                 var token = tokenHandler.CreateToken(tokenDescriptor);
                 return tokenHandler.WriteToken(token);

@@ -13,5 +13,7 @@ namespace NiveshX.Core.Interfaces
         Task UpdateAsync(User user, CancellationToken cancellationToken = default);
         Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task UpdatePasswordAsync(Guid userId, string newPasswordHash, CancellationToken cancellationToken = default);
+        Task UpdateProfileAsync(Guid userId, string name, string? phoneNumber, CancellationToken cancellationToken = default);
+
     }
 }

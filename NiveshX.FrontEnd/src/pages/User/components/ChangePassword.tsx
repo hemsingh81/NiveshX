@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { CustomButton } from '../../../controls';
+import { validatePassword } from '../utils/validatePassword';
 
 interface Props {
      passwords: { current: string; new: string; confirm: string };
@@ -28,28 +29,14 @@ const ChangePassword: React.FC<Props> = ({ passwords, onChange, onSave, resetPas
      const strength = getStrength(passwords.new);
 
      const handleSubmit = async () => {
-          const { current, new: newPass, confirm } = passwords;
-
-          if (!current || !newPass || !confirm) {
-               const missing = !current ? 'current' : !newPass ? 'new' : 'confirm';
-               setErrorField(missing);
-               setErrorMessage('Please fill in all password fields.');
-               toast.error('Missing password field.');
-               return;
-          }
-
-          if (newPass !== confirm) {
-               setErrorField('confirm');
-               setErrorMessage('New password and confirmation do not match.');
-               toast.error('Password mismatch.');
-               return;
-          }
+          const isValid = validatePassword(passwords, setErrorField, setErrorMessage);
+          if (!isValid) return;
 
           setErrorField(null);
           setErrorMessage('');
           try {
                setLoading(true);
-               await onSave({ currentPassword: current, newPassword: newPass });
+               await onSave({ currentPassword: passwords.current, newPassword: passwords.new });
                resetPasswords();
           } catch (err) {
                console.error('Password update failed:', err);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import { profileImg } from '../../assets/images';
-import { getUserProfile, changePassword } from '../../services/authService';
+import { getUserProfile, changePassword, updateProfile } from '../../services/authService';
 import { ProfileDetails, ProfileImageUpload, ChangePassword } from './components';
 
 const Profile: React.FC = () => {
@@ -9,7 +9,7 @@ const Profile: React.FC = () => {
   const [profile, setProfile] = useState({
     name: '',
     email: '',
-    phone: '',
+    phoneNumber: '',
     role: '',
   });
 
@@ -41,14 +41,16 @@ const Profile: React.FC = () => {
       setter((prev: any) => ({ ...prev, [name]: value }));
     };
 
-  const saveProfileDetails = () => {
-    console.log('Saved profile details:', profile);
-    // TODO: Call updateProfile API
-  };
-
   const saveProfileImage = () => {
     console.log('Saved profile image');
     // TODO: Upload image to server
+  };
+
+  const saveProfileDetails = async (
+    payload: { name: string; phoneNumber: string }
+  ): Promise<void> => {
+    await updateProfile(payload);
+    setIsEditing(false);
   };
 
   const savePassword = async (
