@@ -75,14 +75,14 @@ namespace NiveshX.API.Controllers
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                var userId = GetUserIdFromClaims();
+                if (userId == null)
                 {
                     _logger.LogWarning("Invalid or missing user ID claim");
                     return Unauthorized("Invalid token");
                 }
 
-                var profile = await _authService.GetUserProfileAsync(userId, cancellationToken);
+                var profile = await _authService.GetUserProfileAsync(userId.Value, cancellationToken);
                 if (profile == null)
                     return NotFound("User not found");
 
@@ -105,17 +105,18 @@ namespace NiveshX.API.Controllers
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                var userId = GetUserIdFromClaims();
+                if (userId == null)
                 {
                     _logger.LogWarning("Invalid or missing user ID claim");
                     return Unauthorized("Invalid token");
                 }
 
-                var success = await _authService.UpdateUserProfileAsync(userId, request, cancellationToken);
+                var success = await _authService.UpdateUserProfileAsync(userId.Value, request, cancellationToken);
                 if (!success)
                     return BadRequest("User not found or update failed");
 
+                _logger.LogInformation("Profile updated for user: {UserId}", userId);
                 return Ok("Profile updated successfully");
             }
             catch (Exception ex)
@@ -133,40 +134,33 @@ namespace NiveshX.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UploadProfileImage(IFormFile file, CancellationToken cancellationToken)
         {
-            try
+            _logger.LogInformation("Profile image upload started");
+
+            if (file == null || file.Length == 0)
             {
-                _logger.LogInformation("Profile image upload initiated");
-
-                if (file == null || file.Length == 0)
-                {
-                    _logger.LogWarning("No file uploaded");
-                    return BadRequest("No file uploaded");
-                }
-
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-                {
-                    _logger.LogWarning("Invalid or missing user ID claim");
-                    return Unauthorized("Invalid token");
-                }
-
-                var imagePath = await SaveProfileImageAsync(userId, file, cancellationToken);
-                if (imagePath == null)
-                {
-                    _logger.LogWarning("Unsupported file type: {FileName}", file.FileName);
-                    return BadRequest("Unsupported file type");
-                }
-
-                await _authService.UpdateProfilePictureAsync(userId, imagePath, cancellationToken);
-                _logger.LogInformation("Profile image updated for user: {UserId}", userId);
-
-                return Ok(new { imageUrl = imagePath });
+                _logger.LogWarning("No file uploaded");
+                return BadRequest("No file uploaded");
             }
-            catch (Exception ex)
+
+            var userId = GetUserIdFromClaims();
+            if (userId == null)
             {
-                _logger.LogError(ex, "Error uploading profile image");
-                return StatusCode(500, new { error = "An unexpected error occurred while uploading image." });
+                _logger.LogWarning("Missing user ID claim");
+                return Unauthorized("Invalid token");
             }
+
+            await DeleteProfileImageIfExistsAsync(userId.Value);
+            var imagePath = await SaveProfileImageAsync(userId.Value, file, cancellationToken);
+            if (imagePath == null)
+            {
+                _logger.LogWarning("Unsupported file type: {FileName}", file.FileName);
+                return BadRequest("Unsupported file type");
+            }
+
+            await _authService.UpdateProfilePictureAsync(userId.Value, imagePath, cancellationToken);
+            _logger.LogInformation("Profile image updated for user: {UserId}", userId);
+
+            return Ok(new { imageUrl = imagePath });
         }
 
         [HttpPost("change-password")]
@@ -179,14 +173,21 @@ namespace NiveshX.API.Controllers
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                var userId = GetUserIdFromClaims();
+                if (userId == null)
+                {
+                    _logger.LogWarning("Invalid or missing user ID claim");
                     return Unauthorized("Invalid token");
+                }
 
-                var success = await _authService.ChangePasswordAsync(userId, request, cancellationToken);
+                var success = await _authService.ChangePasswordAsync(userId.Value, request, cancellationToken);
                 if (!success)
+                {
+                    _logger.LogWarning("Password change failed for user: {UserId}", userId);
                     return BadRequest("Current password is incorrect or user not found");
+                }
 
+                _logger.LogInformation("Password changed successfully for user: {UserId}", userId);
                 return Ok("Password changed successfully");
             }
             catch (Exception ex)
@@ -195,7 +196,6 @@ namespace NiveshX.API.Controllers
                 return StatusCode(500, new { error = "An unexpected error occurred while changing password." });
             }
         }
-
 
         /// <summary>
         /// Refreshes access token using a valid refresh token
@@ -231,25 +231,55 @@ namespace NiveshX.API.Controllers
             }
         }
 
+        private Guid? GetUserIdFromClaims()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            return Guid.TryParse(userIdClaim?.Value, out var userId) ? userId : null;
+        }
+
+        private async Task DeleteProfileImageIfExistsAsync(Guid userId)
+        {
+            var uploadDir = Path.Combine("wwwroot", "uploads", "profile");
+            var extensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+
+            foreach (var ext in extensions)
+            {
+                var path = Path.Combine(uploadDir, $"{userId}{ext}");
+                if (System.IO.File.Exists(path))
+                {
+                    try
+                    {
+                        System.IO.File.Delete(path);
+                        _logger.LogInformation("Deleted profile image: {Path}", path);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to delete image: {Path}", path);
+                    }
+                }
+            }
+
+            await Task.CompletedTask;
+        }
+
         private async Task<string?> SaveProfileImageAsync(Guid userId, IFormFile file, CancellationToken cancellationToken)
         {
-            var extension = Path.GetExtension(file.FileName);
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-            if (!allowedExtensions.Contains(extension.ToLower()))
-                return null;
+            var ext = Path.GetExtension(file.FileName).ToLower();
+            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            if (!allowed.Contains(ext)) return null;
 
-            var fileName = $"{userId}{extension}";
+            var fileName = $"{userId}{ext}";
             var relativePath = $"/uploads/profile/{fileName}";
-            var filePath = Path.Combine("wwwroot", "uploads", "profile", fileName);
+            var fullPath = Path.Combine("wwwroot", "uploads", "profile", fileName);
 
-            Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-
-            using var stream = new FileStream(filePath, FileMode.Create);
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+            using var stream = new FileStream(fullPath, FileMode.Create);
             await file.CopyToAsync(stream, cancellationToken);
 
-            _logger.LogInformation("Image saved to {Path}", filePath);
+            _logger.LogInformation("Saved profile image to {Path}", fullPath);
             return relativePath;
         }
+
 
     }
 }

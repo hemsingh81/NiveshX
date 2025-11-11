@@ -6,7 +6,7 @@ import {
   changePassword,
   updateProfile,
   uploadProfileImage,
-} from '../../services/authService';
+} from '../../services/profileService';
 import { ProfileDetails, ProfileImageUpload, ChangePassword } from './components';
 
 const Profile: React.FC = () => {
