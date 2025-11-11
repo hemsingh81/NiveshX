@@ -12,12 +12,6 @@ const ProfileMenu: React.FC = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const user = useSelector((state: RootState) => state.user.user);
-  const firstName = user?.name?.split(' ')[0] || 'User';
-
-  const handleLogout = () => {
-    logoutUser();
-    navigate('/login');
-  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -28,6 +22,15 @@ const ProfileMenu: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  if (!user) return null; // or a loading spinner
+  const firstName = user?.name?.split(' ')[0] || 'User';
+  const profilePictureUrl = user?.profilePictureUrl || profileImg;
+
+  const handleLogout = () => {
+    logoutUser();
+    navigate('/login');
+  };
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -40,7 +43,7 @@ const ProfileMenu: React.FC = () => {
         </span>
 
         <img
-          src={profileImg}
+          src={profilePictureUrl}
           alt="Profile"
           className="w-8 h-8 rounded-full border-2 border-white bg-white object-cover"
         />

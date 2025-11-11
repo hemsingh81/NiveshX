@@ -10,6 +10,7 @@ interface LoginResponse {
   refreshToken: string;
   role: string;
   name: string;
+  profilePictureUrl: string;
 }
 
 interface RefreshResponse {
@@ -31,13 +32,15 @@ export const loginUser = async (email: string, password: string): Promise<string
     }
   );
 
-  const { token, refreshToken, name, role } = response.data;
+  const { token, refreshToken, name, role, profilePictureUrl } = response.data;
+  const baseUrl = process.env.REACT_APP_API_BASE_URL?.replace(/\/?api\/?$/, '') || '';
+  const fullProfilePictureUrl = profilePictureUrl ? `${baseUrl}${profilePictureUrl}` : '';
 
   if (token && refreshToken) {
     sessionStorage.setItem('token', token);
     sessionStorage.setItem('refreshToken', refreshToken);
-    sessionStorage.setItem('user', JSON.stringify({ name, role }));
-    store.dispatch(setUser({ token, user: { name, role } }));
+    sessionStorage.setItem('user', JSON.stringify({ name, role, profilePictureUrl: fullProfilePictureUrl }));
+    store.dispatch(setUser({ token, user: { name, role, profilePictureUrl: fullProfilePictureUrl } }));
     return token;
   } else {
     throw new Error('Invalid login response');
@@ -102,6 +105,27 @@ export const changePassword = async (payload: ChangePasswordRequest): Promise<vo
       loading: 'Updating password...',
       success: 'Password updated successfully!',
       error: 'Failed to update password.',
+      suppressGlobalError: true,
+    }
+  );
+};
+
+
+export const uploadProfileImage = async (file: File): Promise<void> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  await withToast(
+    () => axiosInstance.post(`${API_URL}/profile/image`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'x-skip-error-toaster': 'true',
+      },
+    }),
+    {
+      loading: 'Uploading image...',
+      success: 'Profile image updated!',
+      error: 'Failed to upload image.',
       suppressGlobalError: true,
     }
   );

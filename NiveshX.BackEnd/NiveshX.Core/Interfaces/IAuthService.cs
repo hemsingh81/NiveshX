@@ -10,6 +10,7 @@ namespace NiveshX.Core.Interfaces
         Task<LoginResponse?> RefreshTokenAsync(string refreshToken);
         Task<UserProfileResponse?> GetUserProfileAsync(Guid userId, CancellationToken cancellationToken = default);
         Task<bool> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken = default);
+        Task UpdateProfilePictureAsync(Guid userId, string imageUrl, CancellationToken cancellationToken = default);
         Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken cancellationToken = default);
     }
 }

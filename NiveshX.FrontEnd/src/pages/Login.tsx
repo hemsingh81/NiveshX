@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
 import { loginUser } from '../services/authService';
-import { setUser } from '../store/userSlice';
 import loginBg from '../assets/images/login-bg.png';
 import { CustomButton } from '../controls';
-
 import axios from 'axios';
 
 interface FormData {
@@ -17,7 +14,6 @@ const Login: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,10 +33,8 @@ const Login: React.FC = () => {
 
     setLoading(true);
     try {
-      const token = await loginUser(email, password); // ✅ toast handled inside
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      dispatch(setUser({ token, user }));
-      navigate('/dashboard');
+      await loginUser(email, password); // ✅ handles toast + sessionStorage + Redux
+      navigate('/dashboard'); // ✅ navigate after Redux is hydrated
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;

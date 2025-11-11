@@ -125,6 +125,49 @@ namespace NiveshX.API.Controllers
             }
         }
 
+        [HttpPost("profile/image")]
+        [Authorize]
+        [RequestSizeLimit(5_000_000)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UploadProfileImage(IFormFile file, CancellationToken cancellationToken)
+        {
+            try
+            {
+                _logger.LogInformation("Profile image upload initiated");
+
+                if (file == null || file.Length == 0)
+                {
+                    _logger.LogWarning("No file uploaded");
+                    return BadRequest("No file uploaded");
+                }
+
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                {
+                    _logger.LogWarning("Invalid or missing user ID claim");
+                    return Unauthorized("Invalid token");
+                }
+
+                var imagePath = await SaveProfileImageAsync(userId, file, cancellationToken);
+                if (imagePath == null)
+                {
+                    _logger.LogWarning("Unsupported file type: {FileName}", file.FileName);
+                    return BadRequest("Unsupported file type");
+                }
+
+                await _authService.UpdateProfilePictureAsync(userId, imagePath, cancellationToken);
+                _logger.LogInformation("Profile image updated for user: {UserId}", userId);
+
+                return Ok(new { imageUrl = imagePath });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading profile image");
+                return StatusCode(500, new { error = "An unexpected error occurred while uploading image." });
+            }
+        }
 
         [HttpPost("change-password")]
         [Authorize]
@@ -187,5 +230,26 @@ namespace NiveshX.API.Controllers
                 return StatusCode(500, new { error = "An unexpected error occurred during token refresh." });
             }
         }
+
+        private async Task<string?> SaveProfileImageAsync(Guid userId, IFormFile file, CancellationToken cancellationToken)
+        {
+            var extension = Path.GetExtension(file.FileName);
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            if (!allowedExtensions.Contains(extension.ToLower()))
+                return null;
+
+            var fileName = $"{userId}{extension}";
+            var relativePath = $"/uploads/profile/{fileName}";
+            var filePath = Path.Combine("wwwroot", "uploads", "profile", fileName);
+
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+
+            using var stream = new FileStream(filePath, FileMode.Create);
+            await file.CopyToAsync(stream, cancellationToken);
+
+            _logger.LogInformation("Image saved to {Path}", filePath);
+            return relativePath;
+        }
+
     }
 }

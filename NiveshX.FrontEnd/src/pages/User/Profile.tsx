@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import { profileImg } from '../../assets/images';
-import { getUserProfile, changePassword, updateProfile } from '../../services/authService';
+import { getUserProfile, changePassword, updateProfile, uploadProfileImage } from '../../services/authService';
 import { ProfileDetails, ProfileImageUpload, ChangePassword } from './components';
 
 const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
 
-  const [profile, setProfile] = useState({ name: '', email: '', phoneNumber: '', role: '' });
+  const [profile, setProfile] = useState<{
+    name: string; email: string; phoneNumber: string; role: string; profileImageUrl?: string;
+  }>({ name: '', email: '', phoneNumber: '', role: '', profileImageUrl: '', });
+
   const [defaultProfile, setDefaultProfile] = useState(profile);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const [passwords, setPasswords] = useState({
     current: '',
@@ -39,10 +43,16 @@ const Profile: React.FC = () => {
       setter((prev: any) => ({ ...prev, [name]: value }));
     };
 
-  const saveProfileImage = () => {
-    console.log('Saved profile image');
-    // TODO: Upload image to server
+  const saveProfileImage = async () => {
+    if (!uploadedFile) return;
+    try {
+      await uploadProfileImage(uploadedFile);
+      setUploadedFile(null);
+    } catch (err) {
+      console.error('Image upload failed:', err);
+    }
   };
+
 
   const saveProfileDetails = async (
     payload: { name: string; phoneNumber: string }
@@ -64,11 +74,13 @@ const Profile: React.FC = () => {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setUploadedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
+
 
   return (
     <Layout>
@@ -89,9 +101,9 @@ const Profile: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setIsEditing(false);
-                  setProfile(defaultProfile); 
+                  setProfile(defaultProfile);
                   setPasswords({ current: '', new: '', confirm: '' });
-                  //setImagePreview(defaultProfile.profileImageUrl || profileImg); // ✅ reset image
+                  setImagePreview(defaultProfile.profileImageUrl || profileImg);
                 }}
                 className="px-4 py-2 btn-siteCancel rounded shadow"
               >

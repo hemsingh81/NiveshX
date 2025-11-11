@@ -51,7 +51,8 @@ namespace NiveshX.Infrastructure.Services
                     Token = accessToken,
                     RefreshToken = refreshToken,
                     Role = user.Role,
-                    Name = user.Name
+                    Name = user.Name,
+                    ProfilePictureUrl = user.ProfilePictureUrl
                 };
             }
             catch (Exception ex)
@@ -80,7 +81,8 @@ namespace NiveshX.Infrastructure.Services
                     Name = user.Name,
                     Email = user.Email,
                     PhoneNumber = user.PhoneNumber,
-                    Role = user.Role.ToString()
+                    Role = user.Role.ToString(),
+                    ProfilePictureUrl = user.ProfilePictureUrl
                 };
             }
             catch (Exception ex)
@@ -89,6 +91,19 @@ namespace NiveshX.Infrastructure.Services
                 throw;
             }
         }
+
+        public async Task UpdateProfilePictureAsync(Guid userId, string imageUrl, CancellationToken cancellationToken = default)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId, cancellationToken);
+            if (user == null) return;
+
+            user.ProfilePictureUrl = imageUrl;
+            await _unitOfWork.Users.UpdateAsync(user, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Profile picture updated for user: {Email}", user.Email);
+        }
+
 
         public async Task<bool> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken = default)
         {

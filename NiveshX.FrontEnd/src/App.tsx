@@ -10,6 +10,7 @@ import ProtectedRoute from './ProtectedRoute';
 interface StoredUser {
   name: string;
   role: string;
+  profilePictureUrl: string;
 }
 
 const protectedRoutes = [
