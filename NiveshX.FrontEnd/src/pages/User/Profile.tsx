@@ -66,7 +66,7 @@ const Profile: React.FC = () => {
       await uploadProfileImage(file);
       const updated = await getUserProfile();
       setProfile(updated);
-      setDefaultProfile(updated);
+      setDefaultProfile(updated); 
     } catch (err) {
       console.error('Image upload failed:', err);
     }
