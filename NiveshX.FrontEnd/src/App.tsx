@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import { setUser } from './store/userSlice';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
-import { Dashboard, Admin, Master, Profile, Unauthorized, ServerError } from './pages';
+import { Dashboard, Admin, AdminLayout, MotivationQuotes, Master, Profile, Unauthorized, ServerError } from './pages';
 import ProtectedRoute from './ProtectedRoute';
 
 interface StoredUser {
@@ -15,7 +15,18 @@ interface StoredUser {
 
 const protectedRoutes = [
   { path: '/dashboard', element: <Dashboard /> },
-  { path: '/admin', element: <Admin />, allowedRoles: ['Admin'] },
+  {
+    path: '/admin', element: (
+      <AdminLayout>
+        <Admin />
+      </AdminLayout>), allowedRoles: ['Admin']
+  },
+  {
+    path: '/admin/motivation', element: (
+      <AdminLayout>
+        <MotivationQuotes />
+      </AdminLayout>), allowedRoles: ['Admin']
+  },
   { path: '/master', element: <Master />, allowedRoles: ['Admin', 'Trader', 'Master'] },
   { path: '/profile', element: <Profile /> },
   { path: '/unauthorized', element: <Unauthorized /> },

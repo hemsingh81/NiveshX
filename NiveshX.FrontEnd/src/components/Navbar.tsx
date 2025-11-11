@@ -9,7 +9,7 @@ const NavBar: React.FC = () => {
     const currentPath = location.pathname;
 
     const linkClass = (path: string) =>
-        currentPath === path
+        currentPath.startsWith(path)
             ? 'border-b-2 primary-siteBdColor pb-1 text-white'
             : 'hover:text-gray-300';
 
