@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import { profileImg } from '../../assets/images';
-import { getUserProfile, changePassword, updateProfile, uploadProfileImage } from '../../services/authService';
+import {
+  getUserProfile,
+  changePassword,
+  updateProfile,
+  uploadProfileImage,
+} from '../../services/authService';
 import { ProfileDetails, ProfileImageUpload, ChangePassword } from './components';
 
 const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   const [profile, setProfile] = useState<{
-    name: string; email: string; phoneNumber: string; role: string; profileImageUrl?: string;
-  }>({ name: '', email: '', phoneNumber: '', role: '', profileImageUrl: '', });
+    name: string;
+    email: string;
+    phoneNumber: string;
+    role: string;
+    profilePictureUrl?: string;
+  }>({ name: '', email: '', phoneNumber: '', role: '', profilePictureUrl: '' });
 
   const [defaultProfile, setDefaultProfile] = useState(profile);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const [passwords, setPasswords] = useState({
     current: '',
@@ -20,15 +28,12 @@ const Profile: React.FC = () => {
     confirm: '',
   });
 
-  const [imagePreview, setImagePreview] = useState(profileImg);
-
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const data = await getUserProfile();
         setProfile(data);
         setDefaultProfile(data);
-        if (data.profileImageUrl) setImagePreview(data.profileImageUrl);
       } catch (err) {
         console.error('Failed to load profile:', err);
       }
@@ -43,27 +48,12 @@ const Profile: React.FC = () => {
       setter((prev: any) => ({ ...prev, [name]: value }));
     };
 
-  const saveProfileImage = async () => {
-    if (!uploadedFile) return;
-    try {
-      await uploadProfileImage(uploadedFile);
-      setUploadedFile(null);
-    } catch (err) {
-      console.error('Image upload failed:', err);
-    }
-  };
-
-
-  const saveProfileDetails = async (
-    payload: { name: string; phoneNumber: string }
-  ): Promise<void> => {
+  const saveProfileDetails = async (payload: { name: string; phoneNumber: string }) => {
     await updateProfile(payload);
     setIsEditing(false);
   };
 
-  const savePassword = async (
-    payload: { currentPassword: string; newPassword: string }
-  ): Promise<void> => {
+  const savePassword = async (payload: { currentPassword: string; newPassword: string }) => {
     await changePassword(payload);
   };
 
@@ -71,16 +61,16 @@ const Profile: React.FC = () => {
     setPasswords({ current: '', new: '', confirm: '' });
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setUploadedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result as string);
-      reader.readAsDataURL(file);
+  const handleImageSave = async (file: File) => {
+    try {
+      await uploadProfileImage(file);
+      const updated = await getUserProfile();
+      setProfile(updated);
+      setDefaultProfile(updated);
+    } catch (err) {
+      console.error('Image upload failed:', err);
     }
   };
-
 
   return (
     <Layout>
@@ -102,8 +92,7 @@ const Profile: React.FC = () => {
                 onClick={() => {
                   setIsEditing(false);
                   setProfile(defaultProfile);
-                  setPasswords({ current: '', new: '', confirm: '' });
-                  setImagePreview(defaultProfile.profileImageUrl || profileImg);
+                  resetPasswords();
                 }}
                 className="px-4 py-2 btn-siteCancel rounded shadow"
               >
@@ -115,10 +104,9 @@ const Profile: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <ProfileImageUpload
-            imagePreview={imagePreview}
+            imageUrl={profile.profilePictureUrl || profileImg}
             isEditing={isEditing}
-            onUpload={handleImageUpload}
-            onSave={saveProfileImage}
+            onSave={handleImageSave}
           />
 
           <div className="md:col-span-2 space-y-4">

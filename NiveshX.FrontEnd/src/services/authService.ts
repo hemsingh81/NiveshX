@@ -63,13 +63,25 @@ interface UserProfileResponse {
   email: string;
   phoneNumber: string;
   role: string;
-  profileImageUrl?: string;
+  profilePictureUrl?: string;
 }
 
 export const getUserProfile = async (): Promise<UserProfileResponse> => {
   const response = await axiosInstance.get<UserProfileResponse>(`${API_URL}/profile`);
-  return response.data;
+  const { name, email, phoneNumber, role, profilePictureUrl } = response.data;
+
+  const baseUrl = process.env.REACT_APP_API_BASE_URL?.replace(/\/?api\/?$/, '') || '';
+  const fullProfilePictureUrl = profilePictureUrl ? `${baseUrl}${profilePictureUrl}` : '';
+
+  return {
+    name,
+    email,
+    phoneNumber,
+    role,
+    profilePictureUrl: fullProfilePictureUrl,
+  };
 };
+
 
 interface UpdateProfileRequest {
   name: string;
