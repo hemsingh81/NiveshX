@@ -50,7 +50,7 @@ namespace NiveshX.Infrastructure.Services
                 {
                     Token = accessToken,
                     RefreshToken = refreshToken,
-                    Role = user.Role,
+                    Role = user.Role.ToString(),
                     Name = user.Name,
                     ProfilePictureUrl = user.ProfilePictureUrl
                 };
@@ -142,8 +142,6 @@ namespace NiveshX.Infrastructure.Services
             return true;
         }
 
-
-
         public async Task<LoginResponse?> RefreshTokenAsync(string refreshToken)
         {
             try
@@ -224,7 +222,6 @@ namespace NiveshX.Infrastructure.Services
                 throw;
             }
         }
-
 
         private static string GenerateSecureRefreshToken()
         {

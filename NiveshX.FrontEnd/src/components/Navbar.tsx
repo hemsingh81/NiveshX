@@ -1,10 +1,18 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { logoImg } from '../assets/images';
 import ProfileMenu from './ProfileMenu';
 import NotificationMenu from './NotificationMenu';
 
 const NavBar: React.FC = () => {
+    const location = useLocation();
+    const currentPath = location.pathname;
+
+    const linkClass = (path: string) =>
+        currentPath === path
+            ? 'border-b-2 primary-siteBdColor pb-1 text-white'
+            : 'hover:text-gray-300';
+
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-900 text-white px-6 py-3 shadow-2xl flex items-center justify-between">
             {/* Left: Logo + Links */}
@@ -17,18 +25,16 @@ const NavBar: React.FC = () => {
                     />
                 </Link>
                 <div className="flex gap-6 text-sm font-medium">
-                    <Link to="/dashboard" className="border-b-2 primary-siteBdColor pb-1">Dashboard</Link>
-                    <Link to="/admin" className="hover:text-gray-300">Admin</Link>
-                    <Link to="/master" className="hover:text-gray-300">Master</Link>
+                    <Link to="/dashboard" className={linkClass('/dashboard')}>Dashboard</Link>
+                    <Link to="/admin" className={linkClass('/admin')}>Admin</Link>
+                    <Link to="/master" className={linkClass('/master')}>Master</Link>
                 </div>
             </div>
 
             {/* Right: Search + Icons + Profile */}
             <div className="flex items-center gap-6">
-                {/* NotificationMenu */}
                 <NotificationMenu />
                 <div className="h-6 w-px bg-gray-600 mx-1" />
-                {/* Profile Dropdown */}
                 <ProfileMenu />
             </div>
         </nav>

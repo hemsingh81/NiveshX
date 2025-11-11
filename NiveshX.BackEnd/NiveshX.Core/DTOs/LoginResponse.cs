@@ -25,7 +25,7 @@ namespace NiveshX.Core.DTOs
         /// <summary>
         /// Name
         /// </summary>
-        public UserRole Role { get; set; } = UserRole.None;
+        public string Role { get; set; } = UserRole.None.ToString();
 
         public string? ProfilePictureUrl { get; set; }
     }
