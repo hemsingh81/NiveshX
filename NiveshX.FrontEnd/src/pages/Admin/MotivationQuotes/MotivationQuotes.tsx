@@ -7,7 +7,16 @@ import {
   GridRowId,
   GridRenderCellParams,
 } from '@mui/x-data-grid';
-import { Button, Switch, Box } from '@mui/material';
+import {
+  Button,
+  Switch,
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from '@mui/material';
 import {
   getAllQuotes,
   addQuote,
@@ -19,6 +28,8 @@ import {
 const MotivationQuotes: React.FC = () => {
   const [rows, setRows] = useState<MotivationQuote[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [quoteToDelete, setQuoteToDelete] = useState<GridRowId | null>(null);
 
   useEffect(() => {
     fetchQuotes();
@@ -34,15 +45,29 @@ const MotivationQuotes: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: GridRowId) => {
-    await deleteQuote(String(id));
-    setRows(prev => prev.filter(row => row.id !== id));
-  };
-
   const handleAddNew = async () => {
     const newQuote = { quote: 'New motivational quote...' };
     await addQuote(newQuote);
     await fetchQuotes();
+  };
+
+  const handleDeleteClick = (id: GridRowId) => {
+    setQuoteToDelete(id);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (quoteToDelete !== null) {
+      await deleteQuote(String(quoteToDelete));
+      setRows(prev => prev.filter(row => row.id !== quoteToDelete));
+    }
+    setConfirmOpen(false);
+    setQuoteToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmOpen(false);
+    setQuoteToDelete(null);
   };
 
   const handleToggleVisibility = async (id: GridRowId) => {
@@ -61,7 +86,6 @@ const MotivationQuotes: React.FC = () => {
       prev.map(row => (row.id === id ? updatedQuote : row))
     );
   };
-
 
   const processRowUpdate = async (newRow: MotivationQuote) => {
     await editQuote({
@@ -106,7 +130,7 @@ const MotivationQuotes: React.FC = () => {
           variant="outlined"
           color="error"
           size="small"
-          onClick={() => handleDelete(params.id)}
+          onClick={() => handleDeleteClick(params.id)}
         >
           Delete
         </Button>
@@ -122,7 +146,7 @@ const MotivationQuotes: React.FC = () => {
           Add New Quote
         </Button>
       </Box>
-      <div style={{ height: 500, width: '100%' }}>
+      <div className="custom-header" style={{ height: 500, width: '100%' }}>
         <DataGrid
           rows={rows}
           columns={columns}
@@ -133,20 +157,36 @@ const MotivationQuotes: React.FC = () => {
           initialState={{
             pagination: { paginationModel: { pageSize: 5, page: 0 } },
           }}
+          getRowClassName={(params) =>
+            params.indexRelativeToCurrentPage % 2 === 0 ? 'even-row' : 'odd-row'
+          }
           sx={{
             '& .MuiDataGrid-columnHeaders': {
               backgroundColor: '#1976d2',
-              fontWeight: 'bold',
             },
             '& .MuiDataGrid-columnHeaderTitle': {
               fontWeight: 'bold',
             },
           }}
-          getRowClassName={(params) =>
-            params.indexRelativeToCurrentPage % 2 === 0 ? 'even-row' : 'odd-row'
-          }
         />
       </div>
+
+      <Dialog open={confirmOpen} onClose={handleCancelDelete}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this quote? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDelete} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmDelete} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Layout>
   );
 };
