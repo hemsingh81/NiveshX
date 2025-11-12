@@ -1,47 +1,80 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { MdAdd } from 'react-icons/md';
 import Layout from '../../../components/Layout';
 import {
   DataGrid,
   GridColDef,
-  GridRowsProp,
   GridRowId,
   GridRenderCellParams,
 } from '@mui/x-data-grid';
-import { Button, Switch, TextField, Box } from '@mui/material';
+import { Button, Switch, Box } from '@mui/material';
+import {
+  getAllQuotes,
+  addQuote,
+  editQuote,
+  deleteQuote,
+  MotivationQuote,
+} from '../../../services/motivationService';
 
 const MotivationQuotes: React.FC = () => {
-  const [rows, setRows] = useState<GridRowsProp>([
-    { id: 1, quote: 'Believe in yourself!', isVisible: true },
-    { id: 2, quote: 'Stay positive, work hard.', isVisible: false },
-  ]);
+  const [rows, setRows] = useState<MotivationQuote[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const handleDelete = (id: GridRowId) => {
+  useEffect(() => {
+    fetchQuotes();
+  }, []);
+
+  const fetchQuotes = async () => {
+    setLoading(true);
+    try {
+      const quotes = await getAllQuotes();
+      setRows(quotes);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: GridRowId) => {
+    await deleteQuote(String(id));
     setRows(prev => prev.filter(row => row.id !== id));
   };
 
-  const handleToggleVisibility = (id: GridRowId) => {
+  const handleAddNew = async () => {
+    const newQuote = { quote: 'New motivational quote...' };
+    await addQuote(newQuote);
+    await fetchQuotes();
+  };
+
+  const handleToggleVisibility = async (id: GridRowId) => {
+    const updatedRow = rows.find(row => row.id === id);
+    if (!updatedRow) return;
+
+    const updatedQuote = {
+      id: updatedRow.id,
+      quote: updatedRow.quote,
+      isActive: !updatedRow.isActive,
+    };
+
+    await editQuote(updatedQuote);
+
     setRows(prev =>
-      prev.map(row =>
-        row.id === id ? { ...row, isVisible: !row.isVisible } : row
-      )
+      prev.map(row => (row.id === id ? updatedQuote : row))
     );
   };
 
-  const handleAddNew = () => {
-    const newId = rows.length ? Math.max(...rows.map(r => Number(r.id))) + 1 : 1;
-    setRows(prev => [
-      ...prev,
-      { id: newId, quote: 'New motivational quote...', isVisible: true },
-    ]);
-  };
 
-  const handleEditCellChangeCommitted = (params: any) => {
-    const { id, field, value } = params;
+  const processRowUpdate = async (newRow: MotivationQuote) => {
+    await editQuote({
+      id: newRow.id,
+      quote: newRow.quote,
+      isActive: newRow.isActive,
+    });
+
     setRows(prev =>
-      prev.map(row =>
-        row.id === id ? { ...row, [field]: value } : row
-      )
+      prev.map(row => (row.id === newRow.id ? newRow : row))
     );
+
+    return newRow;
   };
 
   const columns: GridColDef[] = [
@@ -52,7 +85,7 @@ const MotivationQuotes: React.FC = () => {
       editable: true,
     },
     {
-      field: 'isVisible',
+      field: 'isActive',
       headerName: 'Visible',
       width: 120,
       renderCell: (params: GridRenderCellParams) => (
@@ -85,20 +118,33 @@ const MotivationQuotes: React.FC = () => {
     <Layout>
       <h1 className="text-2xl font-bold mb-4">Motivation Quotes</h1>
       <Box mb={2}>
-        <Button variant="contained" color="primary" onClick={handleAddNew}>
-          ➕ Add New Quote
+        <Button variant="contained" color="primary" onClick={handleAddNew} startIcon={<MdAdd />}>
+          Add New Quote
         </Button>
       </Box>
       <div style={{ height: 500, width: '100%' }}>
         <DataGrid
           rows={rows}
           columns={columns}
+          loading={loading}
           disableRowSelectionOnClick
-          onCellEditStop={handleEditCellChangeCommitted}
+          processRowUpdate={processRowUpdate}
           pageSizeOptions={[5, 10]}
           initialState={{
             pagination: { paginationModel: { pageSize: 5, page: 0 } },
           }}
+          sx={{
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: '#1976d2',
+              fontWeight: 'bold',
+            },
+            '& .MuiDataGrid-columnHeaderTitle': {
+              fontWeight: 'bold',
+            },
+          }}
+          getRowClassName={(params) =>
+            params.indexRelativeToCurrentPage % 2 === 0 ? 'even-row' : 'odd-row'
+          }
         />
       </div>
     </Layout>

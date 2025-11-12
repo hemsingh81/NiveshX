@@ -50,6 +50,7 @@ namespace NiveshX.Infrastructure.Services
                 }
 
                 quote.Quote = request.Quote;
+                quote.IsActive = request.IsActive;
                 quote.ModifiedOn = DateTime.UtcNow;
 
                 await _unitOfWork.MotivationQuotes.UpdateAsync(quote, cancellationToken);
@@ -77,6 +78,7 @@ namespace NiveshX.Infrastructure.Services
                 }
 
                 quote.IsDeleted = true;
+                quote.IsActive = false;
                 quote.ModifiedOn = DateTime.UtcNow;
 
                 await _unitOfWork.MotivationQuotes.UpdateAsync(quote, cancellationToken);

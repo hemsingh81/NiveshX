@@ -64,3 +64,11 @@ code {
   outline: none;
   box-shadow: 0 0 0 2px rgb(255 79 122 / 0.5);
 }
+
+.even-row {
+  background-color: #f9f9f9; /* light gray */
+}
+
+.odd-row {
+  background-color: #ffffff; /* white */
+}
