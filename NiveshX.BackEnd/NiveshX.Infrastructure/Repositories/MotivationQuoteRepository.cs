@@ -44,6 +44,14 @@ namespace NiveshX.Infrastructure.Repositories
                 .ToListAsync(cancellationToken);
         }
 
+        public async Task<List<MotivationQuote>> GetAllActiveAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.MotivationQuotes
+                .Where(q => !q.IsDeleted && q.IsActive)
+                .OrderByDescending(q => q.CreatedOn)
+                .ToListAsync(cancellationToken);
+        }
+
     }
 
 }

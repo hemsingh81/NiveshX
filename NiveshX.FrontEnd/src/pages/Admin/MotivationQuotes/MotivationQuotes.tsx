@@ -40,7 +40,7 @@ const MotivationQuotes: React.FC = () => {
   };
 
   const handleAddNew = async () => {
-    const newQuote = { quote: 'New motivational quote...' };
+    const newQuote = { quote: 'New motivational quote...', author: 'author...' };
     await addQuote(newQuote);
     await fetchQuotes();
   };
@@ -57,6 +57,7 @@ const MotivationQuotes: React.FC = () => {
     const updatedQuote = {
       id: updatedRow.id,
       quote: updatedRow.quote,
+      author: updatedRow.author,
       isActive: !updatedRow.isActive,
     };
 
@@ -71,6 +72,7 @@ const MotivationQuotes: React.FC = () => {
     await editQuote({
       id: newRow.id,
       quote: newRow.quote,
+      author: newRow.author,
       isActive: newRow.isActive,
     });
 
@@ -85,6 +87,12 @@ const MotivationQuotes: React.FC = () => {
     {
       field: 'quote',
       headerName: 'Motivational Quote',
+      flex: 1,
+      editable: true,
+    },
+    {
+      field: 'author',
+      headerName: 'Author',
       flex: 1,
       editable: true,
     },
@@ -141,12 +149,12 @@ const MotivationQuotes: React.FC = () => {
             params.indexRelativeToCurrentPage % 2 === 0 ? 'even-row' : 'odd-row'
           }
           sx={{
-            '& .MuiDataGrid-columnHeaders': {
-              backgroundColor: '#1976d2',
-            },
             '& .MuiDataGrid-columnHeaderTitle': {
               fontWeight: 'bold',
             },
+            '& .MuiDataGrid-container--top [role="row"]': {
+              backgroundColor: 'rgb(208 222 241) !important', // This should work for the entire header background
+            }
           }}
         />
       </div>

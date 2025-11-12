@@ -72,3 +72,7 @@ code {
 .odd-row {
   background-color: #ffffff; /* white */
 }
+
+.MuiDataGrid-columnHeader{
+  background-color: transparent !important;
+}

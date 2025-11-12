@@ -10,11 +10,12 @@ namespace NiveshX.Core.Interfaces.Services
 {
     public interface IMotivationQuoteService
     {
-        Task<bool> AddQuoteAsync(AddMotivationQuoteRequest request, CancellationToken cancellationToken = default);
-        Task<bool> EditQuoteAsync(EditMotivationQuoteRequest request, CancellationToken cancellationToken = default);
-        Task<bool> DeleteQuoteAsync(Guid id, CancellationToken cancellationToken = default);
-        Task<List<MotivationQuote>> GetAllQuotesAsync(CancellationToken cancellationToken = default);
-        Task<MotivationQuote?> GetQuoteByIdAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<bool> AddAsync(AddMotivationQuoteRequest request, CancellationToken cancellationToken = default);
+        Task<bool> EditAsync(EditMotivationQuoteRequest request, CancellationToken cancellationToken = default);
+        Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<List<MotivationQuote>> GetAllAsync(CancellationToken cancellationToken = default);
+        Task<List<MotivationQuote>> GetAllActive(CancellationToken cancellationToken = default);
+        Task<MotivationQuote?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     }
 
 }

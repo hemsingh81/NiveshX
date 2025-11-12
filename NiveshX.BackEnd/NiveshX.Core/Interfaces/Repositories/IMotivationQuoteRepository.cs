@@ -13,6 +13,7 @@ namespace NiveshX.Core.Interfaces.Repositories
         Task<MotivationQuote?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task UpdateAsync(MotivationQuote quote, CancellationToken cancellationToken = default);
         Task<List<MotivationQuote>> GetAllAsync(CancellationToken cancellationToken = default);
+        Task<List<MotivationQuote>> GetAllActiveAsync(CancellationToken cancellationToken = default);
     }
 
 }

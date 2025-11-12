@@ -20,11 +20,11 @@ namespace NiveshX.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<bool> AddQuoteAsync(AddMotivationQuoteRequest request, CancellationToken cancellationToken = default)
+        public async Task<bool> AddAsync(AddMotivationQuoteRequest request, CancellationToken cancellationToken = default)
         {
             try
             {
-                var quote = new MotivationQuote { Quote = request.Quote };
+                var quote = new MotivationQuote { Quote = request.Quote, Author = request.Author };
                 await _unitOfWork.MotivationQuotes.AddAsync(quote, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -38,7 +38,7 @@ namespace NiveshX.Infrastructure.Services
             }
         }
 
-        public async Task<bool> EditQuoteAsync(EditMotivationQuoteRequest request, CancellationToken cancellationToken = default)
+        public async Task<bool> EditAsync(EditMotivationQuoteRequest request, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -50,6 +50,7 @@ namespace NiveshX.Infrastructure.Services
                 }
 
                 quote.Quote = request.Quote;
+                quote.Author = request.Author;
                 quote.IsActive = request.IsActive;
                 quote.ModifiedOn = DateTime.UtcNow;
 
@@ -66,7 +67,7 @@ namespace NiveshX.Infrastructure.Services
             }
         }
 
-        public async Task<bool> DeleteQuoteAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -93,7 +94,8 @@ namespace NiveshX.Infrastructure.Services
                 throw;
             }
         }
-        public async Task<List<MotivationQuote>> GetAllQuotesAsync(CancellationToken cancellationToken = default)
+
+        public async Task<List<MotivationQuote>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -108,7 +110,22 @@ namespace NiveshX.Infrastructure.Services
             }
         }
 
-        public async Task<MotivationQuote?> GetQuoteByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<List<MotivationQuote>> GetAllActive(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var quotes = await _unitOfWork.MotivationQuotes.GetAllActiveAsync(cancellationToken);
+                _logger.LogInformation("Retrieved {Count} motivation quotes", quotes.Count);
+                return quotes;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving motivation quotes");
+                throw;
+            }
+        }
+
+        public async Task<MotivationQuote?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             try
             {

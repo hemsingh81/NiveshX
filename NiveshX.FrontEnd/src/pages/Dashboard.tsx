@@ -1,11 +1,33 @@
-import React from 'react';
-import Layout from '../components/Layout';
+import React, { useEffect, useState } from 'react';
+import { Layout, MotivationQuote } from '../components';
+import { getAllActivesQuotes } from '../services/motivationService';
 
 const Dashboard: React.FC = () => {
+  const [quotes, setQuotes] = useState<{ text: string; author?: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchQuotes = async () => {
+      try {
+        const data = await getAllActivesQuotes();
+        const formatted = data.map((q: any) => ({
+          text: q.quote,
+          author: q.author || 'Anonymous',
+        }));
+        setQuotes(formatted);
+      } catch (error) {
+        console.error('Failed to fetch quotes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuotes();
+  }, []);
+
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-4">Welcome to your Dashboard</h1>
-      <p className="text-gray-700">This is your secure area. Add widgets, charts, or insights here.</p>
+      {!loading && quotes.length > 0 && <MotivationQuote quotes={quotes} />}
     </Layout>
   );
 };

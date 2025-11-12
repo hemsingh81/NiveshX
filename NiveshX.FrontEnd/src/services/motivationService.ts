@@ -6,16 +6,19 @@ const API_URL = `${process.env.REACT_APP_API_BASE_URL}/motivationquote`;
 export interface MotivationQuote {
      id: string;
      quote: string;
+     author: string;
      isActive: boolean;
 }
 
 export interface AddMotivationQuoteRequest {
      quote: string;
+     author: string;
 }
 
 export interface EditMotivationQuoteRequest {
      id: string;
      quote: string;
+     author: string;
      isActive: boolean;
 }
 
@@ -74,4 +77,16 @@ export const deleteQuote = async (id: string): Promise<void> => {
                error: 'Failed to delete quote.',
           }
      );
+};
+
+export const getAllActivesQuotes = async (): Promise<MotivationQuote[]> => {
+     const response = await withToast(
+          () => axiosInstance.get<MotivationQuote[]>(`${API_URL}/all-active`),
+          {
+               loading: 'Fetching quotes...',
+               success: 'Quotes loaded!',
+               error: 'Failed to load quotes.',
+          }
+     );
+     return response.data;
 };
