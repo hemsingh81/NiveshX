@@ -11,11 +11,6 @@ import {
   Button,
   Switch,
   Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
 } from '@mui/material';
 import {
   getAllQuotes,
@@ -24,12 +19,11 @@ import {
   deleteQuote,
   MotivationQuote,
 } from '../../../services/motivationService';
+import { ConfirmButton } from '../../../controls';
 
 const MotivationQuotes: React.FC = () => {
   const [rows, setRows] = useState<MotivationQuote[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [quoteToDelete, setQuoteToDelete] = useState<GridRowId | null>(null);
 
   useEffect(() => {
     fetchQuotes();
@@ -51,23 +45,9 @@ const MotivationQuotes: React.FC = () => {
     await fetchQuotes();
   };
 
-  const handleDeleteClick = (id: GridRowId) => {
-    setQuoteToDelete(id);
-    setConfirmOpen(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (quoteToDelete !== null) {
-      await deleteQuote(String(quoteToDelete));
-      setRows(prev => prev.filter(row => row.id !== quoteToDelete));
-    }
-    setConfirmOpen(false);
-    setQuoteToDelete(null);
-  };
-
-  const handleCancelDelete = () => {
-    setConfirmOpen(false);
-    setQuoteToDelete(null);
+  const handleDeleteQuote = async (id: GridRowId) => {
+    await deleteQuote(String(id));
+    setRows(prev => prev.filter(row => row.id !== id));
   };
 
   const handleToggleVisibility = async (id: GridRowId) => {
@@ -126,14 +106,14 @@ const MotivationQuotes: React.FC = () => {
       width: 120,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
-        <Button
-          variant="outlined"
+        <ConfirmButton
+          label="Delete"
           color="error"
-          size="small"
-          onClick={() => handleDeleteClick(params.id)}
-        >
-          Delete
-        </Button>
+          confirmText="Delete"
+          dialogTitle="Confirm Deletion"
+          dialogMessage="Are you sure you want to delete this quote?"
+          onConfirm={() => handleDeleteQuote(params.id)}
+        />
       ),
     },
   ];
@@ -171,22 +151,6 @@ const MotivationQuotes: React.FC = () => {
         />
       </div>
 
-      <Dialog open={confirmOpen} onClose={handleCancelDelete}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete this quote? This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelDelete} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Layout>
   );
 };
