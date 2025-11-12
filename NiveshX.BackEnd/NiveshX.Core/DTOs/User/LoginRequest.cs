@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NiveshX.Core.DTOs
+namespace NiveshX.Core.DTOs.User
 {
     /// <summary>
     /// Represents login credentials for authentication.

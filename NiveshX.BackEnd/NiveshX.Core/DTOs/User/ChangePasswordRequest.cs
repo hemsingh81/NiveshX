@@ -1,4 +1,4 @@
-﻿namespace NiveshX.Core.DTOs
+﻿namespace NiveshX.Core.DTOs.User
 {
     public class ChangePasswordRequest
     {

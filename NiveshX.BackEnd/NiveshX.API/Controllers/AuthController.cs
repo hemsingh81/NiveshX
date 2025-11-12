@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NiveshX.Core.DTOs;
-using NiveshX.Core.Interfaces;
+using NiveshX.Core.DTOs.User;
+using NiveshX.Core.Interfaces.Services;
 using NiveshX.Infrastructure.Repositories;
 using System.Security.Claims;
 

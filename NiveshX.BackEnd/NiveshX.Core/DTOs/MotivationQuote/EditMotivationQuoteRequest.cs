@@ -1,0 +1,9 @@
+﻿namespace NiveshX.Core.DTOs.MotivationQuote
+{
+    public class EditMotivationQuoteRequest
+    {
+        public Guid Id { get; set; }
+        public string Quote { get; set; } = string.Empty;
+    }
+
+}

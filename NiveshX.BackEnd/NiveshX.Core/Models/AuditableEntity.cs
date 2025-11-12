@@ -1,10 +1,15 @@
-﻿namespace NiveshX.Core.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace NiveshX.Core.Models
 {
     /// <summary>
     /// Base class for entities that require audit tracking.
     /// </summary>
     public abstract class AuditableEntity
     {
+        [Key]
+        public Guid Id { get; set; }
+
         /// <summary>
         /// Indicates whether the entity is active in business logic.
         /// </summary>

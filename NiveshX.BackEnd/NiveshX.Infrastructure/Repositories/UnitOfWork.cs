@@ -1,4 +1,5 @@
 ﻿using NiveshX.Core.Interfaces;
+using NiveshX.Core.Interfaces.Repositories;
 using NiveshX.Infrastructure.Data;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,11 +11,13 @@ namespace NiveshX.Infrastructure.Repositories
         private readonly AppDbContext _context;
 
         public IUserRepository Users { get; }
+        public IMotivationQuoteRepository MotivationQuotes { get; }
 
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
             Users = new UserRepository(context);
+            MotivationQuotes = new MotivationQuoteRepository(context);
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -1,6 +1,6 @@
 ﻿using NiveshX.Core.Config;
 
-namespace NiveshX.Core.DTOs
+namespace NiveshX.Core.DTOs.User
 {
     /// <summary>
     /// Represents the response returned after successful authentication.

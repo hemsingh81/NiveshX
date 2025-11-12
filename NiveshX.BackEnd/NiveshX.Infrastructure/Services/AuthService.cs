@@ -2,8 +2,9 @@
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NiveshX.Core.Config;
-using NiveshX.Core.DTOs;
+using NiveshX.Core.DTOs.User;
 using NiveshX.Core.Interfaces;
+using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace NiveshX.Core.DTOs
+namespace NiveshX.Core.DTOs.User
 {
     /// <summary>
     /// Represents a request to refresh an access token using a refresh token.

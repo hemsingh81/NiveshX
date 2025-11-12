@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NiveshX.Core.Interfaces
+namespace NiveshX.Core.Interfaces.Repositories
 {
     public interface IUserRepository
     {

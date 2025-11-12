@@ -4,6 +4,7 @@ using Microsoft.OpenApi.Models;
 using NiveshX.API.Middlewares;
 using NiveshX.Core.Config;
 using NiveshX.Core.Interfaces;
+using NiveshX.Core.Interfaces.Services;
 using NiveshX.Infrastructure.Data;
 using NiveshX.Infrastructure.Repositories;
 using NiveshX.Infrastructure.Services;
@@ -22,6 +23,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IMotivationQuoteService, MotivationQuoteService>();
 
 // Add Authentication
 builder.Services.AddAuthentication("Bearer")

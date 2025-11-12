@@ -1,7 +1,7 @@
 ﻿using NiveshX.Core.Config;
 using System.Globalization;
 
-namespace NiveshX.Core.DTOs
+namespace NiveshX.Core.DTOs.User
 {
     public class UserProfileResponse
     {

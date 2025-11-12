@@ -15,10 +15,6 @@ namespace NiveshX.Core.Models
     public class User : AuditableEntity
     {
 
-        /// <summary>Unique identifier for the user.</summary>
-        [Key]
-        public Guid Id { get; set; }
-
         /// <summary>Trader Name address used for communication.</summary>
         public string Name { get; set; } = string.Empty;
 

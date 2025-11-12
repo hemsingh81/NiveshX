@@ -1,8 +1,8 @@
-﻿using NiveshX.Core.DTOs;
+﻿using NiveshX.Core.DTOs.User;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NiveshX.Core.Interfaces
+namespace NiveshX.Core.Interfaces.Services
 {
     public interface IAuthService
     {
