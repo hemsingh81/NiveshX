@@ -13,6 +13,13 @@ namespace NiveshX.Infrastructure.Repositories
 
         public UserRepository(AppDbContext context) => _context = context;
 
+        public async Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.Users
+                .Where(u => !u.IsDeleted)
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await _context.Users.FindAsync(new object[] { id }, cancellationToken);
@@ -65,6 +72,18 @@ namespace NiveshX.Infrastructure.Repositories
                 user.PhoneNumber = phoneNumber;
                 _context.Users.Update(user);
             }
+        }
+
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var user = await _context.Users.FindAsync(new object[] { id }, cancellationToken);
+            if (user == null) return false;
+
+            user.IsDeleted = true;
+            user.ModifiedOn = DateTime.UtcNow;
+            user.ModifiedBy = "system";
+            _context.Users.Update(user);
+            return true;
         }
     }
 }

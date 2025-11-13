@@ -6,6 +6,7 @@ namespace NiveshX.Core.Interfaces.Repositories
 {
     public interface IUserRepository
     {
+        Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default);
         Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
         Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
@@ -14,6 +15,6 @@ namespace NiveshX.Core.Interfaces.Repositories
         Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task UpdatePasswordAsync(Guid userId, string newPasswordHash, CancellationToken cancellationToken = default);
         Task UpdateProfileAsync(Guid userId, string name, string? phoneNumber, CancellationToken cancellationToken = default);
-
+        Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
     }
 }

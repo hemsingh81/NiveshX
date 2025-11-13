@@ -231,6 +231,8 @@ namespace NiveshX.API.Controllers
             }
         }
 
+        #region Private Methods
+
         private Guid? GetUserIdFromClaims()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -280,6 +282,7 @@ namespace NiveshX.API.Controllers
             return relativePath;
         }
 
+        #endregion
 
     }
 }
