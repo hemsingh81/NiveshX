@@ -1,11 +1,21 @@
-import React, { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { setUser } from './store/userSlice';
-import { Toaster } from 'react-hot-toast';
-import Login from './pages/Login';
-import { Dashboard, Admin, AdminLayout, MotivationQuotes, Master, Profile, Unauthorized, ServerError } from './pages';
-import ProtectedRoute from './ProtectedRoute';
+import React, { useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setUser } from "./store/userSlice";
+import { Toaster } from "react-hot-toast";
+import Login from "./pages/Login";
+import {
+  Dashboard,
+  Admin,
+  AdminLayout,
+  MotivationQuotes,
+  UserManagement,
+  Master,
+  Profile,
+  Unauthorized,
+  ServerError,
+} from "./pages";
+import ProtectedRoute from "./ProtectedRoute";
 
 interface StoredUser {
   name: string;
@@ -14,38 +24,57 @@ interface StoredUser {
 }
 
 const protectedRoutes = [
-  { path: '/dashboard', element: <Dashboard /> },
+  { path: "/dashboard", element: <Dashboard /> },
   {
-    path: '/admin', element: (
+    path: "/admin",
+    element: (
       <AdminLayout>
         <Admin />
-      </AdminLayout>), allowedRoles: ['Admin']
+      </AdminLayout>
+    ),
+    allowedRoles: ["Admin"],
   },
   {
-    path: '/admin/motivation', element: (
+    path: "/admin/motivation",
+    element: (
       <AdminLayout>
         <MotivationQuotes />
-      </AdminLayout>), allowedRoles: ['Admin']
+      </AdminLayout>
+    ),
+    allowedRoles: ["Admin"],
   },
-  { path: '/master', element: <Master />, allowedRoles: ['Admin', 'Trader', 'Master'] },
-  { path: '/profile', element: <Profile /> },
-  { path: '/unauthorized', element: <Unauthorized /> },
-  { path: '/server-error', element: <ServerError /> },
+  {
+    path: "/admin/user-management",
+    element: (
+      <AdminLayout>
+        <UserManagement />
+      </AdminLayout>
+    ),
+    allowedRoles: ["Admin"],
+  },
+  {
+    path: "/master",
+    element: <Master />,
+    allowedRoles: ["Admin", "Trader", "Master"],
+  },
+  { path: "/profile", element: <Profile /> },
+  { path: "/unauthorized", element: <Unauthorized /> },
+  { path: "/server-error", element: <ServerError /> },
 ];
 
 const App: React.FC = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    const rawUser = sessionStorage.getItem('user');
+    const token = sessionStorage.getItem("token");
+    const rawUser = sessionStorage.getItem("user");
     try {
       const user: StoredUser | null = rawUser ? JSON.parse(rawUser) : null;
       if (token && user?.name && user?.role) {
         dispatch(setUser({ token, user }));
       }
     } catch {
-      console.warn('Invalid user object in sessionStorage');
+      console.warn("Invalid user object in sessionStorage");
     }
   }, [dispatch]);
 

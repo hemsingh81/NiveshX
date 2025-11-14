@@ -11,6 +11,7 @@ import {
   Button,
   Switch,
   Box,
+  Typography,
 } from '@mui/material';
 import {
   getAllQuotes,
@@ -128,37 +129,46 @@ const MotivationQuotes: React.FC = () => {
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-4">Motivation Quotes</h1>
-      <Box mb={2}>
-        <Button variant="contained" color="primary" onClick={handleAddNew} startIcon={<MdAdd />}>
-          Add New Quote
-        </Button>
-      </Box>
-      <div className="custom-header" style={{ height: 500, width: '100%' }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          loading={loading}
-          disableRowSelectionOnClick
-          processRowUpdate={processRowUpdate}
-          pageSizeOptions={[5, 10]}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 5, page: 0 } },
-          }}
-          getRowClassName={(params) =>
-            params.indexRelativeToCurrentPage % 2 === 0 ? 'even-row' : 'odd-row'
-          }
-          sx={{
-            '& .MuiDataGrid-columnHeaderTitle': {
-              fontWeight: 'bold',
-            },
-            '& .MuiDataGrid-container--top [role="row"]': {
-              backgroundColor: 'rgb(208 222 241) !important', // This should work for the entire header background
-            }
-          }}
-        />
-      </div>
+      <Box>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h5" fontWeight="bold">
+            Motivation Quotes
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<MdAdd />}
+            onClick={handleAddNew}
+          >
+            Add New Quote
+          </Button>
+        </Box>
 
+        <Box sx={{ height: 500, width: '100%' }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            loading={loading}
+            disableRowSelectionOnClick
+            processRowUpdate={processRowUpdate}
+            pageSizeOptions={[5, 10]}
+            initialState={{
+              pagination: { paginationModel: { pageSize: 5, page: 0 } },
+            }}
+            getRowClassName={(params) =>
+              params.indexRelativeToCurrentPage % 2 === 0 ? 'even-row' : 'odd-row'
+            }
+            sx={{
+              '& .MuiDataGrid-columnHeaderTitle': {
+                fontWeight: 'bold',
+              },
+              '& .MuiDataGrid-columnHeaders': {
+                backgroundColor: 'rgb(208, 222, 241)',
+              },
+            }}
+          />
+        </Box>
+      </Box>
     </Layout>
   );
 };

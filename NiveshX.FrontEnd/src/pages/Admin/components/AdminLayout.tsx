@@ -20,6 +20,15 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           >
             🌟 Motivation Quotes
           </Link>
+          <Link
+            to="/admin/user-management"
+            className={`block px-4 py-2 rounded-md transition-all duration-300 ${isActive('/admin/user-management')
+              ? 'bg-blue-100 text-blue-900 font-semibold shadow-sm border-l-4 border-blue-500'
+              : 'hover:bg-blue-50 hover:text-blue-700'
+              }`}
+          >
+            👥 User Management
+          </Link>
         </nav>
       </aside>
 
