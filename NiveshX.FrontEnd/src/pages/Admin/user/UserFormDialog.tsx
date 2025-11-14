@@ -62,39 +62,46 @@ const UserFormDialog: React.FC<Props> = ({
   });
 
   useEffect(() => {
-    if (mode === "edit" && user) {
-      setForm({
-        name: user.name,
-        email: user.email,
-        phoneNumber: user.phoneNumber || "",
-        role: user.role,
-        isActive: user.isActive,
-        isEmailConfirmed: user.isEmailConfirmed,
-        isPhoneConfirmed: user.isPhoneConfirmed,
-        isLockedOut: user.isLockedOut,
-        failedLoginAttempts: user.failedLoginAttempts,
-      });
-    } else {
-      setForm({
-        name: "",
-        email: "",
-        password: "",
-        phoneNumber: "",
-        role: "Trader",
-        isActive: true,
-        isEmailConfirmed: false,
-        isPhoneConfirmed: false,
-        isLockedOut: false,
-        failedLoginAttempts: 0,
-      });
+    if (open) {
+      if (mode === "edit" && user) {
+        setForm({
+          name: user.name,
+          email: user.email,
+          phoneNumber: user.phoneNumber || "",
+          role: user.role,
+          isActive: user.isActive,
+          isEmailConfirmed: user.isEmailConfirmed,
+          isPhoneConfirmed: user.isPhoneConfirmed,
+          isLockedOut: user.isLockedOut,
+          failedLoginAttempts: user.failedLoginAttempts,
+        });
+      } else {
+        setForm({
+          name: "",
+          email: "",
+          password: "",
+          phoneNumber: "",
+          role: "Trader",
+          isActive: true,
+          isEmailConfirmed: false,
+          isPhoneConfirmed: false,
+          isLockedOut: false,
+          failedLoginAttempts: 0,
+        });
+      }
     }
-  }, [mode, user]);
+  }, [open, mode, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : name === "failedLoginAttempts"
+          ? Number(value)
+          : value,
     }));
   };
 
@@ -139,153 +146,173 @@ const UserFormDialog: React.FC<Props> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={(event, reason) => {
+        if (
+          submitting &&
+          (reason === "backdropClick" || reason === "escapeKeyDown")
+        )
+          return;
+        onClose();
+      }}
+      fullWidth
+      maxWidth="sm"
+    >
       <DialogTitle>{mode === "add" ? "Add New User" : "Edit User"}</DialogTitle>
-      <DialogContent>
-        <Box display="flex" gap={2} mt={2}>
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Name"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-          />
-        </Box>
-
-        <Box display="flex" gap={2} mt={2}>
-          <TextField
-            fullWidth
-            label="Email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-          />
-        </Box>
-        {mode === "edit" && (
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={form.isEmailConfirmed}
-                onChange={handleChange}
-                name="isEmailConfirmed"
-              />
-            }
-            label="Email Confirmed"
-          />
-        )}
-
-        {mode === "add" && (
-          <Box display="flex" mt={2}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+      >
+        <DialogContent>
+          <Box display="flex" gap={2} mt={2}>
             <TextField
+              autoFocus
               fullWidth
               margin="normal"
-              label="Password"
-              name="password"
-              type="password"
-              value={form.password || ""}
+              label="Name"
+              name="name"
+              value={form.name}
               onChange={handleChange}
             />
           </Box>
-        )}
 
-        <Box display="flex" gap={2} mt={2}>
-          <TextField
-            fullWidth
-            label="Phone"
-            name="phoneNumber"
-            value={form.phoneNumber || ""}
-            onChange={handleChange}
-          />
-        </Box>
-        {mode === "edit" && (
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={form.isPhoneConfirmed}
-                onChange={handleChange}
-                name="isPhoneConfirmed"
-              />
-            }
-            label="Phone Confirmed"
-          />
-        )}
-
-        <Box display="flex" mt={2}>
-          <TextField
-            select
-            fullWidth
-            margin="normal"
-            label="Role"
-            name="role"
-            value={form.role}
-            onChange={handleChange}
-          >
-            {roles.map((role) => (
-              <MenuItem key={role} value={role}>
-                {role}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Box>
-
-        {mode === "edit" && (
           <Box display="flex" gap={2} mt={2}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={form.isLockedOut}
-                  onChange={handleChange}
-                  name="isLockedOut"
-                />
-              }
-              label="Is Locked Out"
-              sx={{ flex: 1 }}
-            />
             <TextField
-              label="Failed Login Attempts"
-              name="failedLoginAttempts"
-              type="number"
-              value={form.failedLoginAttempts}
-              InputProps={{ readOnly: true }}
-              sx={{ flex: 1 }}
+              fullWidth
+              label="Email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
             />
           </Box>
-        )}
-
-        {mode === "edit" && (
-          <Box mt={3}>
+          {mode === "edit" && (
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={form.isActive}
+                  checked={form.isEmailConfirmed}
                   onChange={handleChange}
-                  name="isActive"
+                  name="isEmailConfirmed"
                 />
               }
-              label="Is Active"
+              label="Email Confirmed"
+            />
+          )}
+
+          {mode === "add" && (
+            <Box display="flex" mt={2}>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Password"
+                name="password"
+                type="password"
+                value={form.password || ""}
+                onChange={handleChange}
+              />
+            </Box>
+          )}
+
+          <Box display="flex" gap={2} mt={2}>
+            <TextField
+              fullWidth
+              label="Phone"
+              name="phoneNumber"
+              value={form.phoneNumber || ""}
+              onChange={handleChange}
             />
           </Box>
-        )}
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <CustomButton
-          loading={false} // keep Cancel enabled even while submitting
-          label="Cancel"
-          type="button"
-          color="gray"
-          onClick={onClose}
-          className="mr-2" // optional spacing
-        />
-        <CustomButton
-          loading={submitting}
-          label={mode === "add" ? "Create" : "Update"}
-          loadingLabel={mode === "add" ? "Creating..." : "Updating..."}
-          type="button"
-          onClick={handleSubmit}
-          color="blue"
-        />
-      </DialogActions>
+          {mode === "edit" && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={form.isPhoneConfirmed}
+                  onChange={handleChange}
+                  name="isPhoneConfirmed"
+                />
+              }
+              label="Phone Confirmed"
+            />
+          )}
+
+          <Box display="flex" mt={2}>
+            <TextField
+              select
+              fullWidth
+              margin="normal"
+              label="Role"
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+            >
+              {roles.map((role) => (
+                <MenuItem key={role} value={role}>
+                  {role}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
+
+          {mode === "edit" && (
+            <Box display="flex" gap={2} mt={2}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={form.isLockedOut}
+                    onChange={handleChange}
+                    name="isLockedOut"
+                  />
+                }
+                label="Is Locked Out"
+                sx={{ flex: 1 }}
+              />
+              <TextField
+                label="Failed Login Attempts"
+                name="failedLoginAttempts"
+                type="number"
+                value={form.failedLoginAttempts}
+                InputProps={{ readOnly: true }}
+                sx={{ flex: 1 }}
+              />
+            </Box>
+          )}
+
+          {mode === "edit" && (
+            <Box mt={3}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={form.isActive}
+                    onChange={handleChange}
+                    name="isActive"
+                  />
+                }
+                label="Is Active"
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <CustomButton
+            loading={false} // keep Cancel enabled even while submitting
+            label="Cancel"
+            type="button"
+            color="gray"
+            onClick={onClose}
+            className="mr-2" // optional spacing
+          />
+          <CustomButton
+            loading={submitting}
+            label={mode === "add" ? "Create" : "Update"}
+            loadingLabel={mode === "add" ? "Creating..." : "Updating..."}
+            type="button"
+            onClick={handleSubmit}
+            color="blue"
+          />
+        </DialogActions>
+      </form>
     </Dialog>
   );
 };
