@@ -45,7 +45,7 @@ axiosInstance.interceptors.response.use(
         }
       } catch (refreshError) {
         toast.error("Session expired. Please log in again.");
-        logoutUser(); // ✅ This will now only run outside login
+        logoutUser();
         return Promise.reject(error);
       }
     }
@@ -54,16 +54,30 @@ axiosInstance.interceptors.response.use(
     const skipToast = headers?.["x-skip-error-toaster"] === "true";
 
     if (!skipToast) {
-      const data = error.response?.data as { message?: string };
-      const message =
-        data?.message ||
-        (status === 400 && "Bad request.") ||
-        (status === 401 && "Unauthorized.") ||
-        (status === 403 && "Forbidden.") ||
-        (status === 404 && "Resource not found.") ||
-        (status === 500 && "Server error. Please try again later.") ||
-        "Unexpected error occurred.";
-      toast.error(message);
+      const data = error.response?.data as any;
+
+      if (data?.errors && typeof data.errors === "object") {
+        const validationMessages = Object.entries(data.errors).flatMap(
+          ([field, messages]) =>
+            (messages as string[]).map((msg) => `${field}: ${msg}`)
+        );
+        // Combine into a single toast message
+        toast.error(validationMessages.join("\n"), {
+          duration: 8000,
+          style: { whiteSpace: "pre-line" },
+        });
+        return;
+      } else {
+        const message =
+          data?.message ||
+          (status === 400 && "Bad request.") ||
+          (status === 401 && "Unauthorized.") ||
+          (status === 403 && "Forbidden.") ||
+          (status === 404 && "Resource not found.") ||
+          (status === 500 && "Server error. Please try again later.") ||
+          "Unexpected error occurred.";
+        toast.error(message);
+      }
     }
 
     return Promise.reject(error);

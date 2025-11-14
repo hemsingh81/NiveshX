@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../../../components/Layout";
-import {
-  Box,
-  Button,
-  IconButton,
-  Typography,
-} from "@mui/material";
+import { Box, Button, IconButton, Typography } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { MdAdd, MdEdit, MdDelete } from "react-icons/md";
 import {
@@ -93,7 +88,7 @@ const UserManagement: React.FC = () => {
             <MdEdit />
           </IconButton>
           <ConfirmButton
-            label="Delete"
+            icon={<MdDelete />}
             color="error"
             size="small"
             variant="text"
