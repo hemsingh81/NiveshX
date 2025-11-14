@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,13 +9,15 @@ import {
   Checkbox,
   FormControlLabel,
   Box,
+  Divider,
 } from "@mui/material";
 import {
   CreateUserRequest,
   UpdateUserRequest,
   UserResponse,
 } from "../../../services/userService";
-import { CustomButton } from "../../../controls";
+import CustomButton from "../../../controls/CustomButton"; // default import (adjust if your export differs)
+import { mapServerErrorsToFieldErrors } from "../../../utils/validationMapper";
 
 interface Props {
   open: boolean;
@@ -40,6 +42,19 @@ interface UserFormModel {
   failedLoginAttempts: number;
 }
 
+const defaultModel = (): UserFormModel => ({
+  name: "",
+  email: "",
+  password: "",
+  phoneNumber: "",
+  role: "Trader",
+  isActive: true,
+  isEmailConfirmed: false,
+  isPhoneConfirmed: false,
+  isLockedOut: false,
+  failedLoginAttempts: 0,
+});
+
 const UserFormDialog: React.FC<Props> = ({
   open,
   onClose,
@@ -48,48 +63,37 @@ const UserFormDialog: React.FC<Props> = ({
   user,
 }) => {
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState<UserFormModel>({
-    name: "",
-    email: "",
-    password: "",
-    phoneNumber: "",
-    role: "Trader",
-    isActive: true,
-    isEmailConfirmed: false,
-    isPhoneConfirmed: false,
-    isLockedOut: false,
-    failedLoginAttempts: 0,
-  });
+  const [form, setForm] = useState<UserFormModel>(defaultModel());
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  // Initialize form when dialog opens
   useEffect(() => {
-    if (open) {
-      if (mode === "edit" && user) {
-        setForm({
-          name: user.name,
-          email: user.email,
-          phoneNumber: user.phoneNumber || "",
-          role: user.role,
-          isActive: user.isActive,
-          isEmailConfirmed: user.isEmailConfirmed,
-          isPhoneConfirmed: user.isPhoneConfirmed,
-          isLockedOut: user.isLockedOut,
-          failedLoginAttempts: user.failedLoginAttempts,
-        });
-      } else {
-        setForm({
-          name: "",
-          email: "",
-          password: "",
-          phoneNumber: "",
-          role: "Trader",
-          isActive: true,
-          isEmailConfirmed: false,
-          isPhoneConfirmed: false,
-          isLockedOut: false,
-          failedLoginAttempts: 0,
-        });
-      }
+    if (!open) {
+      // reset sensitive fields when closed
+      setForm((prev) => ({ ...defaultModel(), ...{ role: prev.role } }));
+      setFieldErrors({});
+      setSubmitting(false);
+      return;
     }
+
+    if (mode === "edit" && user) {
+      setForm({
+        name: user.name,
+        email: user.email,
+        password: "",
+        phoneNumber: user.phoneNumber || "",
+        role: user.role,
+        isActive: user.isActive,
+        isEmailConfirmed: user.isEmailConfirmed,
+        isPhoneConfirmed: user.isPhoneConfirmed,
+        isLockedOut: user.isLockedOut,
+        failedLoginAttempts: user.failedLoginAttempts,
+      });
+    } else {
+      setForm(defaultModel());
+    }
+
+    setFieldErrors({});
   }, [open, mode, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,6 +110,8 @@ const UserFormDialog: React.FC<Props> = ({
   };
 
   const handleSubmit = async () => {
+    // clear previous field errors
+    setFieldErrors({});
     const adjustedFailedAttempts = form.isLockedOut
       ? form.failedLoginAttempts
       : 0;
@@ -137,9 +143,18 @@ const UserFormDialog: React.FC<Props> = ({
         await onSubmit(payload);
       }
 
-      onClose(); // only on success
-    } catch (err) {
-      // keep dialog open; toast shows error
+      onClose(); // close only on success
+    } catch (err: any) {
+      const mapped = mapServerErrorsToFieldErrors(err);
+      setFieldErrors(mapped);
+      // optionally focus the first errored field:
+      const firstField = Object.keys(mapped)[0];
+      if (firstField && firstField !== "__global") {
+        const el = document.querySelector(
+          `[name="${firstField}"]`
+        ) as HTMLElement | null;
+        el?.focus?.();
+      }
     } finally {
       setSubmitting(false);
     }
@@ -149,6 +164,7 @@ const UserFormDialog: React.FC<Props> = ({
     <Dialog
       open={open}
       onClose={(event, reason) => {
+        // prevent accidental close while submitting
         if (
           submitting &&
           (reason === "backdropClick" || reason === "escapeKeyDown")
@@ -158,8 +174,30 @@ const UserFormDialog: React.FC<Props> = ({
       }}
       fullWidth
       maxWidth="sm"
+      aria-labelledby="user-form-dialog-title"
     >
-      <DialogTitle>{mode === "add" ? "Add New User" : "Edit User"}</DialogTitle>
+      <DialogTitle
+        id="user-form-dialog-title"
+        sx={{
+          pb: 1,
+          px: 3,
+          backgroundColor: (theme) => theme.palette.grey[100], // light surface; use theme.palette.primary.light for brand color
+          borderTopLeftRadius: 8,
+          borderTopRightRadius: 8,
+        }}
+      >
+        {mode === "add" ? "Add New User" : "Edit User"}
+      </DialogTitle>
+
+      {/* Divider between Title and Content */}
+      <Divider sx={{ borderColor: "divider", my: 0 }} />
+
+      {fieldErrors["__global"] && (
+        <Box color="error.main" mb={2} px={3}>
+          {fieldErrors["__global"]}
+        </Box>
+      )}
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -167,7 +205,7 @@ const UserFormDialog: React.FC<Props> = ({
         }}
       >
         <DialogContent>
-          <Box display="flex" gap={2} mt={2}>
+          <Box display="flex" gap={2}>
             <TextField
               autoFocus
               fullWidth
@@ -176,6 +214,9 @@ const UserFormDialog: React.FC<Props> = ({
               name="name"
               value={form.name}
               onChange={handleChange}
+              disabled={submitting}
+              error={!!fieldErrors.name}
+              helperText={fieldErrors.name}
             />
           </Box>
 
@@ -186,8 +227,12 @@ const UserFormDialog: React.FC<Props> = ({
               name="email"
               value={form.email}
               onChange={handleChange}
+              disabled={submitting}
+              error={!!fieldErrors.email}
+              helperText={fieldErrors.email}
             />
           </Box>
+
           {mode === "edit" && (
             <FormControlLabel
               control={
@@ -195,6 +240,7 @@ const UserFormDialog: React.FC<Props> = ({
                   checked={form.isEmailConfirmed}
                   onChange={handleChange}
                   name="isEmailConfirmed"
+                  disabled={submitting}
                 />
               }
               label="Email Confirmed"
@@ -211,6 +257,9 @@ const UserFormDialog: React.FC<Props> = ({
                 type="password"
                 value={form.password || ""}
                 onChange={handleChange}
+                disabled={submitting}
+                error={!!fieldErrors.password}
+                helperText={fieldErrors.password}
               />
             </Box>
           )}
@@ -222,8 +271,12 @@ const UserFormDialog: React.FC<Props> = ({
               name="phoneNumber"
               value={form.phoneNumber || ""}
               onChange={handleChange}
+              disabled={submitting}
+              error={!!fieldErrors.phoneNumber}
+              helperText={fieldErrors.phoneNumber}
             />
           </Box>
+
           {mode === "edit" && (
             <FormControlLabel
               control={
@@ -231,6 +284,7 @@ const UserFormDialog: React.FC<Props> = ({
                   checked={form.isPhoneConfirmed}
                   onChange={handleChange}
                   name="isPhoneConfirmed"
+                  disabled={submitting}
                 />
               }
               label="Phone Confirmed"
@@ -246,6 +300,9 @@ const UserFormDialog: React.FC<Props> = ({
               name="role"
               value={form.role}
               onChange={handleChange}
+              disabled={submitting}
+              error={!!fieldErrors.role}
+              helperText={fieldErrors.role}
             >
               {roles.map((role) => (
                 <MenuItem key={role} value={role}>
@@ -263,6 +320,7 @@ const UserFormDialog: React.FC<Props> = ({
                     checked={form.isLockedOut}
                     onChange={handleChange}
                     name="isLockedOut"
+                    disabled={submitting}
                   />
                 }
                 label="Is Locked Out"
@@ -287,6 +345,7 @@ const UserFormDialog: React.FC<Props> = ({
                     checked={form.isActive}
                     onChange={handleChange}
                     name="isActive"
+                    disabled={submitting}
                   />
                 }
                 label="Is Active"
@@ -294,21 +353,33 @@ const UserFormDialog: React.FC<Props> = ({
             </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+
+        {/* Divider between Content and Footer */}
+        <Divider sx={{ borderColor: "divider" }} />
+
+        <DialogActions
+          sx={{
+            p: 2,
+            px: 3,
+            backgroundColor: (theme) => theme.palette.grey[50], // slightly different tint for footer
+            borderBottomLeftRadius: 8,
+            borderBottomRightRadius: 8,
+          }}
+        >
           <CustomButton
-            loading={false} // keep Cancel enabled even while submitting
+            loading={false}
             label="Cancel"
             type="button"
             color="gray"
             onClick={onClose}
-            className="mr-2" // optional spacing
+            className="mr-2"
           />
           <CustomButton
             loading={submitting}
             label={mode === "add" ? "Create" : "Update"}
             loadingLabel={mode === "add" ? "Creating..." : "Updating..."}
-            type="button"
-            onClick={handleSubmit}
+            type="submit"
+            onClick={undefined}
             color="blue"
           />
         </DialogActions>
