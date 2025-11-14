@@ -30,6 +30,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IMotivationQuoteService, MotivationQuoteService>();
+builder.Services.AddScoped<ICountryManagementService, CountryManagementService>();
 
 // Add Authentication
 builder.Services.AddAuthentication("Bearer")

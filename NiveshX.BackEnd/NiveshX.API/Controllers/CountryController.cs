@@ -7,7 +7,7 @@ namespace NiveshX.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")] 
     public class CountryController : ControllerBase
     {
         private readonly ICountryManagementService _service;

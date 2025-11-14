@@ -10,6 +10,7 @@ import {
   AdminLayout,
   MotivationQuotes,
   UserManagement,
+  CountryManagement,
   Master,
   Profile,
   Unauthorized,
@@ -48,6 +49,15 @@ const protectedRoutes = [
     element: (
       <AdminLayout>
         <UserManagement />
+      </AdminLayout>
+    ),
+    allowedRoles: ["Admin"],
+  },
+  {
+    path: "/admin/country",
+    element: (
+      <AdminLayout>
+        <CountryManagement />
       </AdminLayout>
     ),
     allowedRoles: ["Admin"],
