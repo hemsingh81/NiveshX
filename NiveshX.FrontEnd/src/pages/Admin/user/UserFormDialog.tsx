@@ -1,3 +1,4 @@
+// src/components/UserFormDialog.tsx
 import React, { useEffect, useRef, useState } from "react";
 import {
   Dialog,
@@ -58,10 +59,10 @@ const defaultModel = (): UserFormModel => ({
 const UserFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode, user }) => {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<UserFormModel>(defaultModel());
-  // now store arrays so multiple messages are preserved
+  // errors kept as arrays so multiple messages are preserved
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
-  // stable refs map for inputs (MUI TextField input elements)
+  // stable refs map for inputs (MUI TextField native input)
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
@@ -141,10 +142,8 @@ const UserFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode, user }
 
       onClose();
     } catch (err: any) {
-      // mapper now returns Record<string, string[]>
       const mapped = mapServerErrorsToFieldErrors(err);
       setFieldErrors(mapped);
-      // focus first field using refs
       focusFirstError(mapped);
     } finally {
       setSubmitting(false);
@@ -190,14 +189,7 @@ const UserFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode, user }
       <Divider sx={{ borderColor: "divider", my: 0 }} />
 
       {fieldErrors["__global"] && fieldErrors["__global"].length > 0 && (
-        <Box
-          role="status"
-          aria-live="polite"
-          color="error.main"
-          mb={2}
-          px={3}
-          sx={{ whiteSpace: "pre-line" }}
-        >
+        <Box role="status" aria-live="polite" color="error.main" mb={2} px={3}>
           <ul style={{ margin: 0, paddingLeft: 16 }}>
             {fieldErrors["__global"].map((m, i) => (
               <li key={i}>{m}</li>
