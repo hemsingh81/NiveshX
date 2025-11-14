@@ -61,12 +61,13 @@ axiosInstance.interceptors.response.use(
           ([field, messages]) =>
             (messages as string[]).map((msg) => `${field}: ${msg}`)
         );
-        // Combine into a single toast message
         toast.error(validationMessages.join("\n"), {
           duration: 8000,
           style: { whiteSpace: "pre-line" },
         });
-        return;
+
+        // IMPORTANT: reject so callers see the error
+        return Promise.reject(error);
       } else {
         const message =
           data?.message ||
@@ -83,5 +84,6 @@ axiosInstance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
 
 export default axiosInstance;

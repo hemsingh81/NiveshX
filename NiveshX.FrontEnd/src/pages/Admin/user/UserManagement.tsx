@@ -50,14 +50,15 @@ const UserManagement: React.FC = () => {
     fetchUsers();
   };
 
-  const handleSubmit = async (data: CreateUserRequest | UpdateUserRequest) => {
+  const handleSubmit = async (
+    data: CreateUserRequest | UpdateUserRequest
+  ): Promise<void> => {
     if (mode === "add") {
       await createUser(data as CreateUserRequest);
     } else if (editUser) {
       await updateUser(editUser.id, data as UpdateUserRequest);
     }
-    setDialogOpen(false);
-    fetchUsers();
+    await fetchUsers();
   };
 
   const columns: GridColDef[] = [

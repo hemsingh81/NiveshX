@@ -20,7 +20,7 @@ import {
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateUserRequest | UpdateUserRequest) => void;
+  onSubmit: (data: CreateUserRequest | UpdateUserRequest) => Promise<void>;
   mode: "add" | "edit";
   user?: UserResponse;
 }
@@ -47,6 +47,7 @@ const UserFormDialog: React.FC<Props> = ({
   mode,
   user,
 }) => {
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<UserFormModel>({
     name: "",
     email: "",
@@ -97,33 +98,43 @@ const UserFormDialog: React.FC<Props> = ({
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const adjustedFailedAttempts = form.isLockedOut
       ? form.failedLoginAttempts
       : 0;
 
-    if (mode === "add") {
-      const payload: CreateUserRequest = {
-        name: form.name,
-        email: form.email,
-        password: form.password || "",
-        phoneNumber: form.phoneNumber,
-        role: form.role as "Master" | "Trader" | "Viewer",
-      };
-      onSubmit(payload);
-    } else {
-      const payload: UpdateUserRequest = {
-        name: form.name,
-        email: form.email,
-        phoneNumber: form.phoneNumber,
-        role: form.role as "Master" | "Trader" | "Viewer",
-        isActive: form.isActive,
-        isEmailConfirmed: form.isEmailConfirmed,
-        isPhoneConfirmed: form.isPhoneConfirmed,
-        isLockedOut: form.isLockedOut,
-        failedLoginAttempts: adjustedFailedAttempts,
-      };
-      onSubmit(payload);
+    try {
+      setSubmitting(true);
+
+      if (mode === "add") {
+        const payload: CreateUserRequest = {
+          name: form.name,
+          email: form.email,
+          password: form.password || "",
+          phoneNumber: form.phoneNumber,
+          role: form.role as "Master" | "Trader" | "Viewer",
+        };
+        await onSubmit(payload);
+      } else {
+        const payload: UpdateUserRequest = {
+          name: form.name,
+          email: form.email,
+          phoneNumber: form.phoneNumber,
+          role: form.role as "Master" | "Trader" | "Viewer",
+          isActive: form.isActive,
+          isEmailConfirmed: form.isEmailConfirmed,
+          isPhoneConfirmed: form.isPhoneConfirmed,
+          isLockedOut: form.isLockedOut,
+          failedLoginAttempts: adjustedFailedAttempts,
+        };
+        await onSubmit(payload);
+      }
+
+      onClose(); // only on success
+    } catch (err) {
+      // keep dialog open; toast shows error
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -258,10 +269,10 @@ const UserFormDialog: React.FC<Props> = ({
         )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleSubmit}>
-          {mode === "add" ? "Create" : "Update"}
-        </Button>
+         <Button onClick={onClose} disabled={false}>Cancel</Button>
+  <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
+    {mode === "add" ? "Create" : "Update"}
+  </Button>
       </DialogActions>
     </Dialog>
   );
