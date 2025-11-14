@@ -5,7 +5,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Button,
   MenuItem,
   Checkbox,
   FormControlLabel,
@@ -16,6 +15,7 @@ import {
   UpdateUserRequest,
   UserResponse,
 } from "../../../services/userService";
+import { CustomButton } from "../../../controls";
 
 interface Props {
   open: boolean;
@@ -269,10 +269,22 @@ const UserFormDialog: React.FC<Props> = ({
         )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-         <Button onClick={onClose} disabled={false}>Cancel</Button>
-  <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
-    {mode === "add" ? "Create" : "Update"}
-  </Button>
+        <CustomButton
+          loading={false} // keep Cancel enabled even while submitting
+          label="Cancel"
+          type="button"
+          color="gray"
+          onClick={onClose}
+          className="mr-2" // optional spacing
+        />
+        <CustomButton
+          loading={submitting}
+          label={mode === "add" ? "Create" : "Update"}
+          loadingLabel={mode === "add" ? "Creating..." : "Updating..."}
+          type="button"
+          onClick={handleSubmit}
+          color="blue"
+        />
       </DialogActions>
     </Dialog>
   );
