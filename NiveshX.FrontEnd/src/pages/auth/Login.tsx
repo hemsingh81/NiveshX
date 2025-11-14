@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginUser } from '../services/authService';
-import loginBg from '../assets/images/login-bg.png';
-import { CustomButton } from '../controls';
+import { loginUser } from '../../services/authService';
+import loginBg from '../../assets/images/login-bg.png';
+import { CustomButton } from '../../controls';
 import axios from 'axios';
 
 interface FormData {
@@ -33,8 +33,8 @@ const Login: React.FC = () => {
 
     setLoading(true);
     try {
-      await loginUser(email, password); // ✅ handles toast + sessionStorage + Redux
-      navigate('/dashboard'); // ✅ navigate after Redux is hydrated
+      await loginUser(email, password); 
+      navigate('/dashboard');
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;

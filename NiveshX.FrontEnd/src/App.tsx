@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setUser } from "./store/userSlice";
 import { Toaster } from "react-hot-toast";
-import Login from "./pages/Login";
+import Login from "./pages/auth/Login";
 import {
   Dashboard,
   Admin,

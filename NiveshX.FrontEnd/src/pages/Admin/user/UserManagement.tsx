@@ -93,14 +93,15 @@ const UserManagement: React.FC = () => {
       },
       {
         field: "isLockedOut",
-        headerName: "Locked Out",
+        headerName: "Is Locked Out",
         width: 120,
         renderCell: (params) => (params.value ? "Yes" : "No"),
       },
       {
         field: "actions",
         headerName: "Actions",
-        width: 160,
+        width: 150,
+        align: "center",
         sortable: false,
         renderCell: (params) => (
           <>

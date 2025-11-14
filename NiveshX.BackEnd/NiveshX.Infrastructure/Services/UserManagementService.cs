@@ -1,5 +1,4 @@
-﻿using Azure.Core;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.User;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
@@ -24,30 +23,14 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Retrieving all users");
                 var users = await _unitOfWork.Users.GetAllAsync(cancellationToken);
-                return users.Select(ToDto);
+                return users.Select(MapToResponse);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while retrieving all users");
+                _logger.LogError(ex, "Error retrieving all users");
                 throw;
             }
         }
-
-        private static UserResponse ToDto(User user) => new()
-        {
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email,
-            PhoneNumber = user.PhoneNumber,
-            Role = user.Role.ToString(),
-            IsEmailConfirmed = user.IsEmailConfirmed,
-            IsPhoneConfirmed = user.IsPhoneConfirmed,
-            IsLockedOut = user.IsLockedOut,
-            IsActive = user.IsActive,
-            FailedLoginAttempts = user.FailedLoginAttempts,
-            LastLoginOn = user.LastLoginOn
-        };
-
 
         public async Task<UserResponse?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
@@ -55,11 +38,11 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Retrieving user by ID: {UserId}", id);
                 var user = await _unitOfWork.Users.GetByIdAsync(id, cancellationToken);
-                return user == null ? null : ToDto(user);
+                return user == null ? null : MapToResponse(user);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while retrieving user with ID: {UserId}", id);
+                _logger.LogError(ex, "Error retrieving user with ID: {UserId}", id);
                 throw;
             }
         }
@@ -73,11 +56,11 @@ namespace NiveshX.Infrastructure.Services
                     Id = Guid.NewGuid(),
                     Name = request.Name,
                     Email = request.Email,
-                    IsEmailConfirmed = true,
                     PhoneNumber = request.PhoneNumber,
-                    IsPhoneConfirmed = true,
                     Role = request.Role,
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                    IsEmailConfirmed = true,
+                    IsPhoneConfirmed = true,
                     IsLockedOut = false,
                     IsActive = true,
                     FailedLoginAttempts = 0,
@@ -88,12 +71,12 @@ namespace NiveshX.Infrastructure.Services
                 await _unitOfWork.Users.AddAsync(user, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("User created successfully: {Email}", request.Email);
-                return ToDto(user);
+                _logger.LogInformation("User created: {Email}", request.Email);
+                return MapToResponse(user);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while creating user: {Email}", request.Email);
+                _logger.LogError(ex, "Error creating user: {Email}", request.Email);
                 throw;
             }
         }
@@ -103,34 +86,34 @@ namespace NiveshX.Infrastructure.Services
             try
             {
                 _logger.LogInformation("Updating user with ID: {UserId}", id);
-                var existing = await _unitOfWork.Users.GetByIdAsync(id, cancellationToken);
-                if (existing == null)
+                var user = await _unitOfWork.Users.GetByIdAsync(id, cancellationToken);
+                if (user == null)
                 {
                     _logger.LogWarning("User not found for update: {UserId}", id);
                     return null;
                 }
 
-                existing.Name = request.Name;
-                existing.Email = request.Email;
-                existing.IsEmailConfirmed = request.IsEmailConfirmed;
-                existing.PhoneNumber = request.PhoneNumber;
-                existing.IsPhoneConfirmed = request.IsPhoneConfirmed;
-                existing.Role = request.Role;
-                existing.IsLockedOut = request.IsLockedOut;
-                existing.FailedLoginAttempts = request.FailedLoginAttempts;
-                existing.IsActive = request.IsActive;
-                existing.ModifiedOn = DateTime.UtcNow;
-                existing.ModifiedBy = "Admin";
+                user.Name = request.Name;
+                user.Email = request.Email;
+                user.PhoneNumber = request.PhoneNumber;
+                user.Role = request.Role;
+                user.IsEmailConfirmed = request.IsEmailConfirmed;
+                user.IsPhoneConfirmed = request.IsPhoneConfirmed;
+                user.IsLockedOut = request.IsLockedOut;
+                user.FailedLoginAttempts = request.FailedLoginAttempts;
+                user.IsActive = request.IsActive;
+                user.ModifiedOn = DateTime.UtcNow;
+                user.ModifiedBy = "Admin";
 
-                await _unitOfWork.Users.UpdateAsync(existing, cancellationToken);
+                await _unitOfWork.Users.UpdateAsync(user, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("User updated successfully: {UserId}", id);
-                return ToDto(existing);
+                _logger.LogInformation("User updated: {UserId}", id);
+                return MapToResponse(user);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while updating user with ID: {UserId}", id);
+                _logger.LogError(ex, "Error updating user with ID: {UserId}", id);
                 throw;
             }
         }
@@ -139,12 +122,12 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Attempting to delete user with ID: {UserId}", id);
+                _logger.LogInformation("Deleting user with ID: {UserId}", id);
                 var success = await _unitOfWork.Users.DeleteAsync(id, cancellationToken);
                 if (success)
                 {
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
-                    _logger.LogInformation("User deleted successfully: {UserId}", id);
+                    _logger.LogInformation("User deleted: {UserId}", id);
                 }
                 else
                 {
@@ -155,9 +138,24 @@ namespace NiveshX.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while deleting user with ID: {UserId}", id);
+                _logger.LogError(ex, "Error deleting user with ID: {UserId}", id);
                 throw;
             }
         }
+
+        private static UserResponse MapToResponse(User user) => new()
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            Role = user.Role.ToString(),
+            IsEmailConfirmed = user.IsEmailConfirmed,
+            IsPhoneConfirmed = user.IsPhoneConfirmed,
+            IsLockedOut = user.IsLockedOut,
+            IsActive = user.IsActive,
+            FailedLoginAttempts = user.FailedLoginAttempts,
+            LastLoginOn = user.LastLoginOn
+        };
     }
 }
