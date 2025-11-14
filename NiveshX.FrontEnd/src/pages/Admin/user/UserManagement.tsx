@@ -5,9 +5,6 @@ import {
   Button,
   IconButton,
   Typography,
-  Dialog,
-  DialogTitle,
-  DialogActions,
 } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { MdAdd, MdEdit, MdDelete } from "react-icons/md";
@@ -21,6 +18,7 @@ import {
   UpdateUserRequest,
 } from "../../../services/userService";
 import UserFormDialog from "./UserFormDialog";
+import { ConfirmButton } from "../../../controls";
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<UserResponse[]>([]);
@@ -28,7 +26,6 @@ const UserManagement: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editUser, setEditUser] = useState<UserResponse | undefined>();
   const [mode, setMode] = useState<"add" | "edit">("add");
-  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -53,12 +50,9 @@ const UserManagement: React.FC = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async () => {
-    if (deleteId) {
-      await deleteUser(deleteId);
-      setDeleteId(null);
-      fetchUsers();
-    }
+  const handleDeleteUser = async (id: string) => {
+    await deleteUser(id);
+    fetchUsers();
   };
 
   const handleSubmit = async (data: CreateUserRequest | UpdateUserRequest) => {
@@ -91,16 +85,24 @@ const UserManagement: React.FC = () => {
     {
       field: "actions",
       headerName: "Actions",
-      width: 120,
+      width: 160,
       sortable: false,
       renderCell: (params) => (
         <>
           <IconButton onClick={() => handleEdit(params.row)}>
             <MdEdit />
           </IconButton>
-          <IconButton color="error" onClick={() => setDeleteId(params.row.id)}>
-            <MdDelete />
-          </IconButton>
+          <ConfirmButton
+            label="Delete"
+            color="error"
+            size="small"
+            variant="text"
+            dialogTitle="Delete User"
+            dialogMessage={`Are you sure you want to delete ${params.row.name}?`}
+            confirmText="Delete"
+            cancelText="Cancel"
+            onConfirm={() => handleDeleteUser(params.row.id)}
+          />
         </>
       ),
     },
@@ -152,15 +154,6 @@ const UserManagement: React.FC = () => {
           mode={mode}
           user={editUser}
         />
-        <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
-          <DialogTitle>Are you sure you want to delete this user?</DialogTitle>
-          <DialogActions>
-            <Button onClick={() => setDeleteId(null)} variant="outlined">Cancel</Button>
-            <Button color="error" onClick={handleDelete} variant="outlined">
-              Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Box>
     </Layout>
   );

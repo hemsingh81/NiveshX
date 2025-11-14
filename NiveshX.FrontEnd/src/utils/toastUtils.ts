@@ -1,3 +1,4 @@
+// toastUtils.ts
 import toast from 'react-hot-toast';
 
 interface ToastOptions {
@@ -11,8 +12,17 @@ export const withToast = async <T>(
   request: () => Promise<T>,
   options: ToastOptions
 ): Promise<T> => {
+  const wrappedRequest = async () => {
+    try {
+      const result = await request();
+      return result;
+    } catch (err) {
+      throw err;
+    }
+  };
+
   return toast.promise(
-    request(),
+    wrappedRequest(),
     {
       loading: options.loading || 'Processing...',
       success: options.success || 'Success!',
