@@ -11,6 +11,8 @@ namespace NiveshX.Infrastructure.Data
     {
         public DbSet<User> Users => Set<User>();
         public DbSet<MotivationQuote> MotivationQuotes => Set<MotivationQuote>();
+        public DbSet<Country> Countries => Set<Country>();
+
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -34,9 +36,8 @@ namespace NiveshX.Infrastructure.Data
 
             SeedUser(modelBuilder);
             SeedMotivationQuotes(modelBuilder);
+            SeedCountries(modelBuilder);
         }
-
-       
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -58,6 +59,33 @@ namespace NiveshX.Infrastructure.Data
         }
 
         #region Private Methods
+
+        private static void SeedCountries(ModelBuilder modelBuilder)
+        {
+            var createdOn = new DateTime(2025, 12, 8, 0, 0, 0, DateTimeKind.Utc);
+            modelBuilder.Entity<Country>().HasData(
+                 new Country
+                 {
+                     Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                     Name = "International",
+                     Code = "International",
+                     CreatedOn = createdOn,
+                     CreatedBy = "system",
+                     IsActive = true,
+                     IsDeleted = false
+                 },
+                 new Country
+                 {
+                     Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                     Name = "India",
+                     Code = "IN",
+                     CreatedOn = createdOn,
+                     CreatedBy = "system",
+                     IsActive = true,
+                     IsDeleted = false
+                 }
+            );
+        }
 
         private static void SeedMotivationQuotes(ModelBuilder modelBuilder)
         {
@@ -124,7 +152,7 @@ namespace NiveshX.Infrastructure.Data
                 ModifiedBy = null
             });
         }
-        
+
         #endregion
     }
 }

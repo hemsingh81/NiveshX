@@ -1,0 +1,43 @@
+{
+  "src\\pages\\admin\\user\\UserFormDialog.tsx": {
+    "f": "UserFormDialog.tsx",
+    "p": "src\\pages\\admin\\user\\UserFormDialog.tsx",
+    "v": "v1",
+    "c": {
+      "5f181a": {
+        "user": "Hem Singh",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763067563,
+        "hash": "960dcf65",
+        "messageId": "system_8096e310-c0d3-11f0-94bc-7dc928d2a955",
+        "codeBlockId": null,
+        "isActive": false,
+        "type": "applyChanges"
+      },
+      "16aaea": {
+        "user": "Hem Singh",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763068689,
+        "hash": "70180f24",
+        "messageId": "system_f7c44ed0-c0d5-11f0-94bc-7dc928d2a955",
+        "codeBlockId": null,
+        "isActive": false,
+        "type": "applyChanges"
+      },
+      "b0aff5": {
+        "user": "Hem Singh",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763068693,
+        "hash": "70180f24",
+        "messageId": "system_f7c44ed0-c0d5-11f0-94bc-7dc928d2a955",
+        "codeBlockId": "system_f7c44ed0-c0d5-11f0-94bc-7dc928d2a955-Codeblock-1",
+        "isActive": false,
+        "type": "compareCode"
+      }
+    },
+    "l": {}
+  }
+}

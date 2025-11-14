@@ -12,19 +12,21 @@ namespace NiveshX.Infrastructure.Services
     public class MotivationQuoteService : IMotivationQuoteService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserContext _userContext;
         private readonly ILogger<MotivationQuoteService> _logger;
 
-        public MotivationQuoteService(IUnitOfWork unitOfWork, ILogger<MotivationQuoteService> logger)
+        public MotivationQuoteService(IUnitOfWork unitOfWork, ILogger<MotivationQuoteService> logger, IUserContext userContext)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _userContext = userContext;
         }
 
         public async Task<bool> AddAsync(AddMotivationQuoteRequest request, CancellationToken cancellationToken = default)
         {
             try
             {
-                var quote = new MotivationQuote { Quote = request.Quote, Author = request.Author };
+                var quote = new MotivationQuote { Quote = request.Quote, Author = request.Author, CreatedBy = _userContext.UserId, CreatedOn = DateTime.UtcNow };
                 await _unitOfWork.MotivationQuotes.AddAsync(quote, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -53,6 +55,7 @@ namespace NiveshX.Infrastructure.Services
                 quote.Author = request.Author;
                 quote.IsActive = request.IsActive;
                 quote.ModifiedOn = DateTime.UtcNow;
+                quote.ModifiedBy = _userContext.UserId;
 
                 await _unitOfWork.MotivationQuotes.UpdateAsync(quote, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -80,6 +83,7 @@ namespace NiveshX.Infrastructure.Services
 
                 quote.IsDeleted = true;
                 quote.IsActive = false;
+                quote.ModifiedBy = _userContext.UserId;
                 quote.ModifiedOn = DateTime.UtcNow;
 
                 await _unitOfWork.MotivationQuotes.UpdateAsync(quote, cancellationToken);

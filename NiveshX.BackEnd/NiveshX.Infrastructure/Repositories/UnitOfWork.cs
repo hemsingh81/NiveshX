@@ -12,12 +12,14 @@ namespace NiveshX.Infrastructure.Repositories
 
         public IUserRepository Users { get; }
         public IMotivationQuoteRepository MotivationQuotes { get; }
+        public ICountryRepository Countries { get; }
 
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
             Users = new UserRepository(context);
             MotivationQuotes = new MotivationQuoteRepository(context);
+            Countries = new CountryRepository(context);
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

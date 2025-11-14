@@ -8,6 +8,7 @@ namespace NiveshX.Core.Interfaces
     {
         IUserRepository Users { get; }
         IMotivationQuoteRepository MotivationQuotes { get; }
+        ICountryRepository Countries { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

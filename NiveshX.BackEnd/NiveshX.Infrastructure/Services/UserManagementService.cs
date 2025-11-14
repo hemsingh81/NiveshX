@@ -158,4 +158,5 @@ namespace NiveshX.Infrastructure.Services
             LastLoginOn = user.LastLoginOn
         };
     }
+
 }
