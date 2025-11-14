@@ -46,6 +46,7 @@ export const getAllUsers = async (): Promise<UserResponse[]> => {
 };
 
 export const createUser = async (data: CreateUserRequest): Promise<void> => {
+  console.log('data',data);
   await withToast(() => axiosInstance.post(`${API_URL}`, data), {
     loading: "Creating user...",
     success: "User created!",

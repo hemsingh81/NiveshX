@@ -108,7 +108,7 @@ const UserFormDialog: React.FC<Props> = ({
         email: form.email,
         password: form.password || "",
         phoneNumber: form.phoneNumber,
-        role: form.role,
+        role: form.role as "Master" | "Trader" | "Viewer",
       };
       onSubmit(payload);
     } else {
@@ -116,7 +116,7 @@ const UserFormDialog: React.FC<Props> = ({
         name: form.name,
         email: form.email,
         phoneNumber: form.phoneNumber,
-        role: form.role,
+        role: form.role as "Master" | "Trader" | "Viewer",
         isActive: form.isActive,
         isEmailConfirmed: form.isEmailConfirmed,
         isPhoneConfirmed: form.isPhoneConfirmed,

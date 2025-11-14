@@ -155,8 +155,8 @@ const UserManagement: React.FC = () => {
         <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
           <DialogTitle>Are you sure you want to delete this user?</DialogTitle>
           <DialogActions>
-            <Button onClick={() => setDeleteId(null)}>Cancel</Button>
-            <Button color="error" onClick={handleDelete}>
+            <Button onClick={() => setDeleteId(null)} variant="outlined">Cancel</Button>
+            <Button color="error" onClick={handleDelete} variant="outlined">
               Delete
             </Button>
           </DialogActions>
