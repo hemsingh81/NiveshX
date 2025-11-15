@@ -2,13 +2,14 @@
 
 namespace NiveshX.Core.Models
 {
-    public class Country : AuditableEntity
+    public class ClassificationTag : AuditableEntity
     {
         [Required]
         public string Name { get; set; } = string.Empty;
 
-        [Required]
-        public string Code { get; set; } = string.Empty; 
+        public string? Category { get; set; }
+
+        public string? Description { get; set; }
     }
 
 }

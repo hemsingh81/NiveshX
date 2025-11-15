@@ -30,7 +30,10 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IMotivationQuoteService, MotivationQuoteService>();
-builder.Services.AddScoped<ICountryManagementService, CountryManagementService>();
+builder.Services.AddScoped<ICountryService, CountryService>();
+builder.Services.AddScoped<IIndustryService, IndustryService>();
+builder.Services.AddScoped<ISectorService, SectorService>();
+builder.Services.AddScoped<IClassificationTagService, ClassificationTagService>();
 
 // Add Authentication
 builder.Services.AddAuthentication("Bearer")

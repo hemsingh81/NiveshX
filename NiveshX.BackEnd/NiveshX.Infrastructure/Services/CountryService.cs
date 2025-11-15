@@ -6,13 +6,13 @@ using NiveshX.Core.Models;
 
 namespace NiveshX.Infrastructure.Services
 {
-    public class CountryManagementService : ICountryManagementService
+    public class CountryService : ICountryService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserContext _userContext;
-        private readonly ILogger<CountryManagementService> _logger;
+        private readonly ILogger<CountryService> _logger;
 
-        public CountryManagementService(IUnitOfWork unitOfWork, ILogger<CountryManagementService> logger, IUserContext userContext)
+        public CountryService(IUnitOfWork unitOfWork, ILogger<CountryService> logger, IUserContext userContext)
         {
             _unitOfWork = unitOfWork;
             _userContext = userContext;
@@ -142,4 +142,5 @@ namespace NiveshX.Infrastructure.Services
             IsActive = country.IsActive
         };
     }
+
 }

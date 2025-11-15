@@ -10,10 +10,10 @@ namespace NiveshX.API.Controllers
     [Authorize(Roles = "Admin")] 
     public class CountryController : ControllerBase
     {
-        private readonly ICountryManagementService _service;
+        private readonly ICountryService _service;
         private readonly ILogger<CountryController> _logger;
 
-        public CountryController(ICountryManagementService service, ILogger<CountryController> logger)
+        public CountryController(ICountryService service, ILogger<CountryController> logger)
         {
             _service = service;
             _logger = logger;
@@ -139,4 +139,5 @@ namespace NiveshX.API.Controllers
             }
         }
     }
+
 }

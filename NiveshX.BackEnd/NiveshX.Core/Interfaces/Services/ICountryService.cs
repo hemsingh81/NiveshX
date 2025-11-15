@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace NiveshX.Core.Interfaces.Services
 {
-    public interface ICountryManagementService
+    public interface ICountryService
     {
         Task<IEnumerable<CountryResponse>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<CountryResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);

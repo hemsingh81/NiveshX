@@ -12,7 +12,9 @@ namespace NiveshX.Infrastructure.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<MotivationQuote> MotivationQuotes => Set<MotivationQuote>();
         public DbSet<Country> Countries => Set<Country>();
-
+        public DbSet<Industry> Industries => Set<Industry>();
+        public DbSet<Sector> Sectors => Set<Sector>();
+        public DbSet<ClassificationTag> ClassificationTags => Set<ClassificationTag>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

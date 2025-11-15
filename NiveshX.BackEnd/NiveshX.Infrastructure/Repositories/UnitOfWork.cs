@@ -13,6 +13,9 @@ namespace NiveshX.Infrastructure.Repositories
         public IUserRepository Users { get; }
         public IMotivationQuoteRepository MotivationQuotes { get; }
         public ICountryRepository Countries { get; }
+        public IIndustryRepository Industries { get; }
+        public ISectorRepository Sectors { get; }
+        public IClassificationTagRepository ClassificationTags { get; }
 
         public UnitOfWork(AppDbContext context)
         {
@@ -20,6 +23,9 @@ namespace NiveshX.Infrastructure.Repositories
             Users = new UserRepository(context);
             MotivationQuotes = new MotivationQuoteRepository(context);
             Countries = new CountryRepository(context);
+            Industries = new IndustryRepository(context);
+            Sectors = new SectorRepository(context);
+            ClassificationTags = new ClassificationTagRepository(context);
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

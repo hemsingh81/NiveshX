@@ -1,4 +1,5 @@
 ﻿using NiveshX.Core.Interfaces.Repositories;
+using NiveshX.Core.Models;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,6 +10,9 @@ namespace NiveshX.Core.Interfaces
         IUserRepository Users { get; }
         IMotivationQuoteRepository MotivationQuotes { get; }
         ICountryRepository Countries { get; }
+        IIndustryRepository Industries { get; }
+        ISectorRepository Sectors { get; }
+        IClassificationTagRepository ClassificationTags { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
