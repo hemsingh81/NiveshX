@@ -11,10 +11,13 @@ import {
   MotivationQuotes,
   UserManagement,
   CountryManagement,
+  IndustryManagement,
   Master,
   Profile,
   Unauthorized,
   ServerError,
+  SectorManagement,
+  ClassificationTagManagement,
 } from "./pages";
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -58,6 +61,34 @@ const protectedRoutes = [
     element: (
       <AdminLayout>
         <CountryManagement />
+      </AdminLayout>
+    ),
+    allowedRoles: ["Admin"],
+  },
+  {
+    path: "/admin/industry",
+    element: (
+      <AdminLayout>
+        <IndustryManagement />
+      </AdminLayout>
+    ),
+    allowedRoles: ["Admin"],
+  },
+  {
+    path: "/admin/sector",
+    element: (
+      <AdminLayout>
+        <SectorManagement />
+      </AdminLayout>
+    ),
+    allowedRoles: ["Admin"],
+  }
+  ,
+  {
+    path: "/admin/classification-tag",
+    element: (
+      <AdminLayout>
+        <ClassificationTagManagement />
       </AdminLayout>
     ),
     allowedRoles: ["Admin"],

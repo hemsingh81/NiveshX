@@ -22,17 +22,9 @@ namespace NiveshX.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Soft delete filter
-            modelBuilder.Entity<User>().HasQueryFilter(u => !u.IsDeleted);
 
-            // Default values for audit fields
-            modelBuilder.Entity<User>().Property(u => u.IsActive).HasDefaultValue(true);
-            modelBuilder.Entity<User>().Property(u => u.IsDeleted).HasDefaultValue(false);
-            modelBuilder.Entity<User>().Property(u => u.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
-            modelBuilder.Entity<User>().Property(u => u.CreatedBy).HasDefaultValue("system");
-            modelBuilder.Entity<User>().Property(u => u.Role).HasConversion<string>();
-
-
+            ApplyAuditableEntityDefaults(modelBuilder);
+            
             // Unique index on Email
             modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
 
@@ -61,6 +53,34 @@ namespace NiveshX.Infrastructure.Data
         }
 
         #region Private Methods
+
+        private void ApplyAuditableEntityDefaults(ModelBuilder modelBuilder)
+        {
+            var auditableEntityType = typeof(AuditableEntity);
+
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (auditableEntityType.IsAssignableFrom(entityType.ClrType))
+                {
+                    var builder = modelBuilder.Entity(entityType.ClrType);
+
+                    builder.Property(nameof(AuditableEntity.Id))
+                           .HasDefaultValueSql("NEWID()");
+
+                    builder.Property(nameof(AuditableEntity.IsActive))
+                           .HasDefaultValue(true);
+
+                    builder.Property(nameof(AuditableEntity.IsDeleted))
+                           .HasDefaultValue(false);
+
+                    builder.Property(nameof(AuditableEntity.CreatedOn))
+                           .HasDefaultValueSql("GETUTCDATE()");
+
+                    builder.Property(nameof(AuditableEntity.CreatedBy))
+                           .HasDefaultValue("system");
+                }
+            }
+        }
 
         private static void SeedCountries(ModelBuilder modelBuilder)
         {

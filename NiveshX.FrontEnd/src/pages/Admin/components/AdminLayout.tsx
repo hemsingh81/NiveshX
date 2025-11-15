@@ -1,4 +1,12 @@
 import React from "react";
+import {
+  MdBusiness,
+  MdDomain,
+  MdFormatQuote,
+  MdGroup,
+  MdLocalOffer,
+  MdPublic,
+} from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
 
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -21,8 +29,12 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 : "hover:bg-blue-50 hover:text-blue-700"
             }`}
           >
-            🌟 Motivation Quotes
+            <span className="inline-flex items-center gap-2">
+              <MdFormatQuote className="text-lg" />
+              Motivation Quotes
+            </span>
           </Link>
+
           <Link
             to="/admin/user-management"
             className={`block px-4 py-2 rounded-md transition-all duration-300 ${
@@ -31,8 +43,12 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 : "hover:bg-blue-50 hover:text-blue-700"
             }`}
           >
-            👥 User Management
+            <span className="inline-flex items-center gap-2">
+              <MdGroup className="text-lg" />
+              User Management
+            </span>
           </Link>
+
           <Link
             to="/admin/country"
             className={`block px-4 py-2 rounded-md transition-all duration-300 ${
@@ -41,7 +57,52 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 : "hover:bg-blue-50 hover:text-blue-700"
             }`}
           >
-            🌍 Countries
+            <span className="inline-flex items-center gap-2">
+              <MdPublic className="text-lg" />
+              Countries
+            </span>
+          </Link>
+
+          <Link
+            to="/admin/industry"
+            className={`block px-4 py-2 rounded-md transition-all duration-300 ${
+              isActive("/admin/industry")
+                ? "bg-blue-100 text-blue-900 font-semibold shadow-sm border-l-4 border-blue-500"
+                : "hover:bg-blue-50 hover:text-blue-700"
+            }`}
+          >
+            <span className="inline-flex items-center gap-2">
+              <MdBusiness className="text-lg" />
+              Industries
+            </span>
+          </Link>
+
+          <Link
+            to="/admin/sector"
+            className={`block px-4 py-2 rounded-md transition-all duration-300 ${
+              isActive("/admin/sector")
+                ? "bg-blue-100 text-blue-900 font-semibold shadow-sm border-l-4 border-blue-500"
+                : "hover:bg-blue-50 hover:text-blue-700"
+            }`}
+          >
+            <span className="inline-flex items-center gap-2">
+              <MdDomain className="text-lg" />
+              Sectors
+            </span>
+          </Link>
+
+          <Link
+            to="/admin/classification-tag"
+            className={`block px-4 py-2 rounded-md transition-all duration-300 ${
+              isActive("/admin/classification-tag")
+                ? "bg-blue-100 text-blue-900 font-semibold shadow-sm border-l-4 border-blue-500"
+                : "hover:bg-blue-50 hover:text-blue-700"
+            }`}
+          >
+            <span className="inline-flex items-center gap-2">
+              <MdLocalOffer className="text-lg" />
+              Classification Tags
+            </span>
           </Link>
         </nav>
       </aside>

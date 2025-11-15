@@ -8,7 +8,7 @@ namespace NiveshX.Core.Models
     public abstract class AuditableEntity
     {
         [Key]
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>
         /// Indicates whether the entity is active in business logic.
