@@ -1,8 +1,14 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.User;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace NiveshX.Infrastructure.Services
 {
@@ -10,11 +16,16 @@ namespace NiveshX.Infrastructure.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<UserManagementService> _logger;
+        private readonly IMapper _mapper;
 
-        public UserManagementService(IUnitOfWork unitOfWork, ILogger<UserManagementService> logger)
+        public UserManagementService(
+            IUnitOfWork unitOfWork,
+            ILogger<UserManagementService> logger,
+            IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<UserResponse>> GetAllUsersAsync(CancellationToken cancellationToken = default)
@@ -23,7 +34,7 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Retrieving all users");
                 var users = await _unitOfWork.Users.GetAllAsync(cancellationToken);
-                return users.Select(MapToResponse);
+                return users.Select(u => _mapper.Map<UserResponse>(u));
             }
             catch (Exception ex)
             {
@@ -38,7 +49,7 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Retrieving user by ID: {UserId}", id);
                 var user = await _unitOfWork.Users.GetByIdAsync(id, cancellationToken);
-                return user == null ? null : MapToResponse(user);
+                return user == null ? null : _mapper.Map<UserResponse>(user);
             }
             catch (Exception ex)
             {
@@ -51,28 +62,26 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                var user = new User
-                {
-                    Id = Guid.NewGuid(),
-                    Name = request.Name,
-                    Email = request.Email,
-                    PhoneNumber = request.PhoneNumber,
-                    Role = request.Role,
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                    IsEmailConfirmed = true,
-                    IsPhoneConfirmed = true,
-                    IsLockedOut = false,
-                    IsActive = true,
-                    FailedLoginAttempts = 0,
-                    CreatedOn = DateTime.UtcNow,
-                    CreatedBy = "Admin"
-                };
+                _logger.LogInformation("Creating user: {Email}", request.Email);
+
+                var user = _mapper.Map<User>(request);
+
+                // explicit lifecycle & security wiring
+                user.Id = Guid.NewGuid();
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                user.IsEmailConfirmed = true;
+                user.IsPhoneConfirmed = true;
+                user.IsLockedOut = false;
+                user.IsActive = true;
+                user.FailedLoginAttempts = 0;
+                user.CreatedOn = DateTime.UtcNow;
+                user.CreatedBy = "Admin";
 
                 await _unitOfWork.Users.AddAsync(user, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation("User created: {Email}", request.Email);
-                return MapToResponse(user);
+                return _mapper.Map<UserResponse>(user);
             }
             catch (Exception ex)
             {
@@ -93,15 +102,9 @@ namespace NiveshX.Infrastructure.Services
                     return null;
                 }
 
-                user.Name = request.Name;
-                user.Email = request.Email;
-                user.PhoneNumber = request.PhoneNumber;
-                user.Role = request.Role;
-                user.IsEmailConfirmed = request.IsEmailConfirmed;
-                user.IsPhoneConfirmed = request.IsPhoneConfirmed;
-                user.IsLockedOut = request.IsLockedOut;
-                user.FailedLoginAttempts = request.FailedLoginAttempts;
-                user.IsActive = request.IsActive;
+                _mapper.Map(request, user);
+
+                // explicit audit wiring
                 user.ModifiedOn = DateTime.UtcNow;
                 user.ModifiedBy = "Admin";
 
@@ -109,7 +112,7 @@ namespace NiveshX.Infrastructure.Services
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation("User updated: {UserId}", id);
-                return MapToResponse(user);
+                return _mapper.Map<UserResponse>(user);
             }
             catch (Exception ex)
             {
@@ -142,21 +145,5 @@ namespace NiveshX.Infrastructure.Services
                 throw;
             }
         }
-
-        private static UserResponse MapToResponse(User user) => new()
-        {
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email,
-            PhoneNumber = user.PhoneNumber,
-            Role = user.Role.ToString(),
-            IsEmailConfirmed = user.IsEmailConfirmed,
-            IsPhoneConfirmed = user.IsPhoneConfirmed,
-            IsLockedOut = user.IsLockedOut,
-            IsActive = user.IsActive,
-            FailedLoginAttempts = user.FailedLoginAttempts,
-            LastLoginOn = user.LastLoginOn
-        };
     }
-
 }

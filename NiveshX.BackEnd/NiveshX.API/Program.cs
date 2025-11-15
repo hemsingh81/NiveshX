@@ -35,6 +35,7 @@ builder.Services.AddAutoMapper(cfg => cfg.AddProfile<IndustryProfile>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<ClassificationTagProfile>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<SectorProfile>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MotivationQuoteProfile>());
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<UserProfile>());
 
 // ---- HttpContext / user context ----
 builder.Services.AddHttpContextAccessor();
