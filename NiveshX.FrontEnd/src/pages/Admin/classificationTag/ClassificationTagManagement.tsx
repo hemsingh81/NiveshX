@@ -11,7 +11,7 @@ import {
   ClassificationTagResponse,
   CreateClassificationTagRequest,
   UpdateClassificationTagRequest,
-} from "../../../services/classificationTagService";
+} from "../../../services";
 import ClassificationTagFormDialog from "./ClassificationTagFormDialog";
 import { ConfirmButton } from "../../../controls";
 

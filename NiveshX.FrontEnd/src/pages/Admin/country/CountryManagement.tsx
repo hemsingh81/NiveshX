@@ -11,7 +11,7 @@ import {
   CountryResponse,
   CreateCountryRequest,
   UpdateCountryRequest,
-} from "../../../services/countryService";
+} from "../../../services";
 import CountryFormDialog from "./CountryFormDialog";
 import { ConfirmButton } from "../../../controls";
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setUser } from "./store/userSlice";
@@ -21,84 +21,72 @@ import {
 } from "./pages";
 import ProtectedRoute from "./ProtectedRoute";
 
-interface StoredUser {
+type StoredUser = {
   name: string;
   role: string;
   profilePictureUrl: string;
-}
+};
 
-const protectedRoutes = [
-  { path: "/dashboard", element: <Dashboard /> },
+type ProtectedRouteConfig = {
+  path: string;
+  element: React.ReactNode;
+  allowedRoles?: string[];
+  requireAuth?: boolean;
+};
+
+const makeAdmin = (node: React.ReactNode) => <AdminLayout>{node}</AdminLayout>;
+
+const ROUTES: ProtectedRouteConfig[] = [
+  { path: "/dashboard", element: <Dashboard />, requireAuth: true },
   {
     path: "/admin",
-    element: (
-      <AdminLayout>
-        <Admin />
-      </AdminLayout>
-    ),
+    element: makeAdmin(<Admin />),
     allowedRoles: ["Admin"],
+    requireAuth: true,
   },
   {
     path: "/admin/motivation",
-    element: (
-      <AdminLayout>
-        <MotivationQuotes />
-      </AdminLayout>
-    ),
+    element: makeAdmin(<MotivationQuotes />),
     allowedRoles: ["Admin"],
+    requireAuth: true,
   },
   {
     path: "/admin/user-management",
-    element: (
-      <AdminLayout>
-        <UserManagement />
-      </AdminLayout>
-    ),
+    element: makeAdmin(<UserManagement />),
     allowedRoles: ["Admin"],
+    requireAuth: true,
   },
   {
     path: "/admin/country",
-    element: (
-      <AdminLayout>
-        <CountryManagement />
-      </AdminLayout>
-    ),
+    element: makeAdmin(<CountryManagement />),
     allowedRoles: ["Admin"],
+    requireAuth: true,
   },
   {
     path: "/admin/industry",
-    element: (
-      <AdminLayout>
-        <IndustryManagement />
-      </AdminLayout>
-    ),
+    element: makeAdmin(<IndustryManagement />),
     allowedRoles: ["Admin"],
+    requireAuth: true,
   },
   {
     path: "/admin/sector",
-    element: (
-      <AdminLayout>
-        <SectorManagement />
-      </AdminLayout>
-    ),
+    element: makeAdmin(<SectorManagement />),
     allowedRoles: ["Admin"],
-  }
-  ,
+    requireAuth: true,
+  },
   {
     path: "/admin/classification-tag",
-    element: (
-      <AdminLayout>
-        <ClassificationTagManagement />
-      </AdminLayout>
-    ),
+    element: makeAdmin(<ClassificationTagManagement />),
     allowedRoles: ["Admin"],
+    requireAuth: true,
   },
   {
     path: "/master",
     element: <Master />,
     allowedRoles: ["Admin", "Trader", "Master"],
+    requireAuth: true,
   },
-  { path: "/profile", element: <Profile /> },
+  { path: "/profile", element: <Profile />, requireAuth: true },
   { path: "/unauthorized", element: <Unauthorized /> },
   { path: "/server-error", element: <ServerError /> },
 ];
@@ -109,9 +97,11 @@ const App: React.FC = () => {
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     const rawUser = sessionStorage.getItem("user");
+    if (!token || !rawUser) return;
+
     try {
-      const user: StoredUser | null = rawUser ? JSON.parse(rawUser) : null;
-      if (token && user?.name && user?.role) {
+      const user: StoredUser = JSON.parse(rawUser);
+      if (user?.name && user?.role) {
         dispatch(setUser({ token, user }));
       }
     } catch {
@@ -119,23 +109,27 @@ const App: React.FC = () => {
     }
   }, [dispatch]);
 
+  const renderedRoutes = useMemo(
+    () =>
+      ROUTES.map(({ path, element, allowedRoles, requireAuth }) => {
+        const elementNode = requireAuth ? (
+          <ProtectedRoute allowedRoles={allowedRoles}>{element}</ProtectedRoute>
+        ) : (
+          element
+        );
+
+        return <Route key={path} path={path} element={elementNode} />;
+      }),
+    []
+  );
+
   return (
     <>
       <Toaster position="top-right" reverseOrder={false} />
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
-        {protectedRoutes.map(({ path, element, allowedRoles }) => (
-          <Route
-            key={path}
-            path={path}
-            element={
-              <ProtectedRoute allowedRoles={allowedRoles}>
-                {element}
-              </ProtectedRoute>
-            }
-          />
-        ))}
+        {renderedRoutes}
       </Routes>
     </>
   );

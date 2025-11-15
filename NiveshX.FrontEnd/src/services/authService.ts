@@ -7,7 +7,7 @@ const API_URL = `${process.env.REACT_APP_API_BASE_URL}/auth`;
 const BASE_URL =
   process.env.REACT_APP_API_BASE_URL?.replace(/\/?api\/?$/, "") || "";
 
-interface LoginResponse {
+export interface LoginResponse {
   token: string;
   refreshToken: string;
   role: string;
@@ -15,7 +15,7 @@ interface LoginResponse {
   profilePictureUrl: string;
 }
 
-interface RefreshResponse {
+export interface RefreshResponse {
   token: string;
 }
 

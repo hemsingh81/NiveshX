@@ -11,7 +11,7 @@ import {
   SectorResponse,
   CreateSectorRequest,
   UpdateSectorRequest,
-} from "../../../services/sectorService";
+} from "../../../services";
 import SectorFormDialog from "./SectorFormDialog";
 import { ConfirmButton } from "../../../controls";
 

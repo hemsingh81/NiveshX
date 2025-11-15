@@ -15,7 +15,7 @@ import {
   CreateIndustryRequest,
   UpdateIndustryRequest,
   IndustryResponse,
-} from "../../../services/industryService";
+} from "../../../services";
 import { mapServerErrorsToFieldErrors } from "../../../utils/validationMapper";
 
 interface Props {

@@ -11,7 +11,7 @@ import {
   IndustryResponse,
   CreateIndustryRequest,
   UpdateIndustryRequest,
-} from "../../../services/industryService";
+} from "../../../services";
 import IndustryFormDialog from "./IndustryFormDialog";
 import { ConfirmButton } from "../../../controls";
 

@@ -17,7 +17,7 @@ import {
   CreateUserRequest,
   UpdateUserRequest,
   UserResponse,
-} from "../../../services/userService";
+} from "../../../services";
 import { mapServerErrorsToFieldErrors } from "../../../utils/validationMapper";
 
 interface Props {

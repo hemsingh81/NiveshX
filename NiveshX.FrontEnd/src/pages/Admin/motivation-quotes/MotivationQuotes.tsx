@@ -19,7 +19,7 @@ import {
   editQuote,
   deleteQuote,
   MotivationQuote,
-} from '../../../services/motivationService';
+} from '../../../services';
 import { ConfirmButton } from '../../../controls';
 
 const MotivationQuotes: React.FC = () => {

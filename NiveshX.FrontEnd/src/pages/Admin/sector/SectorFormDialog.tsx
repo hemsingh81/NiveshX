@@ -15,7 +15,7 @@ import {
   CreateSectorRequest,
   UpdateSectorRequest,
   SectorResponse,
-} from "../../../services/sectorService";
+} from "../../../services";
 import { mapServerErrorsToFieldErrors } from "../../../utils/validationMapper";
 
 interface Props {

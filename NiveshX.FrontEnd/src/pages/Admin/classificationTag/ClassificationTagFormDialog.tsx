@@ -15,7 +15,7 @@ import {
   CreateClassificationTagRequest,
   UpdateClassificationTagRequest,
   ClassificationTagResponse,
-} from "../../../services/classificationTagService";
+} from "../../../services";
 import { mapServerErrorsToFieldErrors } from "../../../utils/validationMapper";
 
 interface Props {

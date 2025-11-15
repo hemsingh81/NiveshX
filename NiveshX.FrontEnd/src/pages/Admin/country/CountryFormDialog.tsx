@@ -15,7 +15,7 @@ import {
   CreateCountryRequest,
   UpdateCountryRequest,
   CountryResponse,
-} from "../../../services/countryService";
+} from "../../../services";
 import { mapServerErrorsToFieldErrors } from "../../../utils/validationMapper";
 
 interface Props {

@@ -11,7 +11,7 @@ import {
   UserResponse,
   CreateUserRequest,
   UpdateUserRequest,
-} from "../../../services/userService";
+} from "../../../services";
 import UserFormDialog from "./UserFormDialog";
 import { ConfirmButton } from "../../../controls";
 
