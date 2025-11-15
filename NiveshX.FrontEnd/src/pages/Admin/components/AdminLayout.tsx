@@ -105,7 +105,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 bg-white shadow-inner rounded-lg overflow-auto p-6">
+      <main className="flex-1 bg-white shadow-inner rounded-lg overflow-auto">
         {children}
       </main>
     </div>

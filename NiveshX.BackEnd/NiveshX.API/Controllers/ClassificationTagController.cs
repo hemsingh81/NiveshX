@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NiveshX.API.Utils;
 using NiveshX.Core.DTOs.ClassificationTag;
 using NiveshX.Core.Interfaces.Services;
 
@@ -21,122 +22,67 @@ namespace NiveshX.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<ClassificationTagResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult<IEnumerable<ClassificationTagResponse>>> GetAll(CancellationToken cancellationToken) =>
+            this.ExecuteAsync<IEnumerable<ClassificationTagResponse>>(async () =>
             {
                 _logger.LogInformation("Fetching all classification tags");
                 var tags = await _service.GetAllAsync(cancellationToken);
                 return Ok(tags);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while fetching classification tags");
-                return StatusCode(500, new { error = "An unexpected error occurred while retrieving classification tags." });
-            }
-        }
+            }, _logger, "Error occurred while fetching classification tags");
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:guid}")]
         [ProducesResponseType(typeof(ClassificationTagResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult<ClassificationTagResponse>> GetById(Guid id, CancellationToken cancellationToken) =>
+            this.ExecuteAsync<ClassificationTagResponse>(async () =>
             {
                 _logger.LogInformation("Fetching classification tag with ID: {TagId}", id);
                 var tag = await _service.GetByIdAsync(id, cancellationToken);
-                if (tag == null)
-                {
-                    _logger.LogWarning("Classification tag not found with ID: {TagId}", id);
-                    return NotFound("Classification tag not found");
-                }
-
-                return Ok(tag);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while fetching classification tag with ID: {TagId}", id);
-                return StatusCode(500, new { error = "An unexpected error occurred while retrieving classification tag." });
-            }
-        }
+                return tag is not null ? Ok(tag) : NotFound(new { message = "Classification tag not found" });
+            }, _logger, "Error occurred while fetching classification tag with ID: {TagId}", id);
 
         [HttpPost]
-        [ProducesResponseType(typeof(ClassificationTagResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ClassificationTagResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Create([FromBody] CreateClassificationTagRequest request, CancellationToken cancellationToken)
+        public Task<ActionResult<ClassificationTagResponse>> Create([FromBody] CreateClassificationTagRequest request, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return Task.FromResult<ActionResult<ClassificationTagResponse>>(BadRequest(ModelState));
 
-            try
+            return this.ExecuteAsync<ClassificationTagResponse>(async () =>
             {
                 _logger.LogInformation("Creating new classification tag: {Name}", request.Name);
                 var created = await _service.CreateAsync(request, cancellationToken);
-                return Ok(created);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while creating classification tag: {Name}", request.Name);
-                return StatusCode(500, new { error = "An unexpected error occurred while creating classification tag." });
-            }
+                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            }, _logger, "Error occurred while creating classification tag: {Name}", request.Name);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id:guid}")]
         [ProducesResponseType(typeof(ClassificationTagResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateClassificationTagRequest request, CancellationToken cancellationToken)
+        public Task<ActionResult<ClassificationTagResponse>> Update(Guid id, [FromBody] UpdateClassificationTagRequest request, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return Task.FromResult<ActionResult<ClassificationTagResponse>>(BadRequest(ModelState));
 
-            try
+            return this.ExecuteAsync<ClassificationTagResponse>(async () =>
             {
                 _logger.LogInformation("Updating classification tag with ID: {TagId}", id);
                 var updated = await _service.UpdateAsync(id, request, cancellationToken);
-                if (updated == null)
-                {
-                    _logger.LogWarning("Classification tag not found for update: {TagId}", id);
-                    return NotFound("Classification tag not found");
-                }
-
-                return Ok(updated);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while updating classification tag with ID: {TagId}", id);
-                return StatusCode(500, new { error = "An unexpected error occurred while updating classification tag." });
-            }
+                return updated is not null ? Ok(updated) : NotFound(new { message = "Classification tag not found" });
+            }, _logger, "Error occurred while updating classification tag with ID: {TagId}", id);
         }
 
-        [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpDelete("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
+            this.ExecuteAsync(async () =>
             {
                 _logger.LogInformation("Attempting to delete classification tag with ID: {TagId}", id);
                 var success = await _service.DeleteAsync(id, cancellationToken);
-                if (!success)
-                {
-                    _logger.LogWarning("Classification tag not found for deletion: {TagId}", id);
-                    return NotFound("Classification tag not found");
-                }
-
-                _logger.LogInformation("Classification tag deleted successfully: {TagId}", id);
-                return Ok("Classification tag deleted successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while deleting classification tag with ID: {TagId}", id);
-                return StatusCode(500, new { error = "An unexpected error occurred while deleting classification tag." });
-            }
-        }
+                return success ? NoContent() : NotFound(new { message = "Classification tag not found" });
+            }, _logger, "Error occurred while deleting classification tag with ID: {TagId}", id);
     }
 }

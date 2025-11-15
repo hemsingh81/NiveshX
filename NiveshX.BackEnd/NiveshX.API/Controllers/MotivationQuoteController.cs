@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NiveshX.API.Utils;
 using NiveshX.Core.DTOs.MotivationQuote;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
-using System.Security.Claims;
 
 namespace NiveshX.API.Controllers
 {
@@ -24,10 +24,12 @@ namespace NiveshX.API.Controllers
         [HttpPost("add")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Add([FromBody] AddMotivationQuoteRequest request, CancellationToken cancellationToken)
+        public Task<ActionResult> Add([FromBody] AddMotivationQuoteRequest request, CancellationToken cancellationToken)
         {
-            try
+            if (!ModelState.IsValid)
+                return Task.FromResult<ActionResult>(BadRequest(ModelState));
+
+            return this.ExecuteAsync(async () =>
             {
                 if (string.IsNullOrWhiteSpace(request.Quote))
                     return BadRequest("Quote cannot be empty");
@@ -38,21 +40,19 @@ namespace NiveshX.API.Controllers
 
                 _logger.LogInformation("Motivation quote added: {Quote}", request.Quote);
                 return Ok("Quote added successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error adding motivation quote");
-                return StatusCode(500, new { error = "An unexpected error occurred while adding quote." });
-            }
+            }, _logger, "Error adding motivation quote");
         }
 
         [HttpPut("edit")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Edit([FromBody] EditMotivationQuoteRequest request, CancellationToken cancellationToken)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public Task<ActionResult> Edit([FromBody] EditMotivationQuoteRequest request, CancellationToken cancellationToken)
         {
-            try
+            if (!ModelState.IsValid)
+                return Task.FromResult<ActionResult>(BadRequest(ModelState));
+
+            return this.ExecuteAsync(async () =>
             {
                 var success = await _service.EditAsync(request, cancellationToken);
                 if (!success)
@@ -63,21 +63,14 @@ namespace NiveshX.API.Controllers
 
                 _logger.LogInformation("Motivation quote updated: {Id}", request.Id);
                 return Ok("Quote updated successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error editing motivation quote");
-                return StatusCode(500, new { error = "An unexpected error occurred while editing quote." });
-            }
+            }, _logger, "Error editing motivation quote with ID: {Id}", request.Id);
         }
 
-        [HttpDelete("delete/{id}")]
+        [HttpDelete("delete/{id:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
+            this.ExecuteAsync(async () =>
             {
                 var success = await _service.DeleteAsync(id, cancellationToken);
                 if (!success)
@@ -88,69 +81,35 @@ namespace NiveshX.API.Controllers
 
                 _logger.LogInformation("Motivation quote soft-deleted: {Id}", id);
                 return Ok("Quote deleted successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting motivation quote");
-                return StatusCode(500, new { error = "An unexpected error occurred while deleting quote." });
-            }
-        }
+            }, _logger, "Error deleting motivation quote with ID: {Id}", id);
 
         [HttpGet("all")]
         [ProducesResponseType(typeof(List<MotivationQuote>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult<List<MotivationQuote>>> GetAll(CancellationToken cancellationToken) =>
+            this.ExecuteAsync<List<MotivationQuote>>(async () =>
             {
                 var result = await _service.GetAllAsync(cancellationToken);
                 return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving all motivation quotes");
-                return StatusCode(500, new { error = "An unexpected error occurred while retrieving quotes." });
-            }
-        }
+            }, _logger, "Error retrieving all motivation quotes");
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:guid}")]
         [ProducesResponseType(typeof(MotivationQuote), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult<MotivationQuote>> GetById(Guid id, CancellationToken cancellationToken) =>
+            this.ExecuteAsync<MotivationQuote>(async () =>
             {
                 var result = await _service.GetByIdAsync(id, cancellationToken);
-                if (result == null)
-                    return NotFound("Quote not found");
-
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving motivation quote by ID");
-                return StatusCode(500, new { error = "An unexpected error occurred while retrieving quote." });
-            }
-        }
+                return result is not null ? Ok(result) : NotFound("Quote not found");
+            }, _logger, "Error retrieving motivation quote by ID: {Id}", id);
 
         [HttpGet("all-active")]
         [ProducesResponseType(typeof(List<MotivationQuote>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAllActive(CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult<List<MotivationQuote>>> GetAllActive(CancellationToken cancellationToken) =>
+            this.ExecuteAsync<List<MotivationQuote>>(async () =>
             {
                 var result = await _service.GetAllActive(cancellationToken);
                 return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving all motivation quotes");
-                return StatusCode(500, new { error = "An unexpected error occurred while retrieving quotes." });
-            }
-        }
-
+            }, _logger, "Error retrieving all active motivation quotes");
     }
 }

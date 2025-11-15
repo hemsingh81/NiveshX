@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NiveshX.API.Utils;
 using NiveshX.Core.DTOs.User;
 using NiveshX.Core.Interfaces.Services;
-using NiveshX.Infrastructure.Repositories;
 using System.Security.Claims;
 
 namespace NiveshX.API.Controllers
@@ -25,10 +25,7 @@ namespace NiveshX.API.Controllers
         /// </summary>
         [HttpGet("ping")]
         [AllowAnonymous]
-        public IActionResult Ping()
-        {
-            return Ok("API is alive 🚀");
-        }
+        public IActionResult Ping() => Ok("API is alive 🚀");
 
         /// <summary>
         /// Authenticates a user and returns access and refresh tokens
@@ -38,13 +35,12 @@ namespace NiveshX.API.Controllers
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return Task.FromResult<ActionResult<LoginResponse>>(BadRequest(ModelState));
 
-            try
+            return this.ExecuteAsync<LoginResponse>(async () =>
             {
                 _logger.LogInformation("Login attempt for {Email}", request.Email);
 
@@ -57,12 +53,7 @@ namespace NiveshX.API.Controllers
 
                 _logger.LogInformation("Login successful for {Email}", request.Email);
                 return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unhandled exception during login for {Email}", request.Email);
-                return StatusCode(500, new { error = "An unexpected error occurred during login." });
-            }
+            }, _logger, "Unhandled exception during login for {Email}", request.Email);
         }
 
         [HttpGet("profile")]
@@ -70,10 +61,8 @@ namespace NiveshX.API.Controllers
         [ProducesResponseType(typeof(UserProfileResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetProfile(CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult<UserProfileResponse>> GetProfile(CancellationToken cancellationToken) =>
+            this.ExecuteAsync<UserProfileResponse>(async () =>
             {
                 var userId = GetUserIdFromClaims();
                 if (userId == null)
@@ -83,27 +72,20 @@ namespace NiveshX.API.Controllers
                 }
 
                 var profile = await _authService.GetUserProfileAsync(userId.Value, cancellationToken);
-                if (profile == null)
-                    return NotFound("User not found");
-
-                return Ok(profile);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unhandled exception while retrieving profile");
-                return StatusCode(500, new { error = "An unexpected error occurred while retrieving profile." });
-            }
-        }
+                return profile is not null ? Ok(profile) : NotFound("User not found");
+            }, _logger, "Unhandled exception while retrieving profile for userId: {UserId}", GetUserIdFromClaims());
 
         [HttpPut("profile")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
+        public Task<ActionResult> UpdateProfile([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
         {
-            try
+            if (!ModelState.IsValid)
+                return Task.FromResult<ActionResult>(BadRequest(ModelState));
+
+            return this.ExecuteAsync(async () =>
             {
                 var userId = GetUserIdFromClaims();
                 if (userId == null)
@@ -118,12 +100,7 @@ namespace NiveshX.API.Controllers
 
                 _logger.LogInformation("Profile updated for user: {UserId}", userId);
                 return Ok("Profile updated successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unhandled exception while updating profile");
-                return StatusCode(500, new { error = "An unexpected error occurred while updating profile." });
-            }
+            }, _logger, "Unhandled exception while updating profile for userId: {UserId}", GetUserIdFromClaims());
         }
 
         [HttpPost("profile/image")]
@@ -131,36 +108,38 @@ namespace NiveshX.API.Controllers
         [RequestSizeLimit(5_000_000)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UploadProfileImage(IFormFile file, CancellationToken cancellationToken)
+        public Task<ActionResult> UploadProfileImage(IFormFile file, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Profile image upload started");
-
-            if (file == null || file.Length == 0)
+            return this.ExecuteAsync(async () =>
             {
-                _logger.LogWarning("No file uploaded");
-                return BadRequest("No file uploaded");
-            }
+                _logger.LogInformation("Profile image upload started");
 
-            var userId = GetUserIdFromClaims();
-            if (userId == null)
-            {
-                _logger.LogWarning("Missing user ID claim");
-                return Unauthorized("Invalid token");
-            }
+                if (file == null || file.Length == 0)
+                {
+                    _logger.LogWarning("No file uploaded");
+                    return BadRequest("No file uploaded");
+                }
 
-            await DeleteProfileImageIfExistsAsync(userId.Value);
-            var imagePath = await SaveProfileImageAsync(userId.Value, file, cancellationToken);
-            if (imagePath == null)
-            {
-                _logger.LogWarning("Unsupported file type: {FileName}", file.FileName);
-                return BadRequest("Unsupported file type");
-            }
+                var userId = GetUserIdFromClaims();
+                if (userId == null)
+                {
+                    _logger.LogWarning("Missing user ID claim");
+                    return Unauthorized("Invalid token");
+                }
 
-            await _authService.UpdateProfilePictureAsync(userId.Value, imagePath, cancellationToken);
-            _logger.LogInformation("Profile image updated for user: {UserId}", userId);
+                await DeleteProfileImageIfExistsAsync(userId.Value);
+                var imagePath = await SaveProfileImageAsync(userId.Value, file, cancellationToken);
+                if (imagePath == null)
+                {
+                    _logger.LogWarning("Unsupported file type: {FileName}", file.FileName);
+                    return BadRequest("Unsupported file type");
+                }
 
-            return Ok(new { imageUrl = imagePath });
+                await _authService.UpdateProfilePictureAsync(userId.Value, imagePath, cancellationToken);
+                _logger.LogInformation("Profile image updated for user: {UserId}", userId);
+
+                return Ok(new { imageUrl = imagePath });
+            }, _logger, "Unhandled exception during profile image upload for userId: {UserId}", GetUserIdFromClaims());
         }
 
         [HttpPost("change-password")]
@@ -168,10 +147,12 @@ namespace NiveshX.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+        public Task<ActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
         {
-            try
+            if (!ModelState.IsValid)
+                return Task.FromResult<ActionResult>(BadRequest(ModelState));
+
+            return this.ExecuteAsync(async () =>
             {
                 var userId = GetUserIdFromClaims();
                 if (userId == null)
@@ -189,12 +170,7 @@ namespace NiveshX.API.Controllers
 
                 _logger.LogInformation("Password changed successfully for user: {UserId}", userId);
                 return Ok("Password changed successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error changing password");
-                return StatusCode(500, new { error = "An unexpected error occurred while changing password." });
-            }
+            }, _logger, "Error changing password for userId: {UserId}", GetUserIdFromClaims());
         }
 
         /// <summary>
@@ -204,13 +180,12 @@ namespace NiveshX.API.Controllers
         [AllowAnonymous]
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> RefreshToken([FromBody] TokenRefreshRequest request)
+        public Task<ActionResult<LoginResponse>> RefreshToken([FromBody] TokenRefreshRequest request)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return Task.FromResult<ActionResult<LoginResponse>>(BadRequest(ModelState));
 
-            try
+            return this.ExecuteAsync<LoginResponse>(async () =>
             {
                 _logger.LogInformation("Refresh token attempt");
 
@@ -223,12 +198,7 @@ namespace NiveshX.API.Controllers
 
                 _logger.LogInformation("Refresh token successful");
                 return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unhandled exception during token refresh");
-                return StatusCode(500, new { error = "An unexpected error occurred during token refresh." });
-            }
+            }, _logger, "Unhandled exception during token refresh");
         }
 
         #region Private Methods
@@ -275,7 +245,7 @@ namespace NiveshX.API.Controllers
             var fullPath = Path.Combine("wwwroot", "uploads", "profile", fileName);
 
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-            using var stream = new FileStream(fullPath, FileMode.Create);
+            await using var stream = new FileStream(fullPath, FileMode.Create);
             await file.CopyToAsync(stream, cancellationToken);
 
             _logger.LogInformation("Saved profile image to {Path}", fullPath);
@@ -283,6 +253,5 @@ namespace NiveshX.API.Controllers
         }
 
         #endregion
-
     }
 }

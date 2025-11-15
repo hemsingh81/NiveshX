@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NiveshX.API.Utils;
 using NiveshX.Core.DTOs.Industry;
 using NiveshX.Core.Interfaces.Services;
 
@@ -21,122 +22,67 @@ namespace NiveshX.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<IndustryResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult<IEnumerable<IndustryResponse>>> GetAll(CancellationToken cancellationToken) =>
+            this.ExecuteAsync<IEnumerable<IndustryResponse>>(async () =>
             {
                 _logger.LogInformation("Fetching all industries");
                 var industries = await _service.GetAllAsync(cancellationToken);
                 return Ok(industries);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while fetching industries");
-                return StatusCode(500, new { error = "An unexpected error occurred while retrieving industries." });
-            }
-        }
+            }, _logger, "Error occurred while fetching industries");
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:guid}")]
         [ProducesResponseType(typeof(IndustryResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult<IndustryResponse>> GetById(Guid id, CancellationToken cancellationToken) =>
+            this.ExecuteAsync<IndustryResponse>(async () =>
             {
                 _logger.LogInformation("Fetching industry with ID: {IndustryId}", id);
                 var industry = await _service.GetByIdAsync(id, cancellationToken);
-                if (industry == null)
-                {
-                    _logger.LogWarning("Industry not found with ID: {IndustryId}", id);
-                    return NotFound("Industry not found");
-                }
-
-                return Ok(industry);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while fetching industry with ID: {IndustryId}", id);
-                return StatusCode(500, new { error = "An unexpected error occurred while retrieving industry." });
-            }
-        }
+                return industry is not null ? Ok(industry) : NotFound(new { message = "Industry not found" });
+            }, _logger, "Error occurred while fetching industry with ID: {IndustryId}", id);
 
         [HttpPost]
-        [ProducesResponseType(typeof(IndustryResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IndustryResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Create([FromBody] CreateIndustryRequest request, CancellationToken cancellationToken)
+        public Task<ActionResult<IndustryResponse>> Create([FromBody] CreateIndustryRequest request, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return Task.FromResult<ActionResult<IndustryResponse>>(BadRequest(ModelState));
 
-            try
+            return this.ExecuteAsync<IndustryResponse>(async () =>
             {
                 _logger.LogInformation("Creating new industry: {Name}", request.Name);
                 var created = await _service.CreateAsync(request, cancellationToken);
-                return Ok(created);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while creating industry: {Name}", request.Name);
-                return StatusCode(500, new { error = "An unexpected error occurred while creating industry." });
-            }
+                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            }, _logger, "Error occurred while creating industry: {Name}", request.Name);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id:guid}")]
         [ProducesResponseType(typeof(IndustryResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateIndustryRequest request, CancellationToken cancellationToken)
+        public Task<ActionResult<IndustryResponse>> Update(Guid id, [FromBody] UpdateIndustryRequest request, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return Task.FromResult<ActionResult<IndustryResponse>>(BadRequest(ModelState));
 
-            try
+            return this.ExecuteAsync<IndustryResponse>(async () =>
             {
                 _logger.LogInformation("Updating industry with ID: {IndustryId}", id);
                 var updated = await _service.UpdateAsync(id, request, cancellationToken);
-                if (updated == null)
-                {
-                    _logger.LogWarning("Industry not found for update: {IndustryId}", id);
-                    return NotFound("Industry not found");
-                }
-
-                return Ok(updated);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while updating industry with ID: {IndustryId}", id);
-                return StatusCode(500, new { error = "An unexpected error occurred while updating industry." });
-            }
+                return updated is not null ? Ok(updated) : NotFound(new { message = "Industry not found" });
+            }, _logger, "Error occurred while updating industry with ID: {IndustryId}", id);
         }
 
-        [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpDelete("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
+            this.ExecuteAsync(async () =>
             {
                 _logger.LogInformation("Attempting to delete industry with ID: {IndustryId}", id);
                 var success = await _service.DeleteAsync(id, cancellationToken);
-                if (!success)
-                {
-                    _logger.LogWarning("Industry not found for deletion: {IndustryId}", id);
-                    return NotFound("Industry not found");
-                }
-
-                _logger.LogInformation("Industry deleted successfully: {IndustryId}", id);
-                return Ok("Industry deleted successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while deleting industry with ID: {IndustryId}", id);
-                return StatusCode(500, new { error = "An unexpected error occurred while deleting industry." });
-            }
-        }
+                return success ? NoContent() : NotFound(new { message = "Industry not found" });
+            }, _logger, "Error occurred while deleting industry with ID: {IndustryId}", id);
     }
 }

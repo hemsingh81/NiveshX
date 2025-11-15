@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NiveshX.API.Utils;
 using NiveshX.Core.DTOs.Sector;
 using NiveshX.Core.Interfaces.Services;
 
@@ -21,122 +22,67 @@ namespace NiveshX.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<SectorResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult<IEnumerable<SectorResponse>>> GetAll(CancellationToken cancellationToken) =>
+            this.ExecuteAsync<IEnumerable<SectorResponse>>(async () =>
             {
                 _logger.LogInformation("Fetching all sectors");
                 var sectors = await _service.GetAllAsync(cancellationToken);
                 return Ok(sectors);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while fetching sectors");
-                return StatusCode(500, new { error = "An unexpected error occurred while retrieving sectors." });
-            }
-        }
+            }, _logger, "Error occurred while fetching sectors");
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:guid}")]
         [ProducesResponseType(typeof(SectorResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult<SectorResponse>> GetById(Guid id, CancellationToken cancellationToken) =>
+            this.ExecuteAsync<SectorResponse>(async () =>
             {
                 _logger.LogInformation("Fetching sector with ID: {SectorId}", id);
                 var sector = await _service.GetByIdAsync(id, cancellationToken);
-                if (sector == null)
-                {
-                    _logger.LogWarning("Sector not found with ID: {SectorId}", id);
-                    return NotFound("Sector not found");
-                }
-
-                return Ok(sector);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while fetching sector with ID: {SectorId}", id);
-                return StatusCode(500, new { error = "An unexpected error occurred while retrieving sector." });
-            }
-        }
+                return sector is not null ? Ok(sector) : NotFound(new { message = "Sector not found" });
+            }, _logger, "Error occurred while fetching sector with ID: {SectorId}", id);
 
         [HttpPost]
-        [ProducesResponseType(typeof(SectorResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(SectorResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Create([FromBody] CreateSectorRequest request, CancellationToken cancellationToken)
+        public Task<ActionResult<SectorResponse>> Create([FromBody] CreateSectorRequest request, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return Task.FromResult<ActionResult<SectorResponse>>(BadRequest(ModelState));
 
-            try
+            return this.ExecuteAsync<SectorResponse>(async () =>
             {
                 _logger.LogInformation("Creating new sector: {Name}", request.Name);
                 var created = await _service.CreateAsync(request, cancellationToken);
-                return Ok(created);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while creating sector: {Name}", request.Name);
-                return StatusCode(500, new { error = "An unexpected error occurred while creating sector." });
-            }
+                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            }, _logger, "Error occurred while creating sector: {Name}", request.Name);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id:guid}")]
         [ProducesResponseType(typeof(SectorResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSectorRequest request, CancellationToken cancellationToken)
+        public Task<ActionResult<SectorResponse>> Update(Guid id, [FromBody] UpdateSectorRequest request, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return Task.FromResult<ActionResult<SectorResponse>>(BadRequest(ModelState));
 
-            try
+            return this.ExecuteAsync<SectorResponse>(async () =>
             {
                 _logger.LogInformation("Updating sector with ID: {SectorId}", id);
                 var updated = await _service.UpdateAsync(id, request, cancellationToken);
-                if (updated == null)
-                {
-                    _logger.LogWarning("Sector not found for update: {SectorId}", id);
-                    return NotFound("Sector not found");
-                }
-
-                return Ok(updated);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while updating sector with ID: {SectorId}", id);
-                return StatusCode(500, new { error = "An unexpected error occurred while updating sector." });
-            }
+                return updated is not null ? Ok(updated) : NotFound(new { message = "Sector not found" });
+            }, _logger, "Error occurred while updating sector with ID: {SectorId}", id);
         }
 
-        [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpDelete("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-        {
-            try
+        public Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
+            this.ExecuteAsync(async () =>
             {
                 _logger.LogInformation("Attempting to delete sector with ID: {SectorId}", id);
                 var success = await _service.DeleteAsync(id, cancellationToken);
-                if (!success)
-                {
-                    _logger.LogWarning("Sector not found for deletion: {SectorId}", id);
-                    return NotFound("Sector not found");
-                }
-
-                _logger.LogInformation("Sector deleted successfully: {SectorId}", id);
-                return Ok("Sector deleted successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while deleting sector with ID: {SectorId}", id);
-                return StatusCode(500, new { error = "An unexpected error occurred while deleting sector." });
-            }
-        }
+                return success ? NoContent() : NotFound(new { message = "Sector not found" });
+            }, _logger, "Error occurred while deleting sector with ID: {SectorId}", id);
     }
 }
