@@ -16,20 +16,28 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Bind JWT settings
+// ---- Bind and validate JWT settings ----
 var jwtSection = builder.Configuration.GetSection("Jwt");
 builder.Services.Configure<JwtOptions>(jwtSection);
 var jwtKey = jwtSection.GetValue<string>("Key");
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    throw new InvalidOperationException("JWT:Key is not configured. Please set Jwt:Key in configuration.");
+}
 
-// Add services
+// ---- DbContext ----
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// ---- AutoMapper - scan mapping assembly (register all profiles) ----
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<CountryProfile>());
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<IndustryProfile>());
 
+// ---- HttpContext / user context ----
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, UserContext>();
 
+// ---- Application services / repositories ----
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
@@ -39,10 +47,12 @@ builder.Services.AddScoped<IIndustryService, IndustryService>();
 builder.Services.AddScoped<ISectorService, SectorService>();
 builder.Services.AddScoped<IClassificationTagService, ClassificationTagService>();
 
-// Add Authentication
+// ---- Authentication (JWT) ----
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
+        options.RequireHttpsMetadata = true;
+        options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = false,
@@ -53,7 +63,7 @@ builder.Services.AddAuthentication("Bearer")
         };
     });
 
-// Add CORS
+// ---- CORS ----
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
@@ -66,7 +76,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add Swagger
+// ---- Swagger ----
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -93,33 +103,46 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// ---- Controllers + JSON options (single call) ----
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
-
-builder.Services.AddControllers();
-
 var app = builder.Build();
 
-// Global error handler (optional)
-app.UseExceptionHandler("/error");
+// ---- Error handling and middleware ordering ----
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler("/error");
+}
 
-// Swagger for non-production
+// Custom exception middleware
+app.UseMiddleware<ExceptionMiddleware>();
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+// Ensure routing is used before CORS/auth
+app.UseRouting();
+
+app.UseCors(MyAllowSpecificOrigins);
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Swagger (non-production)
 if (!app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseCors(MyAllowSpecificOrigins);
-app.UseMiddleware<ExceptionMiddleware>();
-app.UseAuthentication();
-app.UseAuthorization();
 app.MapControllers();
-app.UseStaticFiles();
-app.Run();
 
+app.Run();

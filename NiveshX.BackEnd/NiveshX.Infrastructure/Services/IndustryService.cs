@@ -1,8 +1,14 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.Industry;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace NiveshX.Infrastructure.Services
 {
@@ -11,12 +17,18 @@ namespace NiveshX.Infrastructure.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserContext _userContext;
         private readonly ILogger<IndustryService> _logger;
+        private readonly IMapper _mapper;
 
-        public IndustryService(IUnitOfWork unitOfWork, ILogger<IndustryService> logger, IUserContext userContext)
+        public IndustryService(
+            IUnitOfWork unitOfWork,
+            ILogger<IndustryService> logger,
+            IUserContext userContext,
+            IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _userContext = userContext;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<IndustryResponse>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -25,7 +37,7 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Fetching all industries");
                 var industries = await _unitOfWork.Industries.GetAllAsync(cancellationToken);
-                return industries.Select(MapToResponse);
+                return industries.Select(i => _mapper.Map<IndustryResponse>(i));
             }
             catch (Exception ex)
             {
@@ -40,7 +52,7 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Fetching industry with ID: {IndustryId}", id);
                 var industry = await _unitOfWork.Industries.GetByIdAsync(id, cancellationToken);
-                return industry == null ? null : MapToResponse(industry);
+                return industry == null ? null : _mapper.Map<IndustryResponse>(industry);
             }
             catch (Exception ex)
             {
@@ -54,19 +66,19 @@ namespace NiveshX.Infrastructure.Services
             try
             {
                 _logger.LogInformation("Creating industry: {Name}", request.Name);
-                var industry = new Industry
-                {
-                    Id = Guid.NewGuid(),
-                    Name = request.Name,
-                    Description = request.Description,
-                    IsActive = true,
-                    CreatedOn = DateTime.UtcNow,
-                    CreatedBy = _userContext.UserId
-                };
+
+                var industry = _mapper.Map<Industry>(request);
+
+                industry.Id = Guid.NewGuid();
+                industry.IsActive = true;
+                industry.CreatedOn = DateTime.UtcNow;
+                industry.CreatedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
 
                 await _unitOfWork.Industries.AddAsync(industry, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
-                return MapToResponse(industry);
+
+                _logger.LogInformation("Industry created successfully: {IndustryId}", industry.Id);
+                return _mapper.Map<IndustryResponse>(industry);
             }
             catch (Exception ex)
             {
@@ -87,15 +99,16 @@ namespace NiveshX.Infrastructure.Services
                     return null;
                 }
 
-                industry.Name = request.Name;
-                industry.Description = request.Description;
-                industry.IsActive = request.IsActive;
+                _mapper.Map(request, industry);
+
                 industry.ModifiedOn = DateTime.UtcNow;
-                industry.ModifiedBy = _userContext.UserId;
+                industry.ModifiedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
 
                 await _unitOfWork.Industries.UpdateAsync(industry, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
-                return MapToResponse(industry);
+
+                _logger.LogInformation("Industry updated successfully: {IndustryId}", id);
+                return _mapper.Map<IndustryResponse>(industry);
             }
             catch (Exception ex)
             {
@@ -128,14 +141,5 @@ namespace NiveshX.Infrastructure.Services
                 throw;
             }
         }
-
-        private static IndustryResponse MapToResponse(Industry industry) => new()
-        {
-            Id = industry.Id,
-            Name = industry.Name,
-            Description = industry.Description,
-            IsActive = industry.IsActive
-        };
     }
-
 }
