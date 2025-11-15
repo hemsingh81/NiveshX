@@ -1,10 +1,13 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NiveshX.API.Middlewares;
 using NiveshX.Core.Config;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
+using NiveshX.Core.Mapping;
 using NiveshX.Infrastructure.Data;
 using NiveshX.Infrastructure.Repositories;
 using NiveshX.Infrastructure.Services;
@@ -22,9 +25,10 @@ var jwtKey = jwtSection.GetValue<string>("Key");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<CountryProfile>());
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, UserContext>();
-
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthService, AuthService>();

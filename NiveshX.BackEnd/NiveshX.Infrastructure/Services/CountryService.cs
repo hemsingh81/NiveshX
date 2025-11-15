@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.Country;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
@@ -11,12 +12,14 @@ namespace NiveshX.Infrastructure.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserContext _userContext;
         private readonly ILogger<CountryService> _logger;
+        private readonly IMapper _mapper;
 
-        public CountryService(IUnitOfWork unitOfWork, ILogger<CountryService> logger, IUserContext userContext)
+        public CountryService(IUnitOfWork unitOfWork, ILogger<CountryService> logger, IUserContext userContext, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _userContext = userContext;
             _logger = logger;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<CountryResponse>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -25,7 +28,7 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Fetching all countries");
                 var countries = await _unitOfWork.Countries.GetAllAsync(cancellationToken);
-                return countries.Select(MapToResponse);
+                return _mapper.Map<IEnumerable<CountryResponse>>(countries);
             }
             catch (Exception ex)
             {
@@ -40,7 +43,7 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Fetching country with ID: {CountryId}", id);
                 var country = await _unitOfWork.Countries.GetByIdAsync(id, cancellationToken);
-                return country == null ? null : MapToResponse(country);
+                return country == null ? null : _mapper.Map<CountryResponse>(country);
             }
             catch (Exception ex)
             {
@@ -55,21 +58,17 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Creating new country: {Code}", request.Code);
 
-                var country = new Country
-                {
-                    Id = Guid.NewGuid(),
-                    Name = request.Name,
-                    Code = request.Code,
-                    IsActive = true,
-                    CreatedOn = DateTime.UtcNow,
-                    CreatedBy = _userContext.UserId
-                };
+                var country = _mapper.Map<Country>(request);
+                country.Id = Guid.NewGuid();
+                country.IsActive = true;
+                country.CreatedOn = DateTime.UtcNow;
+                country.CreatedBy = _userContext.UserId;
 
                 await _unitOfWork.Countries.AddAsync(country, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation("Country created successfully: {CountryId}", country.Id);
-                return MapToResponse(country);
+                return _mapper.Map<CountryResponse>(country);
             }
             catch (Exception ex)
             {
@@ -90,9 +89,9 @@ namespace NiveshX.Infrastructure.Services
                     return null;
                 }
 
-                country.Name = request.Name;
-                country.Code = request.Code;
-                country.IsActive = request.IsActive;
+                // Map incoming request onto existing entity (won't overwrite ignored members per profile)
+                _mapper.Map(request, country);
+
                 country.ModifiedOn = DateTime.UtcNow;
                 country.ModifiedBy = _userContext.UserId;
 
@@ -100,7 +99,7 @@ namespace NiveshX.Infrastructure.Services
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation("Country updated successfully: {CountryId}", id);
-                return MapToResponse(country);
+                return _mapper.Map<CountryResponse>(country);
             }
             catch (Exception ex)
             {
@@ -133,14 +132,5 @@ namespace NiveshX.Infrastructure.Services
                 throw;
             }
         }
-
-        private static CountryResponse MapToResponse(Country country) => new()
-        {
-            Id = country.Id,
-            Name = country.Name,
-            Code = country.Code,
-            IsActive = country.IsActive
-        };
     }
-
 }
