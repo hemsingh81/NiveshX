@@ -1,19 +1,18 @@
 ﻿using AutoMapper;
-using NiveshX.Core.DTOs.ClassificationTag;
-using NiveshX.Core.DTOs.Industry;
+using NiveshX.Core.DTOs.Sector;
 using NiveshX.Core.Models;
 
 namespace NiveshX.Core.Mapping
 {
-    public class IndustryProfile : Profile
+    public class SectorProfile : Profile
     {
-        public IndustryProfile()
+        public SectorProfile()
         {
             // Entity -> Response
-            CreateMap<Industry, IndustryResponse>();
+            CreateMap<Sector, SectorResponse>();
 
             // Create request -> Entity (ignore audit fields)
-            CreateMap<CreateIndustryRequest, Industry>()
+            CreateMap<CreateSectorRequest, Sector>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
@@ -22,7 +21,7 @@ namespace NiveshX.Core.Mapping
                 .ForMember(dest => dest.ModifiedBy, opt => opt.Ignore());
 
             // Update request -> Entity (map mutable fields only)
-            CreateMap<UpdateIndustryRequest, Industry>()
+            CreateMap<UpdateSectorRequest, Sector>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())

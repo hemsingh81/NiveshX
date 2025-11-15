@@ -32,6 +32,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // ---- AutoMapper - scan mapping assembly (register all profiles) ----
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<CountryProfile>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<IndustryProfile>());
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<ClassificationTagProfile>());
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<SectorProfile>());
 
 // ---- HttpContext / user context ----
 builder.Services.AddHttpContextAccessor();

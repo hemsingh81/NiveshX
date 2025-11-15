@@ -1,8 +1,14 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.Sector;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace NiveshX.Infrastructure.Services
 {
@@ -11,12 +17,18 @@ namespace NiveshX.Infrastructure.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserContext _userContext;
         private readonly ILogger<SectorService> _logger;
+        private readonly IMapper _mapper;
 
-        public SectorService(IUnitOfWork unitOfWork, ILogger<SectorService> logger, IUserContext userContext)
+        public SectorService(
+            IUnitOfWork unitOfWork,
+            ILogger<SectorService> logger,
+            IUserContext userContext,
+            IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _userContext = userContext;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<SectorResponse>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -25,7 +37,7 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Fetching all sectors");
                 var sectors = await _unitOfWork.Sectors.GetAllAsync(cancellationToken);
-                return sectors.Select(MapToResponse);
+                return sectors.Select(s => _mapper.Map<SectorResponse>(s));
             }
             catch (Exception ex)
             {
@@ -40,7 +52,7 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Fetching sector with ID: {SectorId}", id);
                 var sector = await _unitOfWork.Sectors.GetByIdAsync(id, cancellationToken);
-                return sector == null ? null : MapToResponse(sector);
+                return sector == null ? null : _mapper.Map<SectorResponse>(sector);
             }
             catch (Exception ex)
             {
@@ -54,19 +66,19 @@ namespace NiveshX.Infrastructure.Services
             try
             {
                 _logger.LogInformation("Creating sector: {Name}", request.Name);
-                var sector = new Sector
-                {
-                    Id = Guid.NewGuid(),
-                    Name = request.Name,
-                    Description = request.Description,
-                    IsActive = true,
-                    CreatedOn = DateTime.UtcNow,
-                    CreatedBy = _userContext.UserId
-                };
+
+                var sector = _mapper.Map<Sector>(request);
+
+                sector.Id = Guid.NewGuid();
+                sector.IsActive = true;
+                sector.CreatedOn = DateTime.UtcNow;
+                sector.CreatedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
 
                 await _unitOfWork.Sectors.AddAsync(sector, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
-                return MapToResponse(sector);
+
+                _logger.LogInformation("Sector created successfully: {SectorId}", sector.Id);
+                return _mapper.Map<SectorResponse>(sector);
             }
             catch (Exception ex)
             {
@@ -87,15 +99,16 @@ namespace NiveshX.Infrastructure.Services
                     return null;
                 }
 
-                sector.Name = request.Name;
-                sector.Description = request.Description;
-                sector.IsActive = request.IsActive;
+                _mapper.Map(request, sector);
+
                 sector.ModifiedOn = DateTime.UtcNow;
-                sector.ModifiedBy = _userContext.UserId;
+                sector.ModifiedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
 
                 await _unitOfWork.Sectors.UpdateAsync(sector, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
-                return MapToResponse(sector);
+
+                _logger.LogInformation("Sector updated successfully: {SectorId}", id);
+                return _mapper.Map<SectorResponse>(sector);
             }
             catch (Exception ex)
             {
@@ -128,14 +141,5 @@ namespace NiveshX.Infrastructure.Services
                 throw;
             }
         }
-
-        private static SectorResponse MapToResponse(Sector sector) => new()
-        {
-            Id = sector.Id,
-            Name = sector.Name,
-            Description = sector.Description,
-            IsActive = sector.IsActive
-        };
     }
-
 }

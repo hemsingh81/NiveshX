@@ -1,19 +1,18 @@
 ﻿using AutoMapper;
 using NiveshX.Core.DTOs.ClassificationTag;
-using NiveshX.Core.DTOs.Industry;
 using NiveshX.Core.Models;
 
 namespace NiveshX.Core.Mapping
 {
-    public class IndustryProfile : Profile
+    public class ClassificationTagProfile : Profile
     {
-        public IndustryProfile()
+        public ClassificationTagProfile()
         {
             // Entity -> Response
-            CreateMap<Industry, IndustryResponse>();
+            CreateMap<ClassificationTag, ClassificationTagResponse>();
 
-            // Create request -> Entity (ignore audit fields)
-            CreateMap<CreateIndustryRequest, Industry>()
+            // Create request -> entity (ignore audit fields)
+            CreateMap<CreateClassificationTagRequest, ClassificationTag>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
@@ -21,13 +20,14 @@ namespace NiveshX.Core.Mapping
                 .ForMember(dest => dest.ModifiedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.ModifiedBy, opt => opt.Ignore());
 
-            // Update request -> Entity (map mutable fields only)
-            CreateMap<UpdateIndustryRequest, Industry>()
+            // Update request -> entity (map mutable fields only)
+            CreateMap<UpdateClassificationTagRequest, ClassificationTag>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
                 .ForMember(dest => dest.ModifiedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.ModifiedBy, opt => opt.Ignore());
         }
+
     }
 }

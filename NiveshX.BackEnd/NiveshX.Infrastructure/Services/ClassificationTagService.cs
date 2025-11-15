@@ -1,8 +1,14 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.ClassificationTag;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace NiveshX.Infrastructure.Services
 {
@@ -11,12 +17,18 @@ namespace NiveshX.Infrastructure.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserContext _userContext;
         private readonly ILogger<ClassificationTagService> _logger;
+        private readonly IMapper _mapper;
 
-        public ClassificationTagService(IUnitOfWork unitOfWork, ILogger<ClassificationTagService> logger, IUserContext userContext)
+        public ClassificationTagService(
+            IUnitOfWork unitOfWork,
+            ILogger<ClassificationTagService> logger,
+            IUserContext userContext,
+            IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _userContext = userContext;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<ClassificationTagResponse>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -25,7 +37,7 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Fetching all classification tags");
                 var tags = await _unitOfWork.ClassificationTags.GetAllAsync(cancellationToken);
-                return tags.Select(MapToResponse);
+                return tags.Select(t => _mapper.Map<ClassificationTagResponse>(t));
             }
             catch (Exception ex)
             {
@@ -40,7 +52,7 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Fetching classification tag with ID: {TagId}", id);
                 var tag = await _unitOfWork.ClassificationTags.GetByIdAsync(id, cancellationToken);
-                return tag == null ? null : MapToResponse(tag);
+                return tag == null ? null : _mapper.Map<ClassificationTagResponse>(tag);
             }
             catch (Exception ex)
             {
@@ -54,20 +66,19 @@ namespace NiveshX.Infrastructure.Services
             try
             {
                 _logger.LogInformation("Creating classification tag: {Name}", request.Name);
-                var tag = new ClassificationTag
-                {
-                    Id = Guid.NewGuid(),
-                    Name = request.Name,
-                    Category = request.Category,
-                    Description = request.Description,
-                    IsActive = true,
-                    CreatedOn = DateTime.UtcNow,
-                    CreatedBy = _userContext.UserId
-                };
+
+                var tag = _mapper.Map<ClassificationTag>(request);
+
+                tag.Id = Guid.NewGuid();
+                tag.IsActive = true;
+                tag.CreatedOn = DateTime.UtcNow;
+                tag.CreatedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
 
                 await _unitOfWork.ClassificationTags.AddAsync(tag, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
-                return MapToResponse(tag);
+
+                _logger.LogInformation("Classification tag created successfully: {TagId}", tag.Id);
+                return _mapper.Map<ClassificationTagResponse>(tag);
             }
             catch (Exception ex)
             {
@@ -88,16 +99,16 @@ namespace NiveshX.Infrastructure.Services
                     return null;
                 }
 
-                tag.Name = request.Name;
-                tag.Category = request.Category;
-                tag.Description = request.Description;
-                tag.IsActive = request.IsActive;
+                _mapper.Map(request, tag);
+
                 tag.ModifiedOn = DateTime.UtcNow;
-                tag.ModifiedBy = _userContext.UserId;
+                tag.ModifiedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
 
                 await _unitOfWork.ClassificationTags.UpdateAsync(tag, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
-                return MapToResponse(tag);
+
+                _logger.LogInformation("Classification tag updated successfully: {TagId}", id);
+                return _mapper.Map<ClassificationTagResponse>(tag);
             }
             catch (Exception ex)
             {
@@ -130,15 +141,5 @@ namespace NiveshX.Infrastructure.Services
                 throw;
             }
         }
-
-        private static ClassificationTagResponse MapToResponse(ClassificationTag tag) => new()
-        {
-            Id = tag.Id,
-            Name = tag.Name,
-            Category = tag.Category,
-            Description = tag.Description,
-            IsActive = tag.IsActive
-        };
     }
-
 }
