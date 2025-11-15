@@ -1,9 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.MotivationQuote;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,19 +16,32 @@ namespace NiveshX.Infrastructure.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserContext _userContext;
         private readonly ILogger<MotivationQuoteService> _logger;
+        private readonly IMapper _mapper;
 
-        public MotivationQuoteService(IUnitOfWork unitOfWork, ILogger<MotivationQuoteService> logger, IUserContext userContext)
+        public MotivationQuoteService(
+            IUnitOfWork unitOfWork,
+            ILogger<MotivationQuoteService> logger,
+            IUserContext userContext,
+            IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _userContext = userContext;
+            _mapper = mapper;
         }
 
         public async Task<bool> AddAsync(AddMotivationQuoteRequest request, CancellationToken cancellationToken = default)
         {
             try
             {
-                var quote = new MotivationQuote { Quote = request.Quote, Author = request.Author, CreatedBy = _userContext.UserId, CreatedOn = DateTime.UtcNow };
+                var quote = _mapper.Map<MotivationQuote>(request);
+
+                quote.Id = Guid.NewGuid();
+                quote.CreatedOn = DateTime.UtcNow;
+                quote.CreatedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
+                quote.IsActive = true;
+                quote.IsDeleted = false;
+
                 await _unitOfWork.MotivationQuotes.AddAsync(quote, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -51,11 +66,10 @@ namespace NiveshX.Infrastructure.Services
                     return false;
                 }
 
-                quote.Quote = request.Quote;
-                quote.Author = request.Author;
-                quote.IsActive = request.IsActive;
+                _mapper.Map(request, quote);
+
                 quote.ModifiedOn = DateTime.UtcNow;
-                quote.ModifiedBy = _userContext.UserId;
+                quote.ModifiedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
 
                 await _unitOfWork.MotivationQuotes.UpdateAsync(quote, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -83,7 +97,7 @@ namespace NiveshX.Infrastructure.Services
 
                 quote.IsDeleted = true;
                 quote.IsActive = false;
-                quote.ModifiedBy = _userContext.UserId;
+                quote.ModifiedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
                 quote.ModifiedOn = DateTime.UtcNow;
 
                 await _unitOfWork.MotivationQuotes.UpdateAsync(quote, cancellationToken);
@@ -147,6 +161,5 @@ namespace NiveshX.Infrastructure.Services
                 throw;
             }
         }
-
     }
 }
