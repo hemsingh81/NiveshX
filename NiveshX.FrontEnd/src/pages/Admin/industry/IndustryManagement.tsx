@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Button, IconButton, Typography } from "@mui/material";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { MdAdd, MdEdit, MdDelete } from "react-icons/md";
+import React, { useMemo, useCallback } from "react";
 import Layout from "../../../components/Layout";
+import GenericCrudManagement from "../../../controls/GenericCrudManagement";
+import { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import { IconButton, Tooltip } from "@mui/material";
+import { MdEdit, MdDelete } from "react-icons/md";
 import {
   getAllIndustries,
   createIndustry,
@@ -15,138 +16,88 @@ import {
 import IndustryFormDialog from "./IndustryFormDialog";
 import { ConfirmButton } from "../../../controls";
 
+type FormDialogRendererProps = {
+  open: boolean;
+  mode: "add" | "edit";
+  item?: IndustryResponse | undefined;
+  onClose: () => void;
+  onSubmit: (data: CreateIndustryRequest | UpdateIndustryRequest) => Promise<void>;
+};
+
 const IndustryManagement: React.FC = () => {
-  const [items, setItems] = useState<IndustryResponse[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editItem, setEditItem] = useState<IndustryResponse | undefined>(undefined);
-  const [mode, setMode] = useState<"add" | "edit">("add");
-
-  const fetch = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await getAllIndustries();
-      setItems(data);
-    } catch {
-      // ignore, toasts handled by service
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetch();
-  }, [fetch]);
-
-  const handleAdd = useCallback(() => {
-    setMode("add");
-    setEditItem(undefined);
-    setDialogOpen(true);
-  }, []);
-
-  const handleEdit = useCallback((item: IndustryResponse) => {
-    setMode("edit");
-    setEditItem(item);
-    setDialogOpen(true);
-  }, []);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      try {
-        await deleteIndustry(id);
-        await fetch();
-      } catch {
-        // toasts shown by service
-      }
-    },
-    [fetch]
-  );
-
-  const handleSubmit = useCallback(
-    async (data: CreateIndustryRequest | UpdateIndustryRequest): Promise<void> => {
-      try {
-        if (mode === "add") {
-          await createIndustry(data as CreateIndustryRequest);
-        } else if (editItem) {
-          await updateIndustry(editItem.id, data as UpdateIndustryRequest);
-        }
-        await fetch();
-      } catch (err) {
-        throw err;
-      }
-    },
-    [mode, editItem, fetch]
-  );
-
-  const columns: GridColDef[] = useMemo(
-    () => [
-      { field: "name", headerName: "Name", flex: 1 },
+  // base columns (without actions)
+  const baseColumns = useMemo<GridColDef<IndustryResponse>[]>(() => {
+    return [
+      { field: "name", headerName: "Name", flex: 1, minWidth: 160 },
       { field: "description", headerName: "Description", flex: 1, minWidth: 240 },
-      { field: "isActive", headerName: "Active", width: 100, renderCell: (p) => (p.value ? "Yes" : "No") },
       {
-        field: "actions",
-        headerName: "Actions",
-        width: 140,
-        align: "center",
-        sortable: false,
-        renderCell: (params) => (
-          <>
-            <IconButton onClick={() => handleEdit(params.row)}>
+        field: "isActive",
+        headerName: "Active",
+        width: 100,
+        renderCell: (p: GridRenderCellParams<IndustryResponse>) => (p.value ? "Yes" : "No"),
+      },
+    ];
+  }, []);
+
+  // actionsRenderer builds the actions column and uses onEdit/onDelete provided by GenericCrudManagement
+  const actionsRenderer = useCallback(
+    (h: { onEdit: (row: IndustryResponse) => void; onDelete: (id: string) => Promise<void> }): GridColDef<IndustryResponse> => ({
+      field: "actions",
+      headerName: "Actions",
+      width: 140,
+      align: "center",
+      sortable: false,
+      renderCell: (params: GridRenderCellParams<IndustryResponse>) => (
+        <>
+          <Tooltip title="Edit">
+            <IconButton
+              onClick={() => h.onEdit(params.row)}
+              size="small"
+              aria-label={`Edit ${params.row.name ?? "industry"}`}
+            >
               <MdEdit />
             </IconButton>
-            <ConfirmButton
-              icon={<MdDelete />}
-              color="error"
-              size="small"
-              variant="text"
-              dialogTitle="Delete Industry"
-              dialogMessage={`Delete ${params.row.name}?`}
-              confirmText="Delete"
-              cancelText="Cancel"
-              onConfirm={() => handleDelete(params.row.id)}
-            />
-          </>
-        ),
-      },
-    ],
-    [handleDelete, handleEdit]
+          </Tooltip>
+
+          <ConfirmButton
+            icon={<MdDelete />}
+            color="error"
+            size="small"
+            variant="text"
+            dialogTitle="Delete Industry"
+            dialogMessage={`Delete ${params.row.name ?? "this industry"}?`}
+            confirmText="Delete"
+            cancelText="Cancel"
+            onConfirm={() => h.onDelete(params.row.id)}
+          />
+        </>
+      ),
+    }),
+    []
   );
 
   return (
     <Layout>
-      <Box>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h5" fontWeight="bold">
-            Industries
-          </Typography>
-          <Button variant="contained" startIcon={<MdAdd />} onClick={handleAdd}>
-            Add Industry
-          </Button>
-        </Box>
-
-        <DataGrid
-          rows={items}
-          columns={columns}
-          loading={loading}
-          autoHeight
-          disableRowSelectionOnClick
-          getRowId={(row) => row.id}
-          pageSizeOptions={[5, 10]}
-          initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
-          sx={{
-            "& .MuiDataGrid-columnHeaderTitle": { fontWeight: "bold" },
-            "& .MuiDataGrid-columnHeaders": { backgroundColor: "rgb(208,222,241)" },
-          }}
-        />
-
-        <IndustryFormDialog
-          open={dialogOpen}
-          onClose={() => setDialogOpen(false)}
-          onSubmit={handleSubmit}
-          mode={mode}
-          industry={editItem}
-        />
-      </Box>
+      <GenericCrudManagement<IndustryResponse, CreateIndustryRequest, UpdateIndustryRequest>
+        title="Industries"
+        fetchAll={getAllIndustries}
+        createItem={createIndustry}
+        updateItem={updateIndustry}
+        deleteItem={deleteIndustry}
+        columns={baseColumns}
+        actionsRenderer={actionsRenderer}
+        rowFilterFields={["name", "description"]}
+        formDialogRenderer={({
+          open,
+          mode,
+          item,
+          onClose,
+          onSubmit,
+        }: FormDialogRendererProps) => (
+          <IndustryFormDialog open={open} onClose={onClose} onSubmit={onSubmit} mode={mode} industry={item} />
+        )}
+        emptyLabel="No industries found"
+      />
     </Layout>
   );
 };

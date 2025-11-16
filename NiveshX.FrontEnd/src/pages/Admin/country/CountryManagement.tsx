@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Button, IconButton, Typography } from "@mui/material";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { MdAdd, MdEdit, MdDelete } from "react-icons/md";
+import React, { useMemo, useCallback } from "react";
 import Layout from "../../../components/Layout";
+import GenericCrudManagement from "../../../controls/GenericCrudManagement"; // adjust path if needed
+import { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import { IconButton, Tooltip } from "@mui/material";
+import { MdEdit, MdDelete } from "react-icons/md";
 import {
   getAllCountries,
   createCountry,
@@ -15,157 +16,82 @@ import {
 import CountryFormDialog from "./CountryFormDialog";
 import { ConfirmButton } from "../../../controls";
 
+type FormDialogRendererProps = {
+  open: boolean;
+  mode: "add" | "edit";
+  item?: CountryResponse | undefined;
+  onClose: () => void;
+  onSubmit: (data: CreateCountryRequest | UpdateCountryRequest) => Promise<void>;
+};
+
 const CountryManagement: React.FC = () => {
-  const [countries, setCountries] = useState<CountryResponse[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editCountry, setEditCountry] = useState<CountryResponse | undefined>(
-    undefined
-  );
-  const [mode, setMode] = useState<"add" | "edit">("add");
-
-  const fetchCountries = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await getAllCountries();
-      setCountries(data);
-    } catch (err) {
-      // optional: handle error
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCountries();
-  }, [fetchCountries]);
-
-  const handleAdd = useCallback(() => {
-    setMode("add");
-    setEditCountry(undefined);
-    setDialogOpen(true);
-  }, []);
-
-  const handleEdit = useCallback((country: CountryResponse) => {
-    setMode("edit");
-    setEditCountry(country);
-    setDialogOpen(true);
-  }, []);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      try {
-        await deleteCountry(id);
-        await fetchCountries();
-      } catch (err) {
-        // optional
-      }
-    },
-    [fetchCountries]
-  );
-
-  const handleSubmit = useCallback(
-    async (
-      data: CreateCountryRequest | UpdateCountryRequest
-    ): Promise<void> => {
-      try {
-        if (mode === "add") {
-          await createCountry(data as CreateCountryRequest);
-        } else if (editCountry) {
-          await updateCountry(editCountry.id, data as UpdateCountryRequest);
-        }
-        await fetchCountries();
-      } catch (err) {
-        // rethrow so dialog can show field errors
-        throw err;
-      }
-    },
-    [mode, editCountry, fetchCountries]
-  );
-
-  const columns: GridColDef[] = useMemo(
-    () => [
+  const baseColumns = useMemo<GridColDef<CountryResponse>[]>(() => {
+    return [
       { field: "name", headerName: "Name", flex: 1 },
       { field: "code", headerName: "Code", width: 150 },
       {
         field: "isActive",
         headerName: "Active",
         width: 100,
-        renderCell: (p) => (p.value ? "Yes" : "No"),
+        renderCell: (p: GridRenderCellParams<CountryResponse>) => (p.value ? "Yes" : "No"),
       },
-      {
-        field: "actions",
-        headerName: "Actions",
-        width: 140,
-        align: "center",
-        sortable: false,
-        renderCell: (params) => (
-          <>
-            <IconButton onClick={() => handleEdit(params.row)}>
+    ];
+  }, []);
+
+  const actionsRenderer = useCallback(
+    (h: { onEdit: (row: CountryResponse) => void; onDelete: (id: string) => Promise<void> }): GridColDef<CountryResponse> => ({
+      field: "actions",
+      headerName: "Actions",
+      width: 140,
+      align: "center",
+      sortable: false,
+      renderCell: (params: GridRenderCellParams<CountryResponse>) => (
+        <>
+          <Tooltip title="Edit">
+            <IconButton onClick={() => h.onEdit(params.row)} size="small" aria-label={`Edit ${params.row.name ?? "country"}`}>
               <MdEdit />
             </IconButton>
-            <ConfirmButton
-              icon={<MdDelete />}
-              color="error"
-              size="small"
-              variant="text"
-              dialogTitle="Delete Country"
-              dialogMessage={`Delete ${params.row.name}?`}
-              confirmText="Delete"
-              cancelText="Cancel"
-              onConfirm={() => handleDelete(params.row.id)}
-            />
-          </>
-        ),
-      },
-    ],
-    [handleDelete, handleEdit]
+          </Tooltip>
+
+          <ConfirmButton
+            icon={<MdDelete />}
+            color="error"
+            size="small"
+            variant="text"
+            dialogTitle="Delete Country"
+            dialogMessage={`Delete ${params.row.name ?? "this country"}?`}
+            confirmText="Delete"
+            cancelText="Cancel"
+            onConfirm={() => h.onDelete(params.row.id)}
+          />
+        </>
+      ),
+    }),
+    []
   );
 
   return (
     <Layout>
-      <Box>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
-          <Typography variant="h5" fontWeight="bold">
-            Countries
-          </Typography>
-          <Button variant="contained" startIcon={<MdAdd />} onClick={handleAdd}>
-            Add Country
-          </Button>
-        </Box>
-
-        <DataGrid
-          rows={countries}
-          columns={columns}
-          loading={loading}
-          autoHeight
-          disableRowSelectionOnClick
-          getRowId={(row) => row.id}
-          pageSizeOptions={[5, 10]}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 10, page: 0 } },
-          }}
-          sx={{
-            "& .MuiDataGrid-columnHeaderTitle": { fontWeight: "bold" },
-            "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: "rgb(208,222,241)",
-            },
-          }}
-        />
-
-        <CountryFormDialog
-          open={dialogOpen}
-          onClose={() => setDialogOpen(false)}
-          onSubmit={handleSubmit}
-          mode={mode}
-          country={editCountry}
-        />
-      </Box>
+      <GenericCrudManagement<CountryResponse, CreateCountryRequest, UpdateCountryRequest>
+        title="Countries"
+        fetchAll={getAllCountries}
+        createItem={createCountry}
+        updateItem={updateCountry}
+        deleteItem={deleteCountry}
+        columns={baseColumns}
+        actionsRenderer={actionsRenderer}
+        rowFilterFields={["name", "code"]}
+        formDialogRenderer={({
+          open,
+          mode,
+          item,
+          onClose,
+          onSubmit,
+        }: FormDialogRendererProps) => (
+          <CountryFormDialog open={open} onClose={onClose} onSubmit={onSubmit} mode={mode} country={item} />
+        )}
+        emptyLabel="No countries found"
+      />
     </Layout>
   );
 };
