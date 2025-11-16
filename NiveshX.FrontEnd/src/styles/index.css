@@ -76,3 +76,39 @@ code {
 .MuiDataGrid-columnHeader{
   background-color: transparent !important;
 }
+
+
+/* src/styles/toast.css */
+
+/* Ensure multiline newlines are shown inside toast content */
+.react-hot-toast {
+  /* not required but safe fallback */
+}
+
+/* Target the built-in content element */
+.react-hot-toast .toast {
+  white-space: pre-line; /* preserve newline characters */
+}
+
+/* If using default Toaster markup, target the toast body */
+.react-hot-toast__container .react-hot-toast {
+  white-space: pre-line;
+  word-break: break-word;
+  line-height: 1.35;
+  padding: 12px 16px;
+}
+
+/* Optional: slightly larger line spacing for long lists */
+.react-hot-toast__container .react-hot-toast[data-type="error"] {
+  line-height: 1.45;
+}
+
+/* If you created custom classes when calling toast.error, style them here */
+.my-multiline-toast {
+  white-space: pre-line;
+  line-height: 1.4;
+  max-width: 480px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(10, 10, 10, 0.08);
+}

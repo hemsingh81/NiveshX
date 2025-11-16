@@ -18,9 +18,10 @@ import {
   ServerError,
   SectorManagement,
   ClassificationTagManagement,
-  StockMarketManagement
+  StockMarketManagement,
 } from "./pages";
 import ProtectedRoute from "./ProtectedRoute";
+import { ToasterControl } from "./components";
 
 type StoredUser = {
   name: string;
@@ -132,7 +133,7 @@ const App: React.FC = () => {
 
   return (
     <>
-      <Toaster position="top-right" reverseOrder={false} />
+      <ToasterControl position="bottom-right" maxWidth="480px" duration={8000} />
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
