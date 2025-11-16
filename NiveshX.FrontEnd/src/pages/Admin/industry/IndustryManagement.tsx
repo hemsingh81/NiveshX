@@ -52,7 +52,6 @@ const IndustryManagement: React.FC = () => {
           <Tooltip title="Edit">
             <IconButton
               onClick={() => h.onEdit(params.row)}
-              size="small"
               aria-label={`Edit ${params.row.name ?? "industry"}`}
             >
               <MdEdit />
@@ -62,7 +61,6 @@ const IndustryManagement: React.FC = () => {
           <ConfirmButton
             icon={<MdDelete />}
             color="error"
-            size="small"
             variant="text"
             dialogTitle="Delete Industry"
             dialogMessage={`Delete ${params.row.name ?? "this industry"}?`}
@@ -96,7 +94,6 @@ const IndustryManagement: React.FC = () => {
         }: FormDialogRendererProps) => (
           <IndustryFormDialog open={open} onClose={onClose} onSubmit={onSubmit} mode={mode} industry={item} />
         )}
-        emptyLabel="No industries found"
       />
     </Layout>
   );

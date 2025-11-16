@@ -48,7 +48,7 @@ const CountryManagement: React.FC = () => {
       renderCell: (params: GridRenderCellParams<CountryResponse>) => (
         <>
           <Tooltip title="Edit">
-            <IconButton onClick={() => h.onEdit(params.row)} size="small" aria-label={`Edit ${params.row.name ?? "country"}`}>
+            <IconButton onClick={() => h.onEdit(params.row)} aria-label={`Edit ${params.row.name ?? "country"}`}>
               <MdEdit />
             </IconButton>
           </Tooltip>
@@ -56,7 +56,6 @@ const CountryManagement: React.FC = () => {
           <ConfirmButton
             icon={<MdDelete />}
             color="error"
-            size="small"
             variant="text"
             dialogTitle="Delete Country"
             dialogMessage={`Delete ${params.row.name ?? "this country"}?`}
@@ -90,7 +89,6 @@ const CountryManagement: React.FC = () => {
         }: FormDialogRendererProps) => (
           <CountryFormDialog open={open} onClose={onClose} onSubmit={onSubmit} mode={mode} country={item} />
         )}
-        emptyLabel="No countries found"
       />
     </Layout>
   );

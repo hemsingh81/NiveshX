@@ -50,7 +50,6 @@ const MotivationQuotesManagement: React.FC = () => {
           <Tooltip title="Edit">
             <IconButton
               onClick={() => h.onEdit(params.row)}
-              size="small"
               aria-label={`Edit ${params.row.author ?? "quote"}`}
             >
               <MdEdit />
@@ -60,7 +59,6 @@ const MotivationQuotesManagement: React.FC = () => {
           <ConfirmButton
             icon={<MdDelete />}
             color="error"
-            size="small"
             variant="text"
             dialogTitle="Delete Quote"
             dialogMessage={`Delete quote by ${params.row.author ?? "unknown"}?`}
@@ -101,7 +99,6 @@ const MotivationQuotesManagement: React.FC = () => {
         }: FormDialogRendererProps) => (
           <MotivationQuoteFormDialog open={open} initial={item} mode={mode} onClose={onClose} onSubmit={onSubmit} />
         )}
-        emptyLabel="No quotes found"
       />
     </Layout>
   );

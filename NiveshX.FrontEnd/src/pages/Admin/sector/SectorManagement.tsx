@@ -48,7 +48,7 @@ const SectorManagement: React.FC = () => {
       renderCell: (params: GridRenderCellParams<SectorResponse>) => (
         <>
           <Tooltip title="Edit">
-            <IconButton onClick={() => h.onEdit(params.row)} size="small" aria-label={`Edit ${params.row.name ?? "sector"}`}>
+            <IconButton onClick={() => h.onEdit(params.row)} aria-label={`Edit ${params.row.name ?? "sector"}`}>
               <MdEdit />
             </IconButton>
           </Tooltip>
@@ -56,7 +56,6 @@ const SectorManagement: React.FC = () => {
           <ConfirmButton
             icon={<MdDelete />}
             color="error"
-            size="small"
             variant="text"
             dialogTitle="Delete Sector"
             dialogMessage={`Delete ${params.row.name ?? "this sector"}?`}
@@ -90,7 +89,6 @@ const SectorManagement: React.FC = () => {
         }: FormDialogRendererProps) => (
           <SectorFormDialog open={open} onClose={onClose} onSubmit={onSubmit} mode={mode} sector={item} />
         )}
-        emptyLabel="No sectors found"
       />
     </Layout>
   );

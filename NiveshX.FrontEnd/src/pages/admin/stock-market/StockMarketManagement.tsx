@@ -54,7 +54,7 @@ const StockMarketManagement: React.FC = () => {
       renderCell: (params: GridRenderCellParams<StockMarketResponse>) => (
         <>
           <Tooltip title="Edit">
-            <IconButton onClick={() => h.onEdit(params.row)} size="small" aria-label={`Edit ${params.row.name ?? "stock market"}`}>
+            <IconButton onClick={() => h.onEdit(params.row)} aria-label={`Edit ${params.row.name ?? "stock market"}`}>
               <MdEdit />
             </IconButton>
           </Tooltip>
@@ -62,7 +62,6 @@ const StockMarketManagement: React.FC = () => {
           <ConfirmButton
             icon={<MdDelete />}
             color="error"
-            size="small"
             variant="text"
             dialogTitle="Delete Stock Market"
             dialogMessage={`Delete ${params.row.name ?? "this stock market"}?`}
@@ -96,7 +95,6 @@ const StockMarketManagement: React.FC = () => {
         }: FormDialogRendererProps) => (
           <StockMarketFormDialog open={open} onClose={onClose} onSubmit={onSubmit} mode={mode} stockMarket={item} />
         )}
-        emptyLabel="No stock markets found"
       />
     </Layout>
   );

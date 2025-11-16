@@ -9,6 +9,7 @@ import {
   Paper,
   Chip,
   useTheme,
+  Divider,
 } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { MdAdd, MdSearch, MdClear } from "react-icons/md";
@@ -164,6 +165,10 @@ export default function GenericCrudManagement<
     );
   }, [items, debouncedSearch, rowFilterFields]);
 
+  // When there are no rows we still render the grid with a minHeight (so headers remain visible).
+  // We hide the footer/pagination when there are no rows for a cleaner empty state.
+  const gridMinHeight = 320;
+
   return (
     <>
       <Box mb={2} display="flex" alignItems="center" gap={2}>
@@ -229,45 +234,41 @@ export default function GenericCrudManagement<
             Add
           </Button>
         </Box>
-
+        <Divider />
         <Box>
-          {filteredRows.length === 0 && !loading ? (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <Typography>{emptyLabel}</Typography>
-            </Box>
-          ) : (
-            <DataGrid
-              rows={filteredRows}
-              columns={builtColumns}
-              loading={loading}
-              autoHeight
-              density="comfortable"
-              disableRowSelectionOnClick
-              getRowId={(row: any) => row.id}
-              pageSizeOptions={[5, 10, 25]}
-              initialState={{
-                pagination: { paginationModel: { pageSize, page: 0 } },
-              }}
-              sx={{
-                "& .MuiDataGrid-columnHeaderTitle": { fontWeight: 700 },
-                "& .MuiDataGrid-columnHeaders": {
-                  backgroundColor:
-                    theme.palette.mode === "light"
-                      ? "rgba(208,222,241,0.6)"
-                      : undefined,
-                },
-                "& .MuiDataGrid-row:nth-of-type(odd)": {
-                  backgroundColor:
-                    theme.palette.mode === "light"
-                      ? "rgba(245,248,252,0.6)"
-                      : undefined,
-                },
-                "& .MuiDataGrid-cell": {
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                },
-              }}
-            />
-          )}
+          <DataGrid
+            rows={filteredRows}
+            columns={builtColumns}
+            loading={loading}
+            // keep autoHeight off so the grid keeps its header even with zero rows
+            autoHeight={true}
+            disableRowSelectionOnClick
+            getRowId={(row: any) => row.id}
+            pageSizeOptions={[5, 10, 25]}
+            hideFooter={filteredRows.length === 0}
+            initialState={{
+              pagination: { paginationModel: { pageSize, page: 0 } },
+            }}
+            sx={{
+              minHeight: gridMinHeight,
+              "& .MuiDataGrid-columnHeaderTitle": { fontWeight: 700 },
+              "& .MuiDataGrid-columnHeaders": {
+                backgroundColor:
+                  theme.palette.mode === "light"
+                    ? "rgba(208,222,241,0.6)"
+                    : undefined,
+              },
+              "& .MuiDataGrid-row:nth-of-type(odd)": {
+                backgroundColor:
+                  theme.palette.mode === "light"
+                    ? "rgba(245,248,252,0.6)"
+                    : undefined,
+              },
+              "& .MuiDataGrid-cell": {
+                borderBottom: `1px solid ${theme.palette.divider}`,
+              },
+            }}
+          />
         </Box>
 
         {formDialogRenderer({

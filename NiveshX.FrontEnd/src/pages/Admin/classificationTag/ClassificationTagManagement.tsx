@@ -51,7 +51,6 @@ const ClassificationTagManagement: React.FC = () => {
           <Tooltip title="Edit">
             <IconButton
               onClick={() => h.onEdit(params.row)}
-              size="small"
               aria-label={`Edit ${params.row.name ?? "tag"}`}
             >
               <MdEdit />
@@ -61,7 +60,6 @@ const ClassificationTagManagement: React.FC = () => {
           <ConfirmButton
             icon={<MdDelete />}
             color="error"
-            size="small"
             variant="text"
             dialogTitle="Delete Tag"
             dialogMessage={`Delete ${params.row.name ?? "this tag"}?`}
@@ -95,7 +93,6 @@ const ClassificationTagManagement: React.FC = () => {
         }: FormDialogRendererProps) => (
           <ClassificationTagFormDialog open={open} onClose={onClose} onSubmit={onSubmit} mode={mode} tag={item} />
         )}
-        emptyLabel="No tags found"
       />
     </Layout>
   );
