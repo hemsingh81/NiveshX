@@ -6,6 +6,7 @@ import {
   MdGroup,
   MdLocalOffer,
   MdPublic,
+  MdShowChart,
 } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
 
@@ -54,6 +55,12 @@ const MENU: MenuItem[] = [
     to: "/admin/classification-tag",
     label: "Classification Tags",
     Icon: MdLocalOffer,
+  },
+  {
+    key: "stockMarkets",
+    to: "/admin/stock-market",
+    label: "Stock Markets",
+    Icon: MdShowChart,
   },
 ];
 
