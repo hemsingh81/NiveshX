@@ -25,7 +25,6 @@ export const getAllSectors = async (): Promise<SectorResponse[]> => {
   const res = await withToast(() => axiosInstance.get<SectorResponse[]>(`${API_URL}`), {
     loading: "Loading sectors...",
     success: "Sectors loaded!",
-    error: "Failed to load sectors.",
   });
   return res.data;
 };
@@ -34,7 +33,6 @@ export const createSector = async (payload: CreateSectorRequest): Promise<Sector
   const res = await withToast(() => axiosInstance.post<SectorResponse>(`${API_URL}`, payload), {
     loading: "Creating sector...",
     success: "Sector created!",
-    error: "Failed to create sector.",
   });
   return res.data;
 };
@@ -43,7 +41,6 @@ export const updateSector = async (id: string, payload: UpdateSectorRequest): Pr
   const res = await withToast(() => axiosInstance.put<SectorResponse>(`${API_URL}/${id}`, payload), {
     loading: "Updating sector...",
     success: "Sector updated!",
-    error: "Failed to update sector.",
   });
   return res.data;
 };
@@ -52,6 +49,5 @@ export const deleteSector = async (id: string): Promise<void> => {
   await withToast(() => axiosInstance.delete(`${API_URL}/${id}`), {
     loading: "Deleting sector...",
     success: "Sector deleted!",
-    error: "Failed to delete sector.",
   });
 };

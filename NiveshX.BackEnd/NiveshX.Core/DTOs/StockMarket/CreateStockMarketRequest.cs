@@ -13,6 +13,6 @@ namespace NiveshX.Core.DTOs.StockMarket
         public string Description { get; set; } = string.Empty;
 
         [Required]
-        public Guid CountryId { get; set; }
+        public Guid? CountryId { get; set; }
     }
 }

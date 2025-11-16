@@ -28,7 +28,6 @@ export const getAllClassificationTags = async (): Promise<ClassificationTagRespo
   const res = await withToast(() => axiosInstance.get<ClassificationTagResponse[]>(`${API_URL}`), {
     loading: "Loading tags...",
     success: "Tags loaded!",
-    error: "Failed to load tags.",
   });
   return res.data;
 };
@@ -37,7 +36,6 @@ export const createClassificationTag = async (payload: CreateClassificationTagRe
   const res = await withToast(() => axiosInstance.post<ClassificationTagResponse>(`${API_URL}`, payload), {
     loading: "Creating tag...",
     success: "Tag created!",
-    error: "Failed to create tag.",
   });
   return res.data;
 };
@@ -46,7 +44,6 @@ export const updateClassificationTag = async (id: string, payload: UpdateClassif
   const res = await withToast(() => axiosInstance.put<ClassificationTagResponse>(`${API_URL}/${id}`, payload), {
     loading: "Updating tag...",
     success: "Tag updated!",
-    error: "Failed to update tag.",
   });
   return res.data;
 };
@@ -55,6 +52,5 @@ export const deleteClassificationTag = async (id: string): Promise<void> => {
   await withToast(() => axiosInstance.delete(`${API_URL}/${id}`), {
     loading: "Deleting tag...",
     success: "Tag deleted!",
-    error: "Failed to delete tag.",
   });
 };

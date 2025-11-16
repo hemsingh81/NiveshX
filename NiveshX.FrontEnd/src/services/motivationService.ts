@@ -28,7 +28,6 @@ export const getAllQuotes = async (): Promise<MotivationQuote[]> => {
           {
                loading: 'Fetching quotes...',
                success: 'Quotes loaded!',
-               error: 'Failed to load quotes.',
           }
      );
      return response.data;
@@ -40,7 +39,6 @@ export const getQuoteById = async (id: string): Promise<MotivationQuote> => {
           {
                loading: 'Fetching quote...',
                success: 'Quote loaded!',
-               error: 'Quote not found.',
           }
      );
      return response.data;
@@ -52,7 +50,6 @@ export const addQuote = async (request: AddMotivationQuoteRequest): Promise<void
           {
                loading: 'Adding quote...',
                success: 'Quote added!',
-               error: 'Failed to add quote.',
           }
      );
 };
@@ -63,7 +60,6 @@ export const editQuote = async (request: EditMotivationQuoteRequest): Promise<vo
           {
                loading: 'Updating quote...',
                success: 'Quote updated!',
-               error: 'Failed to update quote.',
           }
      );
 };
@@ -74,7 +70,6 @@ export const deleteQuote = async (id: string): Promise<void> => {
           {
                loading: 'Deleting quote...',
                success: 'Quote deleted!',
-               error: 'Failed to delete quote.',
           }
      );
 };
@@ -85,7 +80,6 @@ export const getAllActivesQuotes = async (): Promise<MotivationQuote[]> => {
           {
                loading: 'Fetching quotes...',
                success: 'Quotes loaded!',
-               error: 'Failed to load quotes.',
           }
      );
      return response.data;

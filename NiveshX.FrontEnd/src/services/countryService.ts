@@ -27,7 +27,6 @@ export const getAllCountries = async (): Promise<CountryResponse[]> => {
     {
       loading: "Loading countries...",
       success: "Countries loaded!",
-      error: "Failed to load countries.",
     }
   );
   return res.data;
@@ -41,7 +40,6 @@ export const createCountry = async (
     {
       loading: "Creating country...",
       success: "Country created!",
-      error: "Failed to create country.",
     }
   );
   return res.data;
@@ -56,7 +54,6 @@ export const updateCountry = async (
     {
       loading: "Updating country...",
       success: "Country updated!",
-      error: "Failed to update country.",
     }
   );
   return res.data;
@@ -66,6 +63,5 @@ export const deleteCountry = async (id: string): Promise<void> => {
   await withToast(() => axiosInstance.delete(`${API_URL}/${id}`), {
     loading: "Deleting country...",
     success: "Country deleted!",
-    error: "Failed to delete country.",
   });
 };

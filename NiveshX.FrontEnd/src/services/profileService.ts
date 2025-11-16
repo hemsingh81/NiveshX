@@ -38,7 +38,6 @@ export const updateProfile = async (payload: UpdateProfileRequest): Promise<void
     {
       loading: 'Updating profile...',
       success: 'Profile updated successfully!',
-      error: 'Failed to update profile.',
       suppressGlobalError: true,
     }
   );
@@ -52,7 +51,6 @@ export const changePassword = async (payload: ChangePasswordRequest): Promise<vo
     {
       loading: 'Updating password...',
       success: 'Password updated successfully!',
-      error: 'Failed to update password.',
       suppressGlobalError: true,
     }
   );
@@ -72,7 +70,6 @@ export const uploadProfileImage = async (file: File): Promise<void> => {
     {
       loading: 'Uploading image...',
       success: 'Profile image updated!',
-      error: 'Failed to upload image.',
       suppressGlobalError: true,
     }
   );

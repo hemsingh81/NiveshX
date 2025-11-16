@@ -40,7 +40,6 @@ export const getAllUsers = async (): Promise<UserResponse[]> => {
   const res = await withToast(() => axiosInstance.get(`${API_URL}`), {
     loading: "Loading users...",
     success: "Users loaded!",
-    error: "Failed to load users.",
   });
   return res.data;
 };
@@ -49,7 +48,6 @@ export const createUser = async (data: CreateUserRequest): Promise<void> => {
   await withToast(() => axiosInstance.post(`${API_URL}`, data), {
     loading: "Creating user...",
     success: "User created!",
-    error: "Failed to create user.",
   });
 };
 
@@ -60,7 +58,6 @@ export const updateUser = async (
   await withToast(() => axiosInstance.put(`${API_URL}/${id}`, data), {
     loading: "Updating user...",
     success: "User updated!",
-    error: "Failed to update user.",
   });
 };
 
@@ -68,6 +65,5 @@ export const deleteUser = async (id: string): Promise<void> => {
   await withToast(() => axiosInstance.delete(`${API_URL}/${id}`), {
     loading: "Deleting user...",
     success: "User deleted!",
-    error: "Failed to delete user.",
   });
 };

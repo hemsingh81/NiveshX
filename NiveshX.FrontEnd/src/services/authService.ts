@@ -37,7 +37,6 @@ export const loginUser = async (
     {
       loading: "Logging in...",
       success: "Login successful!",
-      error: "Login failed. Please check your credentials.",
     }
   );
 

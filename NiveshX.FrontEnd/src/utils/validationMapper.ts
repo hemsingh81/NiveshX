@@ -1,63 +1,111 @@
 // src/utils/validationMapper.ts
 export type ServerErrorPayload =
-  | { errors?: Record<string, string[]>; message?: string }
-  | { errors?: { field: string; message: string }[]; message?: string }
-  | { message?: string };
+  | {
+      type?: string;
+      title?: string;
+      status?: number;
+      errors?: Record<string, string[]>;
+      message?: string;
+      detail?: string;
+    }
+  | {
+      errors?: { field?: string; key?: string; message?: string }[];
+      message?: string;
+      title?: string;
+    }
+  | { message?: string; title?: string };
 
-const toCamel = (s: string) =>
-  s.replace(/^[A-Z]/, (m) => m.toLowerCase()).replace(/\s+/g, "");
+const pascalToCamel = (s: string) =>
+  s.length > 0 ? s.charAt(0).toLowerCase() + s.slice(1) : s;
 
-export function mapServerErrorsToFieldErrors(
-  err: any
-): Record<string, string[]> {
+/**
+ * Normalize keys coming from server or binder:
+ * - "$.countryId" => "countryId"
+ * - "CountryId" => "countryId"
+ * - "items[0].name" => "name"
+ * - "request" => "__global"
+ */
+const normalizeKey = (rawKey: unknown): string => {
+  if (typeof rawKey !== "string" || !rawKey.trim()) return "__global";
+  let key = rawKey.trim();
+
+  if (key.startsWith("$.") || key.startsWith("$[")) key = key.slice(2);
+  key = key.replace(/\[(\d+)\]/g, ".$1");
+
+  const parts = key.split(".").filter(Boolean);
+  const last = parts.length ? parts[parts.length - 1] : key;
+
+  if (!last) return "__global";
+  if (last.toLowerCase() === "request") return "__global";
+
+  return /^[A-Z]/.test(last) ? pascalToCamel(last) : last;
+};
+
+export function mapServerErrorsToFieldErrors(err: any): Record<string, string[]> {
   const result: Record<string, string[]> = {};
 
-  const data = err?.response?.data;
+  // Accept axios-style error (err.response.data) or a raw payload
+  const data: any = err?.response?.data ?? err ?? null;
   if (!data) {
     if (err?.message) result["__global"] = [String(err.message)];
     return result;
   }
 
-  // Shape A: errors object where each key -> string[]
-  if (
-    data.errors &&
-    typeof data.errors === "object" &&
-    !Array.isArray(data.errors)
-  ) {
-    Object.entries(data.errors).forEach(([key, val]) => {
-      const messages = Array.isArray(val) ? val.map(String) : [String(val)];
-      const normalizedKey =
-        key[0] === key[0].toUpperCase() ? toCamel(key) : key;
+  // 1) If errors is an object map: { errors: { field: [msgs] } }
+  if (data && "errors" in data && data.errors && typeof data.errors === "object" && !Array.isArray(data.errors)) {
+    Object.entries(data.errors as Record<string, unknown>).forEach(([key, val]) => {
+      const normalizedKey = normalizeKey(key);
+      const messages = Array.isArray(val) ? (val as unknown[]).map(String) : [String(val ?? "")];
       result[normalizedKey] = (result[normalizedKey] || []).concat(messages);
     });
     return result;
   }
 
-  // Shape B: errors array of { field, message }
-  if (Array.isArray(data.errors)) {
-    data.errors.forEach((it: any) => {
-      const field = it.field ?? it.key ?? "__global";
-      const normalizedKey =
-        typeof field === "string"
-          ? field[0] === field[0].toUpperCase()
-            ? toCamel(field)
-            : field
-          : "__global";
-      const msg = String(it.message ?? it.msg ?? it.error ?? "");
+  // 2) If errors is an array: [{ field, message }]
+  if (data && "errors" in data && Array.isArray(data.errors)) {
+    (data.errors as any[]).forEach((it) => {
+      const rawField = it?.field ?? it?.key ?? "__global";
+      const normalizedKey = normalizeKey(rawField);
+      const msg = String(it?.message ?? it?.msg ?? it?.error ?? JSON.stringify(it));
       result[normalizedKey] = (result[normalizedKey] || []).concat(msg);
     });
     return result;
   }
 
-  // Generic message
-  if (data.message) {
-    result["__global"] = [String(data.message)];
-    return result;
+  // 3) If top-level title/message/detail exist, use as global error(s)
+  if (data?.title) result["__global"] = (result["__global"] || []).concat(String(data.title));
+  if (data?.message) result["__global"] = (result["__global"] || []).concat(String(data.message));
+  if ((data as any)?.detail) result["__global"] = (result["__global"] || []).concat(String((data as any).detail));
+
+  // 4) Defensive: if data.errors exists but didn't match map/array shapes, iterate entries
+  if (data && "errors" in data && data.errors && typeof data.errors === "object") {
+    try {
+      for (const [k, v] of Object.entries(data.errors as Record<string, unknown>)) {
+        const normalizedKey = normalizeKey(k);
+        if (Array.isArray(v)) {
+          (v as unknown[]).forEach((m) => (result[normalizedKey] = (result[normalizedKey] || []).concat(String(m))));
+        } else {
+          result[normalizedKey] = (result[normalizedKey] || []).concat(String(v ?? ""));
+        }
+      }
+      return result;
+    } catch {
+      // fall through to fallback
+    }
   }
 
-  if (err?.message) {
-    result["__global"] = [String(err.message)];
+  // 5) Fallback: if data is string or object, put in __global
+  if (typeof data === "string") {
+    result["__global"] = (result["__global"] || []).concat(data);
+  } else {
+    try {
+      result["__global"] = (result["__global"] || []).concat(JSON.stringify(data));
+    } catch {
+      result["__global"] = (result["__global"] || []).concat(String(data));
+    }
   }
 
   return result;
 }
+
+export default mapServerErrorsToFieldErrors;

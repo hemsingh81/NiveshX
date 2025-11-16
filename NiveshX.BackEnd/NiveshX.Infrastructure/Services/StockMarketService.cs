@@ -41,7 +41,7 @@ namespace NiveshX.Infrastructure.Services
         public async Task<StockMarketResponse> CreateAsync(CreateStockMarketRequest request, CancellationToken cancellationToken = default)
         {
             // Optional: validate country exists
-            var country = await _unitOfWork.Countries.GetByIdAsync(request.CountryId, cancellationToken);
+            var country = await _unitOfWork.Countries.GetByIdAsync(request.CountryId.Value, cancellationToken);
             if (country == null) throw new InvalidOperationException("Country not found");
 
             var entity = _mapper.Map<StockMarket>(request);
