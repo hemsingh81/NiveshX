@@ -30,6 +30,17 @@ namespace NiveshX.API.Controllers
                 return Ok(quotes);
             }, _logger, "Error occurred while fetching motivation quotes");
 
+        [HttpGet("all-active")]
+        [ProducesResponseType(typeof(IEnumerable<MotivationQuoteResponse>), StatusCodes.Status200OK)]
+        [AllowAnonymous]
+        public Task<ActionResult<IEnumerable<MotivationQuoteResponse>>> GetAllActive(CancellationToken cancellationToken) =>
+            this.ExecuteAsync<IEnumerable<MotivationQuoteResponse>>(async () =>
+            {
+                _logger.LogInformation("Fetching all Active motivation quotes");
+                var quotes = await _service.GetAllActiveAsync(cancellationToken);
+                return Ok(quotes);
+            }, _logger, "Error occurred while fetching active motivation quotes");
+
         [HttpGet("{id:guid}")]
         [ProducesResponseType(typeof(MotivationQuoteResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

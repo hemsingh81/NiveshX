@@ -11,6 +11,7 @@ namespace NiveshX.Core.Interfaces.Services
     public interface IMotivationQuoteService
     {
         Task<IEnumerable<MotivationQuoteResponse>> GetAllAsync(CancellationToken cancellationToken = default);
+        Task<IEnumerable<MotivationQuoteResponse>> GetAllActiveAsync(CancellationToken cancellationToken = default);
         Task<MotivationQuoteResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<MotivationQuoteResponse> CreateAsync(CreateMotivationQuoteRequest request, CancellationToken cancellationToken = default);
         Task<MotivationQuoteResponse?> UpdateAsync(Guid id, UpdateMotivationQuoteRequest request, CancellationToken cancellationToken = default);

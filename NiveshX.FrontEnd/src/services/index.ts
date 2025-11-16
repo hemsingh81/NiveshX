@@ -2,7 +2,7 @@ export * from "./profileService";
 export * from "./sectorService";
 export * from "./userService";
 export * from "./industryService";
-export * from "./motivationService";
+export * from "./motivationQuoteService";
 export * from "./countryService";
 export * from "./classificationTagService";
 export * from "./authService";

@@ -19,6 +19,9 @@ namespace NiveshX.Infrastructure.Repositories
         public async Task<IEnumerable<MotivationQuote>> GetAllAsync(CancellationToken cancellationToken = default)
             => await _context.MotivationQuotes.Where(q => !q.IsDeleted).ToListAsync(cancellationToken);
 
+        public async Task<IEnumerable<MotivationQuote>> GetAllActiveAsync(CancellationToken cancellationToken = default)
+            => await _context.MotivationQuotes.Where(q => !q.IsDeleted && q.IsActive).ToListAsync(cancellationToken);
+
         public async Task<MotivationQuote?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
             => await _context.MotivationQuotes.FindAsync(new object[] { id }, cancellationToken);
 

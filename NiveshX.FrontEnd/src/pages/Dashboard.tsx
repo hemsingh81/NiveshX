@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Layout, MotivationQuote } from '../components';
-import { getAllActivesQuotes } from '../services/motivationService';
+import { getAllActivesQuotes } from '../services';
 
 const Dashboard: React.FC = () => {
   const [quotes, setQuotes] = useState<{ text: string; author?: string }[]>([]);

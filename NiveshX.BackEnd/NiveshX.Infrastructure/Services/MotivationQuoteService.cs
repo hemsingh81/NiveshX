@@ -41,6 +41,21 @@ namespace NiveshX.Infrastructure.Services
             }
         }
 
+        public async Task<IEnumerable<MotivationQuoteResponse>> GetAllActiveAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching all motivation quotes");
+                var quotes = await _unitOfWork.MotivationQuotes.GetAllActiveAsync(cancellationToken);
+                return _mapper.Map<IEnumerable<MotivationQuoteResponse>>(quotes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching motivation quotes");
+                throw;
+            }
+        }
+
         public async Task<MotivationQuoteResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             try

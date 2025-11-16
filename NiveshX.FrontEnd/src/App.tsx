@@ -7,7 +7,6 @@ import {
   Dashboard,
   Admin,
   AdminLayout,
-  MotivationQuotes,
   UserManagement,
   CountryManagement,
   IndustryManagement,
@@ -18,6 +17,7 @@ import {
   SectorManagement,
   ClassificationTagManagement,
   StockMarketManagement,
+  MotivationQuotesManagement,
 } from "./pages";
 import ProtectedRoute from "./ProtectedRoute";
 import { ToasterControl } from "./components";
@@ -47,7 +47,7 @@ const ROUTES: ProtectedRouteConfig[] = [
   },
   {
     path: "/admin/motivation",
-    element: makeAdmin(<MotivationQuotes />),
+    element: makeAdmin(<MotivationQuotesManagement />),
     allowedRoles: ["Admin"],
     requireAuth: true,
   },
@@ -132,7 +132,11 @@ const App: React.FC = () => {
 
   return (
     <>
-      <ToasterControl position="bottom-right" maxWidth="480px" duration={8000} />
+      <ToasterControl
+        position="bottom-right"
+        maxWidth="480px"
+        duration={8000}
+      />
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />

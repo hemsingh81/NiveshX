@@ -6,7 +6,7 @@ export { default as Unauthorized } from './errors/unauthorized';
 export { default as ServerError } from './errors/ServerError';
 
 export { default as Admin } from './admin/Admin';
-export { default as MotivationQuotes } from './admin/motivation-quotes/MotivationQuotes';
+export { default as MotivationQuotesManagement } from './admin/motivation-quotes/MotivationQuotesManagement';
 export { default as UserManagement } from './admin/user/UserManagement';
 export { default as CountryManagement } from './admin/country/CountryManagement';
 export { default as IndustryManagement } from './admin/industry/IndustryManagement';
