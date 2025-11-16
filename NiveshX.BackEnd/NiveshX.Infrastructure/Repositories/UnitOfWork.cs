@@ -16,6 +16,7 @@ namespace NiveshX.Infrastructure.Repositories
         public IIndustryRepository Industries { get; }
         public ISectorRepository Sectors { get; }
         public IClassificationTagRepository ClassificationTags { get; }
+        public IStockMarketRepository StockMarkets { get; }
 
         public UnitOfWork(AppDbContext context)
         {
@@ -26,6 +27,7 @@ namespace NiveshX.Infrastructure.Repositories
             Industries = new IndustryRepository(context);
             Sectors = new SectorRepository(context);
             ClassificationTags = new ClassificationTagRepository(context);
+            StockMarkets = new StockMarketRepository(context);
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -50,6 +50,7 @@ builder.Services.AddScoped<ICountryService, CountryService>();
 builder.Services.AddScoped<IIndustryService, IndustryService>();
 builder.Services.AddScoped<ISectorService, SectorService>();
 builder.Services.AddScoped<IClassificationTagService, ClassificationTagService>();
+builder.Services.AddScoped<IStockMarketService, StockMarketService>();
 
 // ---- Authentication (JWT) ----
 builder.Services.AddAuthentication("Bearer")

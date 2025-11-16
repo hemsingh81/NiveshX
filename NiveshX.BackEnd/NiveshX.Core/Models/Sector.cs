@@ -9,5 +9,4 @@ namespace NiveshX.Core.Models
 
         public string? Description { get; set; }
     }
-
 }

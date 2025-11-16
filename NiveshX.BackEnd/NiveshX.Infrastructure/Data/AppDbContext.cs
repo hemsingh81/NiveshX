@@ -15,6 +15,7 @@ namespace NiveshX.Infrastructure.Data
         public DbSet<Industry> Industries => Set<Industry>();
         public DbSet<Sector> Sectors => Set<Sector>();
         public DbSet<ClassificationTag> ClassificationTags => Set<ClassificationTag>();
+        public DbSet<StockMarket> StockMarkets => Set<StockMarket>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
