@@ -14,44 +14,34 @@ namespace NiveshX.Infrastructure.Repositories
     {
         private readonly AppDbContext _context;
 
-        public MotivationQuoteRepository(AppDbContext context)
-        {
-            _context = context;
-        }
+        public MotivationQuoteRepository(AppDbContext context) => _context = context;
 
-        public async Task AddAsync(MotivationQuote quote, CancellationToken cancellationToken = default)
-        {
-            await _context.MotivationQuotes.AddAsync(quote, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
-        }
+        public async Task<IEnumerable<MotivationQuote>> GetAllAsync(CancellationToken cancellationToken = default)
+            => await _context.MotivationQuotes.Where(q => !q.IsDeleted).ToListAsync(cancellationToken);
 
         public async Task<MotivationQuote?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        {
-            return await _context.MotivationQuotes.FirstOrDefaultAsync(q => q.Id == id && !q.IsDeleted, cancellationToken);
-        }
+            => await _context.MotivationQuotes.FindAsync(new object[] { id }, cancellationToken);
 
-        public async Task UpdateAsync(MotivationQuote quote, CancellationToken cancellationToken = default)
+        public async Task AddAsync(MotivationQuote quote, CancellationToken cancellationToken = default)
+            => await _context.MotivationQuotes.AddAsync(quote, cancellationToken);
+
+        public Task UpdateAsync(MotivationQuote quote, CancellationToken cancellationToken = default)
         {
             _context.MotivationQuotes.Update(quote);
-            await _context.SaveChangesAsync(cancellationToken);
+            return Task.CompletedTask;
         }
 
-        public async Task<List<MotivationQuote>> GetAllAsync(CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _context.MotivationQuotes
-                .Where(q => !q.IsDeleted)
-                .OrderByDescending(q => q.CreatedOn)
-                .ToListAsync(cancellationToken);
-        }
+            var quote = await _context.MotivationQuotes.FindAsync(new object[] { id }, cancellationToken);
+            if (quote == null) return false;
 
-        public async Task<List<MotivationQuote>> GetAllActiveAsync(CancellationToken cancellationToken = default)
-        {
-            return await _context.MotivationQuotes
-                .Where(q => !q.IsDeleted && q.IsActive)
-                .OrderByDescending(q => q.CreatedOn)
-                .ToListAsync(cancellationToken);
+            quote.IsDeleted = true;
+            quote.ModifiedOn = DateTime.UtcNow;
+            quote.ModifiedBy = "system";
+            _context.MotivationQuotes.Update(quote);
+            return true;
         }
-
     }
 
 }

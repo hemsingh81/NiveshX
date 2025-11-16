@@ -3,13 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using NiveshX.API.Utils;
 using NiveshX.Core.DTOs.MotivationQuote;
 using NiveshX.Core.Interfaces.Services;
-using NiveshX.Core.Models;
 
 namespace NiveshX.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public class MotivationQuoteController : ControllerBase
     {
         private readonly IMotivationQuoteService _service;
@@ -21,95 +20,69 @@ namespace NiveshX.API.Controllers
             _logger = logger;
         }
 
-        [HttpPost("add")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public Task<ActionResult> Add([FromBody] AddMotivationQuoteRequest request, CancellationToken cancellationToken)
-        {
-            if (!ModelState.IsValid)
-                return Task.FromResult<ActionResult>(BadRequest(ModelState));
-
-            return this.ExecuteAsync(async () =>
+        [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<MotivationQuoteResponse>), StatusCodes.Status200OK)]
+        public Task<ActionResult<IEnumerable<MotivationQuoteResponse>>> GetAll(CancellationToken cancellationToken) =>
+            this.ExecuteAsync<IEnumerable<MotivationQuoteResponse>>(async () =>
             {
-                if (string.IsNullOrWhiteSpace(request.Quote))
-                    return BadRequest("Quote cannot be empty");
+                _logger.LogInformation("Fetching all motivation quotes");
+                var quotes = await _service.GetAllAsync(cancellationToken);
+                return Ok(quotes);
+            }, _logger, "Error occurred while fetching motivation quotes");
 
-                var success = await _service.AddAsync(request, cancellationToken);
-                if (!success)
-                    return BadRequest("Failed to add quote");
-
-                _logger.LogInformation("Motivation quote added: {Quote}", request.Quote);
-                return Ok("Quote added successfully");
-            }, _logger, "Error adding motivation quote");
-        }
-
-        [HttpPut("edit")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpGet("{id:guid}")]
+        [ProducesResponseType(typeof(MotivationQuoteResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public Task<ActionResult<MotivationQuoteResponse>> GetById(Guid id, CancellationToken cancellationToken) =>
+            this.ExecuteAsync<MotivationQuoteResponse>(async () =>
+            {
+                _logger.LogInformation("Fetching motivation quote with ID: {QuoteId}", id);
+                var quote = await _service.GetByIdAsync(id, cancellationToken);
+                return quote is not null ? Ok(quote) : NotFound(new { message = "Motivation quote not found" });
+            }, _logger, "Error occurred while fetching motivation quote with ID: {QuoteId}", id);
+
+        [HttpPost]
+        [ProducesResponseType(typeof(MotivationQuoteResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public Task<ActionResult> Edit([FromBody] EditMotivationQuoteRequest request, CancellationToken cancellationToken)
+        public Task<ActionResult<MotivationQuoteResponse>> Create([FromBody] CreateMotivationQuoteRequest request, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
-                return Task.FromResult<ActionResult>(BadRequest(ModelState));
+                return Task.FromResult<ActionResult<MotivationQuoteResponse>>(BadRequest(ModelState));
 
-            return this.ExecuteAsync(async () =>
+            return this.ExecuteAsync<MotivationQuoteResponse>(async () =>
             {
-                var success = await _service.EditAsync(request, cancellationToken);
-                if (!success)
-                {
-                    _logger.LogWarning("Edit failed: Quote not found for ID {Id}", request.Id);
-                    return NotFound("Quote not found");
-                }
-
-                _logger.LogInformation("Motivation quote updated: {Id}", request.Id);
-                return Ok("Quote updated successfully");
-            }, _logger, "Error editing motivation quote with ID: {Id}", request.Id);
+                _logger.LogInformation("Creating new motivation quote by author: {Author}", request.Author);
+                var created = await _service.CreateAsync(request, cancellationToken);
+                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            }, _logger, "Error occurred while creating motivation quote by author: {Author}", request.Author);
         }
 
-        [HttpDelete("delete/{id:guid}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpPut("{id:guid}")]
+        [ProducesResponseType(typeof(MotivationQuoteResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public Task<ActionResult<MotivationQuoteResponse>> Update(Guid id, [FromBody] UpdateMotivationQuoteRequest request, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+                return Task.FromResult<ActionResult<MotivationQuoteResponse>>(BadRequest(ModelState));
+
+            return this.ExecuteAsync<MotivationQuoteResponse>(async () =>
+            {
+                _logger.LogInformation("Updating motivation quote with ID: {QuoteId}", id);
+                var updated = await _service.UpdateAsync(id, request, cancellationToken);
+                return updated is not null ? Ok(updated) : NotFound(new { message = "Motivation quote not found" });
+            }, _logger, "Error occurred while updating motivation quote with ID: {QuoteId}", id);
+        }
+
+        [HttpDelete("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
             this.ExecuteAsync(async () =>
             {
+                _logger.LogInformation("Attempting to delete motivation quote with ID: {QuoteId}", id);
                 var success = await _service.DeleteAsync(id, cancellationToken);
-                if (!success)
-                {
-                    _logger.LogWarning("Soft delete failed: Quote not found for ID {Id}", id);
-                    return NotFound("Quote not found");
-                }
-
-                _logger.LogInformation("Motivation quote soft-deleted: {Id}", id);
-                return Ok("Quote deleted successfully");
-            }, _logger, "Error deleting motivation quote with ID: {Id}", id);
-
-        [HttpGet("all")]
-        [ProducesResponseType(typeof(List<MotivationQuote>), StatusCodes.Status200OK)]
-        public Task<ActionResult<List<MotivationQuote>>> GetAll(CancellationToken cancellationToken) =>
-            this.ExecuteAsync<List<MotivationQuote>>(async () =>
-            {
-                var result = await _service.GetAllAsync(cancellationToken);
-                return Ok(result);
-            }, _logger, "Error retrieving all motivation quotes");
-
-        [HttpGet("{id:guid}")]
-        [ProducesResponseType(typeof(MotivationQuote), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public Task<ActionResult<MotivationQuote>> GetById(Guid id, CancellationToken cancellationToken) =>
-            this.ExecuteAsync<MotivationQuote>(async () =>
-            {
-                var result = await _service.GetByIdAsync(id, cancellationToken);
-                return result is not null ? Ok(result) : NotFound("Quote not found");
-            }, _logger, "Error retrieving motivation quote by ID: {Id}", id);
-
-        [HttpGet("all-active")]
-        [ProducesResponseType(typeof(List<MotivationQuote>), StatusCodes.Status200OK)]
-        [AllowAnonymous]
-        public Task<ActionResult<List<MotivationQuote>>> GetAllActive(CancellationToken cancellationToken) =>
-            this.ExecuteAsync<List<MotivationQuote>>(async () =>
-            {
-                var result = await _service.GetAllActive(cancellationToken);
-                return Ok(result);
-            }, _logger, "Error retrieving all active motivation quotes");
+                return success ? NoContent() : NotFound(new { message = "Motivation quote not found" });
+            }, _logger, "Error occurred while deleting motivation quote with ID: {QuoteId}", id);
     }
 }
