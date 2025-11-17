@@ -1,32 +1,19 @@
-// src/pages/admin/stockMarket/StockMarketFormDialog.tsx
-import React, { useEffect, useRef, useState } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Box,
-  Divider,
-  FormControlLabel,
-  Checkbox,
-  MenuItem,
-} from "@mui/material";
-import { CustomButton, ErrorDisplay } from "../../../controls";
+import React, { useEffect, useState } from "react";
+import { DialogContent, Box, FormControlLabel, Checkbox, MenuItem } from "@mui/material";
+import FormDialogWrapper from "../../../controls/FormDialogWrapper";
+import FormField from "../../../controls/FormField";
+import useServerErrors from "../../../hooks/useServerErrors";
 import {
   CreateStockMarketRequest,
   UpdateStockMarketRequest,
   StockMarketResponse,
   getAllCountries,
 } from "../../../services";
-import { mapServerErrorsToFieldErrors } from "../../../utils/validationMapper";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (
-    data: CreateStockMarketRequest | UpdateStockMarketRequest
-  ) => Promise<void>;
+  onSubmit: (data: CreateStockMarketRequest | UpdateStockMarketRequest) => Promise<void>;
   mode: "add" | "edit";
   stockMarket?: StockMarketResponse;
 }
@@ -47,20 +34,12 @@ const defaultModel = (): FormModel => ({
   isActive: true,
 });
 
-const StockMarketFormDialog: React.FC<Props> = ({
-  open,
-  onClose,
-  onSubmit,
-  mode,
-  stockMarket,
-}) => {
+const StockMarketFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode, stockMarket }) => {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<FormModel>(defaultModel());
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
-  const [countries, setCountries] = useState<{ id: string; name: string }[]>(
-    []
-  );
-  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [countries, setCountries] = useState<{ id: string; name: string }[]>([]);
+
+  const { fieldErrors, handleServerError, clearErrors, bindRef } = useServerErrors();
 
   useEffect(() => {
     let mounted = true;
@@ -70,7 +49,7 @@ const StockMarketFormDialog: React.FC<Props> = ({
         if (!mounted) return;
         setCountries(data.map((c) => ({ id: c.id, name: c.name })));
       } catch {
-        // withToast shows errors
+        // service layer handles errors/toasts
       }
     })();
     return () => {
@@ -81,7 +60,7 @@ const StockMarketFormDialog: React.FC<Props> = ({
   useEffect(() => {
     if (!open) {
       setForm((prev) => ({ ...defaultModel(), isActive: prev.isActive }));
-      setFieldErrors({});
+      clearErrors();
       setSubmitting(false);
       return;
     }
@@ -98,27 +77,16 @@ const StockMarketFormDialog: React.FC<Props> = ({
       setForm(defaultModel());
     }
 
-    setFieldErrors({});
-  }, [open, mode, stockMarket]);
+    clearErrors();
+  }, [open, mode, stockMarket, clearErrors]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type, checked } = e.target as any;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  const focusFirstError = (mapped: Record<string, string[]>) => {
-    const firstField = Object.keys(mapped)[0];
-    if (!firstField || firstField === "__global") return;
-    inputRefs.current[firstField]?.focus?.();
+    setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
   const handleSubmit = async () => {
-    setFieldErrors({});
+    clearErrors();
     try {
       setSubmitting(true);
       if (mode === "add") {
@@ -142,173 +110,118 @@ const StockMarketFormDialog: React.FC<Props> = ({
       }
       onClose();
     } catch (err: any) {
-      const mapped = mapServerErrorsToFieldErrors(err);
-      setFieldErrors(mapped);
-      focusFirstError(mapped);
-      // do not rethrow — we've handled mapping here
+      handleServerError(err);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const renderHelper = (key: string) => {
-    const arr = fieldErrors[key];
-    if (!arr || arr.length === 0) return undefined;
-    return (
+  const renderFieldHelper = (key: string) =>
+    fieldErrors[key] ? (
       <ul style={{ margin: 0, paddingLeft: 16 }}>
-        {arr.map((m, i) => (
+        {fieldErrors[key].map((m, i) => (
           <li key={i}>{m}</li>
         ))}
       </ul>
-    );
-  };
+    ) : undefined;
+
+  const renderBody = () => (
+    <DialogContent>
+      <Box display="flex" gap={2}>
+        <FormField
+          autoFocus
+          fullWidth
+          margin="normal"
+          label="Name"
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          disabled={submitting}
+          error={!!fieldErrors.name}
+          helper={renderFieldHelper("name")}
+          inputRefFn={bindRef("name")}
+        />
+      </Box>
+
+      <Box display="flex" gap={2} mt={2}>
+        <FormField
+          fullWidth
+          margin="normal"
+          label="Code"
+          name="code"
+          value={form.code}
+          onChange={handleChange}
+          disabled={submitting}
+          error={!!fieldErrors.code}
+          helper={renderFieldHelper("code")}
+          inputRefFn={bindRef("code")}
+        />
+      </Box>
+
+      <Box display="flex" gap={2} mt={2}>
+        <FormField
+          fullWidth
+          multiline
+          minRows={3}
+          label="Description"
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          disabled={submitting}
+          error={!!fieldErrors.description}
+          helper={renderFieldHelper("description")}
+          inputRefFn={bindRef("description")}
+        />
+      </Box>
+
+      <Box display="flex" gap={2} mt={2}>
+        <FormField
+          select
+          fullWidth
+          label="Country"
+          name="countryId"
+          value={form.countryId ?? ""}
+          onChange={handleChange}
+          disabled={submitting}
+          error={!!fieldErrors.countryId}
+          helper={renderFieldHelper("countryId")}
+          inputRefFn={bindRef("countryId")}
+        >
+          <MenuItem value="">
+            <em>None</em>
+          </MenuItem>
+          {countries.map((c) => (
+            <MenuItem key={c.id} value={c.id}>
+              {c.name}
+            </MenuItem>
+          ))}
+        </FormField>
+      </Box>
+
+      {mode === "edit" && (
+        <Box mt={2}>
+          <FormControlLabel
+            control={<Checkbox checked={form.isActive} onChange={handleChange} name="isActive" disabled={submitting} />}
+            label="Is Active"
+          />
+        </Box>
+      )}
+    </DialogContent>
+  );
 
   return (
-    <Dialog
+    <FormDialogWrapper
       open={open}
-      onClose={(e, reason) => {
-        if (
-          submitting &&
-          (reason === "backdropClick" || reason === "escapeKeyDown")
-        )
-          return;
-        onClose();
-      }}
-      fullWidth
-      maxWidth="sm"
-      aria-labelledby="stock-market-form-dialog-title"
-    >
-      <DialogTitle
-        id="stock-market-form-dialog-title"
-        sx={{ pb: 1, px: 3, backgroundColor: (t) => t.palette.grey[100] }}
-      >
-        {mode === "add" ? "Add Stock Market" : "Edit Stock Market"}
-      </DialogTitle>
-
-      <Divider sx={{ borderColor: "divider", my: 0 }} />
-
-      <ErrorDisplay errors={fieldErrors} showFieldLevel={false} sx={{ my: 2, px: 3 }} />
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit();
-        }}
-      >
-        <DialogContent>
-          <Box display="flex" gap={2}>
-            <TextField
-              autoFocus
-              fullWidth
-              margin="normal"
-              label="Name"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              disabled={submitting}
-              error={!!fieldErrors.name}
-              helperText={renderHelper("name")}
-              inputRef={(el) => (inputRefs.current["name"] = el)}
-            />
-          </Box>
-
-          <Box display="flex" gap={2} mt={2}>
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Code"
-              name="code"
-              value={form.code}
-              onChange={handleChange}
-              disabled={submitting}
-              error={!!fieldErrors.code}
-              helperText={renderHelper("code")}
-              inputRef={(el) => (inputRefs.current["code"] = el)}
-            />
-          </Box>
-
-          <Box display="flex" gap={2} mt={2}>
-            <TextField
-              fullWidth
-              multiline
-              minRows={3}
-              label="Description"
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              disabled={submitting}
-              error={!!fieldErrors.description}
-              helperText={renderHelper("description")}
-              inputRef={(el) => (inputRefs.current["description"] = el)}
-            />
-          </Box>
-
-          <Box display="flex" gap={2} mt={2}>
-            <TextField
-              select
-              fullWidth
-              label="Country"
-              name="countryId"
-              value={form.countryId ?? ""}
-              onChange={handleChange}
-              disabled={submitting}
-              error={!!fieldErrors.countryId}
-              helperText={renderHelper("countryId")}
-              inputRef={(el) => (inputRefs.current["countryId"] = el)}
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {countries.map((c) => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.name}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Box>
-
-          {mode === "edit" && (
-            <Box mt={2}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={form.isActive}
-                    onChange={handleChange}
-                    name="isActive"
-                    disabled={submitting}
-                  />
-                }
-                label="Is Active"
-              />
-            </Box>
-          )}
-        </DialogContent>
-
-        <Divider sx={{ borderColor: "divider" }} />
-
-        <DialogActions
-          sx={{ p: 2, px: 3, backgroundColor: (t) => t.palette.grey[50] }}
-        >
-          <CustomButton
-            loading={false}
-            label="Cancel"
-            type="button"
-            color="gray"
-            onClick={() => {
-              if (!submitting) onClose();
-            }}
-            className="mr-2"
-          />
-          <CustomButton
-            loading={submitting}
-            label={mode === "add" ? "Create" : "Update"}
-            loadingLabel={mode === "add" ? "Creating..." : "Updating..."}
-            type="submit"
-            color="blue"
-          />
-        </DialogActions>
-      </form>
-    </Dialog>
+      title={mode === "add" ? "Add Stock Market" : "Edit Stock Market"}
+      submitting={submitting}
+      mode={mode}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      errors={fieldErrors}
+      showFieldLevel={false}
+      submitLabels={{ add: "Create", edit: "Update" }}
+      renderBody={renderBody}
+    />
   );
 };
 

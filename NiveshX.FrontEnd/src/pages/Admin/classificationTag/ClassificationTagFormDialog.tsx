@@ -1,27 +1,24 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  TextField,
   Box,
-  Divider,
   FormControlLabel,
   Checkbox,
 } from "@mui/material";
-import { CustomButton, ErrorDisplay } from "../../../controls";
+import { FormField, FormDialogWrapper } from "../../../controls";
+import useServerErrors from "../../../hooks/useServerErrors";
 import {
   CreateClassificationTagRequest,
   UpdateClassificationTagRequest,
   ClassificationTagResponse,
 } from "../../../services";
-import { mapServerErrorsToFieldErrors } from "../../../utils/validationMapper";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateClassificationTagRequest | UpdateClassificationTagRequest) => Promise<void>;
+  onSubmit: (
+    data: CreateClassificationTagRequest | UpdateClassificationTagRequest
+  ) => Promise<void>;
   mode: "add" | "edit";
   tag?: ClassificationTagResponse;
 }
@@ -40,16 +37,23 @@ const defaultModel = (): FormModel => ({
   isActive: true,
 });
 
-const ClassificationTagFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode, tag }) => {
+const ClassificationTagFormDialog: React.FC<Props> = ({
+  open,
+  onClose,
+  onSubmit,
+  mode,
+  tag,
+}) => {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<FormModel>(defaultModel());
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
-  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const { fieldErrors, handleServerError, clearErrors, bindRef } =
+    useServerErrors();
 
   useEffect(() => {
     if (!open) {
       setForm((prev) => ({ ...defaultModel(), isActive: prev.isActive }));
-      setFieldErrors({});
+      clearErrors();
       setSubmitting(false);
       return;
     }
@@ -65,22 +69,21 @@ const ClassificationTagFormDialog: React.FC<Props> = ({ open, onClose, onSubmit,
       setForm(defaultModel());
     }
 
-    setFieldErrors({});
-  }, [open, mode, tag]);
+    clearErrors();
+  }, [open, mode, tag, clearErrors]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type, checked } = e.target as any;
-    setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
-  };
-
-  const focusFirstError = (mapped: Record<string, string[]>) => {
-    const firstField = Object.keys(mapped)[0];
-    if (!firstField || firstField === "__global") return;
-    inputRefs.current[firstField]?.focus?.();
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSubmit = async () => {
-    setFieldErrors({});
+    clearErrors();
     try {
       setSubmitting(true);
       if (mode === "add") {
@@ -101,122 +104,116 @@ const ClassificationTagFormDialog: React.FC<Props> = ({ open, onClose, onSubmit,
       }
       onClose();
     } catch (err: any) {
-      const mapped = mapServerErrorsToFieldErrors(err);
-      setFieldErrors(mapped);
-      focusFirstError(mapped);
+      handleServerError(err);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const renderHelper = (key: string) => {
-    const arr = fieldErrors[key];
-    if (!arr || arr.length === 0) return undefined;
-    return (
-      <ul style={{ margin: 0, paddingLeft: 16 }}>
-        {arr.map((m, i) => (
-          <li key={i}>{m}</li>
-        ))}
-      </ul>
-    );
-  };
+  const renderBody = () => (
+    <DialogContent>
+      <Box display="flex" gap={2}>
+        <FormField
+          autoFocus
+          fullWidth
+          margin="normal"
+          label="Name"
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          disabled={submitting}
+          error={!!fieldErrors.name}
+          helper={
+            fieldErrors.name ? (
+              <ul style={{ margin: 0, paddingLeft: 16 }}>
+                {fieldErrors.name.map((m, i) => (
+                  <li key={i}>{m}</li>
+                ))}
+              </ul>
+            ) : undefined
+          }
+          inputRefFn={bindRef("name")}
+        />
+      </Box>
+
+      <Box display="flex" gap={2} mt={2}>
+        <FormField
+          fullWidth
+          label="Category"
+          name="category"
+          value={form.category}
+          onChange={handleChange}
+          disabled={submitting}
+          error={!!fieldErrors.category}
+          helper={
+            fieldErrors.category ? (
+              <ul style={{ margin: 0, paddingLeft: 16 }}>
+                {fieldErrors.category.map((m, i) => (
+                  <li key={i}>{m}</li>
+                ))}
+              </ul>
+            ) : undefined
+          }
+          inputRefFn={bindRef("category")}
+        />
+      </Box>
+
+      <Box display="flex" gap={2} mt={2}>
+        <FormField
+          fullWidth
+          multiline
+          minRows={3}
+          label="Description"
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          disabled={submitting}
+          error={!!fieldErrors.description}
+          helper={
+            fieldErrors.description ? (
+              <ul style={{ margin: 0, paddingLeft: 16 }}>
+                {fieldErrors.description.map((m, i) => (
+                  <li key={i}>{m}</li>
+                ))}
+              </ul>
+            ) : undefined
+          }
+          inputRefFn={bindRef("description")}
+        />
+      </Box>
+
+      {mode === "edit" && (
+        <Box mt={2}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={form.isActive}
+                onChange={handleChange}
+                name="isActive"
+                disabled={submitting}
+              />
+            }
+            label="Is Active"
+          />
+        </Box>
+      )}
+    </DialogContent>
+  );
 
   return (
-    <Dialog
+    <FormDialogWrapper
       open={open}
-      onClose={(e, reason) => {
-        if (submitting && (reason === "backdropClick" || reason === "escapeKeyDown")) return;
-        onClose();
-      }}
-      fullWidth
-      maxWidth="sm"
-      aria-labelledby="classification-tag-form-dialog-title"
-    >
-      <DialogTitle id="classification-tag-form-dialog-title" sx={{ pb: 1, px: 3, backgroundColor: (t) => t.palette.grey[100] }}>
-        {mode === "add" ? "Add Classification Tag" : "Edit Classification Tag"}
-      </DialogTitle>
-
-      <Divider sx={{ borderColor: "divider", my: 0 }} />
-
-      <ErrorDisplay errors={fieldErrors} showFieldLevel={false} sx={{ my: 2, px: 3 }} />
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit();
-        }}
-      >
-        <DialogContent>
-          <Box display="flex" gap={2}>
-            <TextField
-              autoFocus
-              fullWidth
-              margin="normal"
-              label="Name"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              disabled={submitting}
-              error={!!fieldErrors.name}
-              helperText={renderHelper("name")}
-              inputRef={(el) => (inputRefs.current["name"] = el)}
-            />
-          </Box>
-
-          <Box display="flex" gap={2} mt={2}>
-            <TextField
-              fullWidth
-              label="Category"
-              name="category"
-              value={form.category}
-              onChange={handleChange}
-              disabled={submitting}
-              error={!!fieldErrors.category}
-              helperText={renderHelper("category")}
-              inputRef={(el) => (inputRefs.current["category"] = el)}
-            />
-          </Box>
-
-          <Box display="flex" gap={2} mt={2}>
-            <TextField
-              fullWidth
-              multiline
-              minRows={3}
-              label="Description"
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              disabled={submitting}
-              error={!!fieldErrors.description}
-              helperText={renderHelper("description")}
-              inputRef={(el) => (inputRefs.current["description"] = el)}
-            />
-          </Box>
-
-          {mode === "edit" && (
-            <Box mt={2}>
-              <FormControlLabel
-                control={<Checkbox checked={form.isActive} onChange={handleChange} name="isActive" disabled={submitting} />}
-                label="Is Active"
-              />
-            </Box>
-          )}
-        </DialogContent>
-
-        <Divider sx={{ borderColor: "divider" }} />
-
-        <DialogActions sx={{ p: 2, px: 3, backgroundColor: (t) => t.palette.grey[50] }}>
-          <CustomButton loading={false} label="Cancel" type="button" color="gray" onClick={onClose} className="mr-2" />
-          <CustomButton
-            loading={submitting}
-            label={mode === "add" ? "Create" : "Update"}
-            loadingLabel={mode === "add" ? "Creating..." : "Updating..."}
-            type="submit"
-            color="blue"
-          />
-        </DialogActions>
-      </form>
-    </Dialog>
+      title={
+        mode === "add" ? "Add Classification Tag" : "Edit Classification Tag"
+      }
+      submitting={submitting}
+      mode={mode}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      errors={fieldErrors}
+      showFieldLevel={false}
+      renderBody={renderBody}
+    />
   );
 };
 

@@ -15,10 +15,6 @@ export type FieldErrors = Record<string, string[]>;
 
 type Props = {
   errors?: FieldErrors | null;
-  /**
-   * If true, field-level messages are rendered inline as small text blocks.
-   * If false, only a global Alert is rendered (good for pages that only expect global messages).
-   */
   showFieldLevel?: boolean;
   sx?: any;
 };

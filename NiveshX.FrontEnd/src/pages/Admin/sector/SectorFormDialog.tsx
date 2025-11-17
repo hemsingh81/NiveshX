@@ -1,22 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Box,
-  Divider,
-  FormControlLabel,
-  Checkbox,
-} from "@mui/material";
-import { CustomButton, ErrorDisplay } from "../../../controls";
+import React, { useEffect, useState } from "react";
+import { Box, DialogContent, FormControlLabel, Checkbox } from "@mui/material";
+import FormDialogWrapper from "../../../controls/FormDialogWrapper";
+import FormField from "../../../controls/FormField";
+import useServerErrors from "../../../hooks/useServerErrors";
 import {
   CreateSectorRequest,
   UpdateSectorRequest,
   SectorResponse,
 } from "../../../services";
-import { mapServerErrorsToFieldErrors } from "../../../utils/validationMapper";
 
 interface Props {
   open: boolean;
@@ -41,13 +32,13 @@ const defaultModel = (): FormModel => ({
 const SectorFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode, sector }) => {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<FormModel>(defaultModel());
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
-  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const { fieldErrors, handleServerError, clearErrors, bindRef } = useServerErrors();
 
   useEffect(() => {
     if (!open) {
       setForm((prev) => ({ ...defaultModel(), isActive: prev.isActive }));
-      setFieldErrors({});
+      clearErrors();
       setSubmitting(false);
       return;
     }
@@ -62,136 +53,115 @@ const SectorFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode, sect
       setForm(defaultModel());
     }
 
-    setFieldErrors({});
-  }, [open, mode, sector]);
+    clearErrors();
+  }, [open, mode, sector, clearErrors]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type, checked } = e.target as any;
     setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
-  const focusFirstError = (mapped: Record<string, string[]>) => {
-    const firstField = Object.keys(mapped)[0];
-    if (!firstField || firstField === "__global") return;
-    inputRefs.current[firstField]?.focus?.();
-  };
-
   const handleSubmit = async () => {
-    setFieldErrors({});
+    clearErrors();
     try {
       setSubmitting(true);
       if (mode === "add") {
-        const payload: CreateSectorRequest = { name: form.name, description: form.description || undefined };
+        const payload: CreateSectorRequest = {
+          name: form.name,
+          description: form.description || undefined,
+        };
         await onSubmit(payload);
       } else {
-        const payload: UpdateSectorRequest = { name: form.name, description: form.description || undefined, isActive: form.isActive };
+        const payload: UpdateSectorRequest = {
+          name: form.name,
+          description: form.description || undefined,
+          isActive: form.isActive,
+        };
         if (!sector) throw new Error("Missing sector id");
         await onSubmit(payload);
       }
       onClose();
     } catch (err: any) {
-      const mapped = mapServerErrorsToFieldErrors(err);
-      setFieldErrors(mapped);
-      focusFirstError(mapped);
+      handleServerError(err);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const renderHelper = (key: string) => {
-    const arr = fieldErrors[key];
-    if (!arr || arr.length === 0) return undefined;
-    return (
-      <ul style={{ margin: 0, paddingLeft: 16 }}>
-        {arr.map((m, i) => (
-          <li key={i}>{m}</li>
-        ))}
-      </ul>
-    );
-  };
+  const renderBody = () => (
+    <DialogContent>
+      <Box display="flex" gap={2}>
+        <FormField
+          autoFocus
+          fullWidth
+          margin="normal"
+          label="Name"
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          disabled={submitting}
+          error={!!fieldErrors.name}
+          helper={
+            fieldErrors.name ? (
+              <ul style={{ margin: 0, paddingLeft: 16 }}>
+                {fieldErrors.name.map((m, i) => (
+                  <li key={i}>{m}</li>
+                ))}
+              </ul>
+            ) : undefined
+          }
+          inputRefFn={bindRef("name")}
+        />
+      </Box>
+
+      <Box display="flex" gap={2} mt={2}>
+        <FormField
+          fullWidth
+          multiline
+          minRows={3}
+          label="Description"
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          disabled={submitting}
+          error={!!fieldErrors.description}
+          helper={
+            fieldErrors.description ? (
+              <ul style={{ margin: 0, paddingLeft: 16 }}>
+                {fieldErrors.description.map((m, i) => (
+                  <li key={i}>{m}</li>
+                ))}
+              </ul>
+            ) : undefined
+          }
+          inputRefFn={bindRef("description")}
+        />
+      </Box>
+
+      {mode === "edit" && (
+        <Box mt={2}>
+          <FormControlLabel
+            control={<Checkbox checked={form.isActive} onChange={handleChange} name="isActive" disabled={submitting} />}
+            label="Is Active"
+          />
+        </Box>
+      )}
+    </DialogContent>
+  );
 
   return (
-    <Dialog
+    <FormDialogWrapper
       open={open}
-      onClose={(e, reason) => {
-        if (submitting && (reason === "backdropClick" || reason === "escapeKeyDown")) return;
-        onClose();
-      }}
-      fullWidth
-      maxWidth="sm"
-      aria-labelledby="sector-form-dialog-title"
-    >
-      <DialogTitle id="sector-form-dialog-title" sx={{ pb: 1, px: 3, backgroundColor: (t) => t.palette.grey[100] }}>
-        {mode === "add" ? "Add Sector" : "Edit Sector"}
-      </DialogTitle>
-
-      <Divider sx={{ borderColor: "divider", my: 0 }} />
-
-      <ErrorDisplay errors={fieldErrors} showFieldLevel={false} sx={{ my: 2, px: 3 }} />
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit();
-        }}
-      >
-        <DialogContent>
-          <Box display="flex" gap={2}>
-            <TextField
-              autoFocus
-              fullWidth
-              margin="normal"
-              label="Name"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              disabled={submitting}
-              error={!!fieldErrors.name}
-              helperText={renderHelper("name")}
-              inputRef={(el) => (inputRefs.current["name"] = el)}
-            />
-          </Box>
-
-          <Box display="flex" gap={2} mt={2}>
-            <TextField
-              fullWidth
-              multiline
-              minRows={3}
-              label="Description"
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              disabled={submitting}
-              error={!!fieldErrors.description}
-              helperText={renderHelper("description")}
-              inputRef={(el) => (inputRefs.current["description"] = el)}
-            />
-          </Box>
-
-          {mode === "edit" && (
-            <Box mt={2}>
-              <FormControlLabel
-                control={<Checkbox checked={form.isActive} onChange={handleChange} name="isActive" disabled={submitting} />}
-                label="Is Active"
-              />
-            </Box>
-          )}
-        </DialogContent>
-
-        <Divider sx={{ borderColor: "divider" }} />
-
-        <DialogActions sx={{ p: 2, px: 3, backgroundColor: (t) => t.palette.grey[50] }}>
-          <CustomButton loading={false} label="Cancel" type="button" color="gray" onClick={onClose} className="mr-2" />
-          <CustomButton
-            loading={submitting}
-            label={mode === "add" ? "Create" : "Update"}
-            loadingLabel={mode === "add" ? "Creating..." : "Updating..."}
-            type="submit"
-            color="blue"
-          />
-        </DialogActions>
-      </form>
-    </Dialog>
+      title={mode === "add" ? "Add Sector" : "Edit Sector"}
+      submitting={submitting}
+      mode={mode}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      errors={fieldErrors}
+      showFieldLevel={false}
+      submitLabels={{ add: "Create", edit: "Update" }}
+      renderBody={renderBody}
+    />
   );
 };
 
