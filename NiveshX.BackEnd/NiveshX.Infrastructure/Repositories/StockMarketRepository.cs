@@ -49,6 +49,28 @@ namespace NiveshX.Infrastructure.Repositories
             _appDbContext.Set<StockMarket>().Remove(entity);
             return true;
         }
+
+        public async Task<bool> ExistsAsync(string name, string code, Guid countryId, CancellationToken cancellationToken = default)
+        {
+            return await ExistsAsync(name, code, countryId, null, cancellationToken);
+        }
+        public async Task<bool> ExistsAsync(string name, string code, Guid countryId, Guid? excludeId = null, CancellationToken cancellationToken = default)
+        {
+            var normalizedName = name?.Trim().ToLowerInvariant() ?? string.Empty;
+            var normalizedCode = code?.Trim().ToLowerInvariant() ?? string.Empty;
+
+            var q = _appDbContext.StockMarkets
+                .AsNoTracking()
+                .Where(s => !s.IsDeleted && s.CountryId == countryId);
+
+            if (excludeId.HasValue)
+                q = q.Where(s => s.Id != excludeId.Value);
+
+            return await q.AnyAsync(s =>
+                s.Name.ToLower() == normalizedName ||
+                s.Code.ToLower() == normalizedCode,
+                cancellationToken);
+        }
     }
 
 }

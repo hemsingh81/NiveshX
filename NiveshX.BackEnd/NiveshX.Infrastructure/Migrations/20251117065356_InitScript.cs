@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace NiveshX.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitScripts : Migration
+    public partial class InitScript : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -139,6 +139,33 @@ namespace NiveshX.Infrastructure.Migrations
                     table.PrimaryKey("PK_Users", x => x.Id);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "StockMarkets",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CountryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: "system"),
+                    ModifiedOn = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StockMarkets", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_StockMarkets_Countries_CountryId",
+                        column: x => x.CountryId,
+                        principalTable: "Countries",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.InsertData(
                 table: "Countries",
                 columns: new[] { "Id", "Code", "CreatedBy", "CreatedOn", "IsActive", "ModifiedBy", "ModifiedOn", "Name" },
@@ -164,6 +191,11 @@ namespace NiveshX.Infrastructure.Migrations
                 values: new object[] { new Guid("11111111-1111-1111-1111-111111111111"), "system", new DateTime(2025, 11, 8, 0, 0, 0, 0, DateTimeKind.Utc), "admin@niveshx.com", 0, true, true, false, false, null, null, null, "Hem Singh", "$2a$11$7SacvvnY60SyyWyDD/lmsuNvANz/cR5.763EBaidcDmL.y53UjOXS", null, null, "", new DateTime(2025, 12, 8, 0, 0, 0, 0, DateTimeKind.Utc), 1 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_StockMarkets_CountryId",
+                table: "StockMarkets",
+                column: "CountryId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",
                 table: "Users",
                 column: "Email",
@@ -177,9 +209,6 @@ namespace NiveshX.Infrastructure.Migrations
                 name: "ClassificationTags");
 
             migrationBuilder.DropTable(
-                name: "Countries");
-
-            migrationBuilder.DropTable(
                 name: "Industries");
 
             migrationBuilder.DropTable(
@@ -189,7 +218,13 @@ namespace NiveshX.Infrastructure.Migrations
                 name: "Sectors");
 
             migrationBuilder.DropTable(
+                name: "StockMarkets");
+
+            migrationBuilder.DropTable(
                 name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Countries");
         }
     }
 }

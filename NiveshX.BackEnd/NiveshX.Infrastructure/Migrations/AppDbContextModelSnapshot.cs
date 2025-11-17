@@ -362,6 +362,8 @@ namespace NiveshX.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CountryId");
+
                     b.ToTable("StockMarkets");
                 });
 
@@ -474,7 +476,7 @@ namespace NiveshX.Infrastructure.Migrations
                 {
                     b.HasOne("NiveshX.Core.Models.Country", "Country")
                         .WithMany()
-                        .HasForeignKey("Id")
+                        .HasForeignKey("CountryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

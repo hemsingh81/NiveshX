@@ -17,7 +17,7 @@ namespace NiveshX.Core.Models
         [Required]
         public Guid CountryId { get; set; }
 
-        [ForeignKey(nameof(Id))]
+        [ForeignKey(nameof(CountryId))]
         public Country? Country { get; set; }
 
     }

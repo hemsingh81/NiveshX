@@ -1,4 +1,3 @@
-// src/utils/validationMapper.ts
 export type ServerErrorPayload =
   | {
       type?: string;
@@ -41,6 +40,16 @@ const normalizeKey = (rawKey: unknown): string => {
   return /^[A-Z]/.test(last) ? pascalToCamel(last) : last;
 };
 
+const splitDetailIntoMessages = (detail: string): string[] => {
+  if (!detail) return [];
+  // Split on sentence boundaries but avoid splitting urls etc — simple split on period followed by space.
+  const parts = detail
+    .split(/(?<=\.)\s+/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts.length ? parts : [detail];
+};
+
 export function mapServerErrorsToFieldErrors(err: any): Record<string, string[]> {
   const result: Record<string, string[]> = {};
 
@@ -52,7 +61,13 @@ export function mapServerErrorsToFieldErrors(err: any): Record<string, string[]>
   }
 
   // 1) If errors is an object map: { errors: { field: [msgs] } }
-  if (data && "errors" in data && data.errors && typeof data.errors === "object" && !Array.isArray(data.errors)) {
+  if (
+    data &&
+    "errors" in data &&
+    data.errors &&
+    typeof data.errors === "object" &&
+    !Array.isArray(data.errors)
+  ) {
     Object.entries(data.errors as Record<string, unknown>).forEach(([key, val]) => {
       const normalizedKey = normalizeKey(key);
       const messages = Array.isArray(val) ? (val as unknown[]).map(String) : [String(val ?? "")];
@@ -72,10 +87,23 @@ export function mapServerErrorsToFieldErrors(err: any): Record<string, string[]>
     return result;
   }
 
-  // 3) If top-level title/message/detail exist, use as global error(s)
-  if (data?.title) result["__global"] = (result["__global"] || []).concat(String(data.title));
-  if (data?.message) result["__global"] = (result["__global"] || []).concat(String(data.message));
-  if ((data as any)?.detail) result["__global"] = (result["__global"] || []).concat(String((data as any).detail));
+  // 3) If the payload follows the pattern { title, status, detail } (e.g. your example),
+  //    map title and detail to __global messages. Split detail into sentences if needed.
+  if (data && (data.title || (data as any).detail || data.message)) {
+    if (data.title) {
+      result["__global"] = (result["__global"] || []).concat(String(data.title));
+    }
+    if ((data as any).detail) {
+      const msgs = splitDetailIntoMessages(String((data as any).detail));
+      result["__global"] = (result["__global"] || []).concat(msgs);
+    }
+    if (data.message && !data.detail) {
+      // if message exists but detail did not, include message
+      result["__global"] = (result["__global"] || []).concat(String(data.message));
+    }
+    // Return early because this payload is top-level global error style
+    if (Object.keys(result).length > 0) return result;
+  }
 
   // 4) Defensive: if data.errors exists but didn't match map/array shapes, iterate entries
   if (data && "errors" in data && data.errors && typeof data.errors === "object") {
@@ -88,7 +116,7 @@ export function mapServerErrorsToFieldErrors(err: any): Record<string, string[]>
           result[normalizedKey] = (result[normalizedKey] || []).concat(String(v ?? ""));
         }
       }
-      return result;
+      if (Object.keys(result).length) return result;
     } catch {
       // fall through to fallback
     }

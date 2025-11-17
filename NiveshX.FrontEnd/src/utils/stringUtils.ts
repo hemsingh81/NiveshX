@@ -1,3 +1,4 @@
+// src/utils/stringUtils.ts
 export function humanizeFieldKey(key: string | undefined | null): string {
   if (!key) return "Error";
   if (key === "__global") return "Error";

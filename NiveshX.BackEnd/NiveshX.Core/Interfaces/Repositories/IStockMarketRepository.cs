@@ -10,5 +10,7 @@ namespace NiveshX.Core.Interfaces.Repositories
         Task UpdateAsync(StockMarket entity, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
         IQueryable<StockMarket> Query(); // for ProjectTo if needed
+        Task<bool> ExistsAsync(string name, string code, Guid countryId, CancellationToken cancellationToken = default);
+        Task<bool> ExistsAsync(string name, string code, Guid countryId, Guid? excludeId = null, CancellationToken cancellationToken = default);
     }
 }

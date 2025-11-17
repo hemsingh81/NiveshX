@@ -44,7 +44,13 @@ namespace NiveshX.Infrastructure.Services
             var country = await _unitOfWork.Countries.GetByIdAsync(request.CountryId.Value, cancellationToken);
             if (country == null) throw new InvalidOperationException("Country not found");
 
+            // uniqueness check: same Name or Code in same Country
+            var exists = await _unitOfWork.StockMarkets.ExistsAsync(request.Name, request.Code, request.CountryId.Value, cancellationToken);
+            if (exists)
+                throw new ArgumentException("A stock market with the same name or code already exists for the selected country");
+
             var entity = _mapper.Map<StockMarket>(request);
+            entity.Country = country;
             entity.Id = Guid.NewGuid();
             entity.CreatedOn = DateTime.UtcNow;
             entity.CreatedBy = _userContext.UserId;
@@ -67,8 +73,13 @@ namespace NiveshX.Infrastructure.Services
             var country = await _unitOfWork.Countries.GetByIdAsync(request.CountryId, cancellationToken);
             if (country == null) throw new InvalidOperationException("Country not found");
 
-            _mapper.Map(request, entity);
+            // uniqueness check: ensure no other record (excluding current id) has same Name or Code in same Country
+            var duplicate = await _unitOfWork.StockMarkets.ExistsAsync(request.Name, request.Code, request.CountryId, excludeId: id, cancellationToken);
+            if (duplicate)
+                throw new ArgumentException("A stock market with the same name or code already exists for the selected country");
 
+            _mapper.Map(request, entity);
+            entity.Country = country;
             entity.ModifiedOn = DateTime.UtcNow;
             entity.ModifiedBy = _userContext.UserId;
 

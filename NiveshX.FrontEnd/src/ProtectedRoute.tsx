@@ -10,7 +10,6 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
   const { token, user } = useSelector((state: RootState) => state.user);
-  console.log(user);
   if (!token) return <Navigate to="/login" />;
 
   if (allowedRoles && (!user?.role || !allowedRoles.includes(user.role))) {

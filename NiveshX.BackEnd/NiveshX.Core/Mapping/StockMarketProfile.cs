@@ -9,27 +9,29 @@ namespace NiveshX.Core.Mapping
     {
         public StockMarketProfile()
         {
-            // map Country -> CountryResponse (required for nested mapping)
+            // Country -> CountryResponse
             CreateMap<Country, CountryResponse>();
 
+            // Entity -> Response
             CreateMap<StockMarket, StockMarketResponse>()
-                // AutoMapper will populate Country nested object if Country is included
                 .ForMember(dest => dest.Country, opt => opt.MapFrom(src => src.Country));
 
+            // DTO -> Entity (Create) - map scalar CountryId, ignore navigation
             CreateMap<CreateStockMarketRequest, StockMarket>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(_ => true))
                 .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
-                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+                .ForMember(dest => dest.Country, opt => opt.Ignore()); // assign Country in service
 
+            // DTO -> Entity (Update)
             CreateMap<UpdateStockMarketRequest, StockMarket>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
                 .ForMember(dest => dest.ModifiedOn, opt => opt.Ignore())
                 .ForMember(dest => dest.ModifiedBy, opt => opt.Ignore())
-                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+                .ForMember(dest => dest.Country, opt => opt.Ignore());
         }
     }
 }
