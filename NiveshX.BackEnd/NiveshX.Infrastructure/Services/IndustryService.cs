@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.Industry;
+using NiveshX.Core.Exceptions;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
@@ -67,6 +68,10 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Creating industry: {Name}", request.Name);
 
+                var exists = await _unitOfWork.Industries.ExistsAsync(request.Name, cancellationToken);
+                if (exists)
+                    throw new DuplicateEntityException($"An industry with the name '{request.Name}' already exists.");
+
                 var industry = _mapper.Map<Industry>(request);
 
                 industry.Id = Guid.NewGuid();
@@ -98,6 +103,10 @@ namespace NiveshX.Infrastructure.Services
                     _logger.LogWarning("Industry not found for update: {IndustryId}", id);
                     return null;
                 }
+
+                var duplicate = await _unitOfWork.Industries.ExistsAsync(request.Name, excludeId: id, cancellationToken);
+                if (duplicate)
+                    throw new DuplicateEntityException($"An industry with the name '{request.Name}' already exists.");
 
                 _mapper.Map(request, industry);
 

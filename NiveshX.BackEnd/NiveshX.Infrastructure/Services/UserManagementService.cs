@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.User;
+using NiveshX.Core.Exceptions;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
@@ -15,16 +16,19 @@ namespace NiveshX.Infrastructure.Services
     public class UserManagementService : IUserManagementService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserContext _userContext;
         private readonly ILogger<UserManagementService> _logger;
         private readonly IMapper _mapper;
 
         public UserManagementService(
             IUnitOfWork unitOfWork,
             ILogger<UserManagementService> logger,
+             IUserContext userContext,
             IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _userContext = userContext;
             _mapper = mapper;
         }
 
@@ -64,6 +68,13 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Creating user: {Email}", request.Email);
 
+                var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+
+                // uniqueness check
+                var exists = await _unitOfWork.Users.ExistsByEmailAsync(normalizedEmail, cancellationToken);
+                if (exists)
+                    throw new DuplicateEntityException($"A user with the email '{request.Email}' already exists.");
+
                 var user = _mapper.Map<User>(request);
 
                 // explicit lifecycle & security wiring
@@ -75,7 +86,7 @@ namespace NiveshX.Infrastructure.Services
                 user.IsActive = true;
                 user.FailedLoginAttempts = 0;
                 user.CreatedOn = DateTime.UtcNow;
-                user.CreatedBy = "Admin";
+                user.CreatedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
 
                 await _unitOfWork.Users.AddAsync(user, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -102,11 +113,23 @@ namespace NiveshX.Infrastructure.Services
                     return null;
                 }
 
+                // If email is being changed (or provided), validate and check uniqueness
+                if (!string.IsNullOrWhiteSpace(request.Email))
+                {
+                    var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+
+                    var duplicate = await _unitOfWork.Users.ExistsByEmailAsync(normalizedEmail, excludeId: id, cancellationToken);
+                    if (duplicate)
+                        throw new DuplicateEntityException($"A user with the email '{request.Email}' already exists.");
+
+                    user.Email = normalizedEmail;
+                }
+
                 _mapper.Map(request, user);
 
                 // explicit audit wiring
                 user.ModifiedOn = DateTime.UtcNow;
-                user.ModifiedBy = "Admin";
+                user.ModifiedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
 
                 await _unitOfWork.Users.UpdateAsync(user, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.Sector;
+using NiveshX.Core.Exceptions;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
@@ -67,6 +68,11 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Creating sector: {Name}", request.Name);
 
+                // uniqueness check
+                var exists = await _unitOfWork.Sectors.ExistsAsync(request.Name, cancellationToken);
+                if (exists)
+                    throw new DuplicateEntityException($"A sector with the name '{request.Name}' already exists.");
+
                 var sector = _mapper.Map<Sector>(request);
 
                 sector.Id = Guid.NewGuid();
@@ -98,6 +104,11 @@ namespace NiveshX.Infrastructure.Services
                     _logger.LogWarning("Sector not found for update: {SectorId}", id);
                     return null;
                 }
+
+                // uniqueness check excluding current id
+                var duplicate = await _unitOfWork.Sectors.ExistsAsync(request.Name, excludeId: id, cancellationToken);
+                if (duplicate)
+                    throw new DuplicateEntityException($"A sector with the name '{request.Name}' already exists.");
 
                 _mapper.Map(request, sector);
 

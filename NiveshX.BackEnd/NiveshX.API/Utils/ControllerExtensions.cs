@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using NiveshX.Core.Exceptions;
 
 namespace NiveshX.API.Utils
 {
@@ -13,12 +14,7 @@ namespace NiveshX.API.Utils
     /// </summary>
     public static class ControllerExtensions
     {
-        /// <summary>
-        /// Domain exceptions that callers can throw from services to indicate specific HTTP semantics.
-        /// Use NotFoundException for 404, DuplicateEntityException for 409, ArgumentException / InvalidOperationException for 400.
-        /// </summary>
-        public class NotFoundException : Exception { public NotFoundException(string message) : base(message) { } }
-        public class DuplicateEntityException : Exception { public DuplicateEntityException(string message) : base(message) { } }
+        
 
         /// <summary>
         /// Execute an async work item that returns an IActionResult and centralize exception handling.

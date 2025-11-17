@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.Country;
+using NiveshX.Core.Exceptions;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
@@ -58,6 +59,10 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Creating new country: {Code}", request.Code);
 
+                var exists = await _unitOfWork.Countries.ExistsAsync(request.Code, request.Name, cancellationToken);
+                if (exists)
+                    throw new DuplicateEntityException($"A country with the same code or name already exists.");
+
                 var country = _mapper.Map<Country>(request);
                 country.Id = Guid.NewGuid();
                 country.IsActive = true;
@@ -88,6 +93,10 @@ namespace NiveshX.Infrastructure.Services
                     _logger.LogWarning("Country not found for update: {CountryId}", id);
                     return null;
                 }
+
+                var duplicate = await _unitOfWork.Countries.ExistsAsync(request.Code, request.Name, excludeId: id, cancellationToken);
+                if (duplicate)
+                    throw new DuplicateEntityException($"A country with the same code or name already exists.");
 
                 // Map incoming request onto existing entity (won't overwrite ignored members per profile)
                 _mapper.Map(request, country);

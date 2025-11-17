@@ -14,6 +14,9 @@ namespace NiveshX.Core.Interfaces.Repositories
         Task AddAsync(Country country, CancellationToken cancellationToken = default);
         Task UpdateAsync(Country country, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<bool> ExistsAsync(string code, string name, CancellationToken cancellationToken = default);
+        Task<bool> ExistsAsync(string code, string name, Guid? excludeId = null, CancellationToken cancellationToken = default);
+
     }
 
 }

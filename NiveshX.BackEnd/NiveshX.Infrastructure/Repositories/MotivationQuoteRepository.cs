@@ -45,6 +45,25 @@ namespace NiveshX.Infrastructure.Repositories
             _context.MotivationQuotes.Update(quote);
             return true;
         }
+
+        public async Task<bool> ExistsAsync(string quote, CancellationToken cancellationToken = default)
+        {
+            return await ExistsAsync(quote, null, cancellationToken);
+        }
+
+        public async Task<bool> ExistsAsync(string quote, Guid? excludeId = null, CancellationToken cancellationToken = default)
+        {
+            var normalizedText = (quote ?? string.Empty).Trim().ToLowerInvariant();
+
+            var query = _context.MotivationQuotes
+                .AsNoTracking()
+                .Where(q => !q.IsDeleted && q.Quote.ToLower() == normalizedText);
+
+            if (excludeId.HasValue)
+                query = query.Where(q => q.Id != excludeId.Value);
+
+            return await query.AnyAsync(cancellationToken);
+        }
     }
 
 }

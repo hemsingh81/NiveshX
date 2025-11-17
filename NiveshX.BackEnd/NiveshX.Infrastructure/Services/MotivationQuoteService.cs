@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.MotivationQuote;
+using NiveshX.Core.Exceptions;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
@@ -77,11 +78,15 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Creating motivation quote by author: {Author}", request.Author);
 
+                var exists = await _unitOfWork.MotivationQuotes.ExistsAsync(request.Quote, cancellationToken);
+                if (exists)
+                    throw new DuplicateEntityException("A motivation quote with the same text already exists.");
+
                 var quote = _mapper.Map<MotivationQuote>(request);
                 quote.Id = Guid.NewGuid();
                 quote.IsActive = true;
                 quote.CreatedOn = DateTime.UtcNow;
-                quote.CreatedBy = _userContext.UserId;
+                quote.CreatedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
 
                 await _unitOfWork.MotivationQuotes.AddAsync(quote, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -108,10 +113,14 @@ namespace NiveshX.Infrastructure.Services
                     return null;
                 }
 
+                var duplicate = await _unitOfWork.MotivationQuotes.ExistsAsync(request.Quote, excludeId: id, cancellationToken);
+                if (duplicate)
+                    throw new DuplicateEntityException("A motivation quote with the same text already exists.");
+
                 _mapper.Map(request, quote);
 
                 quote.ModifiedOn = DateTime.UtcNow;
-                quote.ModifiedBy = _userContext.UserId;
+                quote.ModifiedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
 
                 await _unitOfWork.MotivationQuotes.UpdateAsync(quote, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);

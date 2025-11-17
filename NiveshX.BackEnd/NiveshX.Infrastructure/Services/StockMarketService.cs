@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.StockMarket;
+using NiveshX.Core.Exceptions;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace NiveshX.Infrastructure.Services
 {
@@ -47,7 +48,7 @@ namespace NiveshX.Infrastructure.Services
             // uniqueness check: same Name or Code in same Country
             var exists = await _unitOfWork.StockMarkets.ExistsAsync(request.Name, request.Code, request.CountryId.Value, cancellationToken);
             if (exists)
-                throw new ArgumentException("A stock market with the same name or code already exists for the selected country");
+                throw new DuplicateEntityException("A stock market with the same name or code already exists for the selected country");
 
             var entity = _mapper.Map<StockMarket>(request);
             entity.Country = country;
@@ -76,7 +77,7 @@ namespace NiveshX.Infrastructure.Services
             // uniqueness check: ensure no other record (excluding current id) has same Name or Code in same Country
             var duplicate = await _unitOfWork.StockMarkets.ExistsAsync(request.Name, request.Code, request.CountryId, excludeId: id, cancellationToken);
             if (duplicate)
-                throw new ArgumentException("A stock market with the same name or code already exists for the selected country");
+                throw new DuplicateEntityException("A stock market with the same name or code already exists for the selected country");
 
             _mapper.Map(request, entity);
             entity.Country = country;

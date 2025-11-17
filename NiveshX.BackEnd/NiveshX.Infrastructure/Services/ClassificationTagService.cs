@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.ClassificationTag;
+using NiveshX.Core.Exceptions;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
@@ -67,6 +68,11 @@ namespace NiveshX.Infrastructure.Services
             {
                 _logger.LogInformation("Creating classification tag: {Name}", request.Name);
 
+                // uniqueness check
+                var exists = await _unitOfWork.ClassificationTags.ExistsAsync(request.Name, cancellationToken);
+                if (exists)
+                    throw new DuplicateEntityException($"A classification tag with the name '{request.Name}' already exists.");
+
                 var tag = _mapper.Map<ClassificationTag>(request);
 
                 tag.Id = Guid.NewGuid();
@@ -98,6 +104,11 @@ namespace NiveshX.Infrastructure.Services
                     _logger.LogWarning("Classification tag not found for update: {TagId}", id);
                     return null;
                 }
+
+                // uniqueness check excluding current id
+                var duplicate = await _unitOfWork.ClassificationTags.ExistsAsync(request.Name, id, cancellationToken);
+                if (duplicate)
+                    throw new DuplicateEntityException($"A classification tag with the name '{request.Name}' already exists.");
 
                 _mapper.Map(request, tag);
 

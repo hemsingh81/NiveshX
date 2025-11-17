@@ -9,5 +9,7 @@ namespace NiveshX.Core.Interfaces.Repositories
         Task AddAsync(Sector sector, CancellationToken cancellationToken = default);
         Task UpdateAsync(Sector sector, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<bool> ExistsAsync(string name, CancellationToken cancellationToken = default);
+        Task<bool> ExistsAsync(string name, Guid? excludeId = null, CancellationToken cancellationToken = default);
     }
 }

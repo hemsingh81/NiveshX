@@ -10,7 +10,7 @@ import {
   FormControlLabel,
   Checkbox,
 } from "@mui/material";
-import { CustomButton } from "../../../controls";
+import { CustomButton, ErrorDisplay } from "../../../controls";
 import {
   CreateSectorRequest,
   UpdateSectorRequest,
@@ -127,15 +127,7 @@ const SectorFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode, sect
 
       <Divider sx={{ borderColor: "divider", my: 0 }} />
 
-      {fieldErrors["__global"] && fieldErrors["__global"].length > 0 && (
-        <Box role="status" aria-live="polite" color="error.main" mb={2} px={3}>
-          <ul style={{ margin: 0, paddingLeft: 16 }}>
-            {fieldErrors["__global"].map((m, i) => (
-              <li key={i}>{m}</li>
-            ))}
-          </ul>
-        </Box>
-      )}
+      <ErrorDisplay errors={fieldErrors} showFieldLevel={false} sx={{ my: 2, px: 3 }} />
 
       <form
         onSubmit={(e) => {

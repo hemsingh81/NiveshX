@@ -37,6 +37,26 @@ namespace NiveshX.Infrastructure.Repositories
             _context.ClassificationTags.Update(tag);
             return true;
         }
+
+        public async Task<bool> ExistsAsync(string name, CancellationToken cancellationToken = default)
+        {
+            return await ExistsAsync(name, null, cancellationToken);
+        }
+
+        public async Task<bool> ExistsAsync(string name, Guid? excludeId, CancellationToken cancellationToken = default)
+        {
+            var normalized = (name ?? string.Empty).Trim().ToLowerInvariant();
+
+            var query = _context.ClassificationTags
+                .AsNoTracking()
+                .Where(t => !t.IsDeleted && t.Name.ToLower() == normalized);
+
+            if (excludeId.HasValue)
+                query = query.Where(t => t.Id != excludeId.Value);
+
+            return await query.AnyAsync(cancellationToken);
+        }
+
     }
 
 }

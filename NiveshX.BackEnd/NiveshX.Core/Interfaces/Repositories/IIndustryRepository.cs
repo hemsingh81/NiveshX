@@ -9,6 +9,9 @@ namespace NiveshX.Core.Interfaces.Repositories
         Task AddAsync(Industry industry, CancellationToken cancellationToken = default);
         Task UpdateAsync(Industry industry, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<bool> ExistsAsync(string name, CancellationToken cancellationToken = default);
+        Task<bool> ExistsAsync(string name, Guid? excludeId = null, CancellationToken cancellationToken = default);
+
     }
 
 }

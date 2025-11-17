@@ -85,6 +85,25 @@ namespace NiveshX.Infrastructure.Repositories
             _context.Users.Update(user);
             return true;
         }
+
+        public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
+        {
+            return await ExistsByEmailAsync(email, cancellationToken);
+        }
+
+        public async Task<bool> ExistsByEmailAsync(string email, Guid? excludeId = null, CancellationToken cancellationToken = default)
+        {
+            var normalized = (email ?? string.Empty).Trim().ToLowerInvariant();
+
+            var query = _context.Users
+                .AsNoTracking()
+                .Where(u => !u.IsDeleted && u.Email.ToLower() == normalized);
+
+            if (excludeId.HasValue)
+                query = query.Where(u => u.Id != excludeId.Value);
+
+            return await query.AnyAsync(cancellationToken);
+        }
     }
 
 }

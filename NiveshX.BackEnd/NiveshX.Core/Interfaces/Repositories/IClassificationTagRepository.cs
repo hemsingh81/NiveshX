@@ -9,6 +9,9 @@ namespace NiveshX.Core.Interfaces.Repositories
         Task AddAsync(ClassificationTag tag, CancellationToken cancellationToken = default);
         Task UpdateAsync(ClassificationTag tag, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<bool> ExistsAsync(string name, CancellationToken cancellationToken = default);
+        Task<bool> ExistsAsync(string name, Guid? excludeId, CancellationToken cancellationToken = default);
+
     }
 
 }
