@@ -58,7 +58,6 @@ export default function GenericCrudManagement<
     columns,
     rowFilterFields,
     formDialogRenderer,
-    emptyLabel = "No rows found",
     pageSize = 10,
     actionsRenderer,
   } = props;
