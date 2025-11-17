@@ -1,7 +1,5 @@
-using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NiveshX.API.Middlewares;
@@ -28,6 +26,10 @@ if (string.IsNullOrWhiteSpace(jwtKey))
     throw new InvalidOperationException("JWT:Key is not configured. Please set Jwt:Key in configuration.");
 }
 
+// ---- HttpContext / user context ----
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserContext, UserContext>();
+
 // ---- DbContext ----
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -41,9 +43,6 @@ builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MotivationQuoteProfile>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<UserProfile>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<StockMarketProfile>());
 
-// ---- HttpContext / user context ----
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<IUserContext, UserContext>();
 
 // ---- Application services / repositories ----
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();

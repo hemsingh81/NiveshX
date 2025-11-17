@@ -1,7 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using NiveshX.Core.Config;
+using NiveshX.Core.Interfaces;
+using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
 using System;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,6 +14,8 @@ namespace NiveshX.Infrastructure.Data
 {
     public class AppDbContext : DbContext
     {
+        private readonly IUserContext _userContext;
+
         public DbSet<User> Users => Set<User>();
         public DbSet<MotivationQuote> MotivationQuotes => Set<MotivationQuote>();
         public DbSet<Country> Countries => Set<Country>();
@@ -17,16 +24,19 @@ namespace NiveshX.Infrastructure.Data
         public DbSet<ClassificationTag> ClassificationTags => Set<ClassificationTag>();
         public DbSet<StockMarket> StockMarkets => Set<StockMarket>();
 
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+        public AppDbContext(DbContextOptions<AppDbContext> options, IUserContext userContext)
+            : base(options)
+        {
+            _userContext = userContext;
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-
             ApplyAuditableEntityDefaults(modelBuilder);
-            
-            // Unique index on Email
+            ApplySoftDeleteQueryFilter(modelBuilder);
+
             modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
 
             SeedUser(modelBuilder);
@@ -36,17 +46,22 @@ namespace NiveshX.Infrastructure.Data
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
+            var now = DateTime.UtcNow;
+            var userId = string.IsNullOrWhiteSpace(_userContext?.UserId) ? "system" : _userContext.UserId;
+
+            foreach (var entry in ChangeTracker.Entries().Where(e => e.Entity is IAuditable))
             {
+                var auditable = (IAuditable)entry.Entity;
                 if (entry.State == EntityState.Added)
                 {
-                    entry.Entity.CreatedOn = DateTime.UtcNow;
-                    entry.Entity.CreatedBy = "system"; // Replace with actual user context
+                    auditable.CreatedOn = now;
+                    auditable.CreatedBy = userId;
+                    auditable.IsActive = true;
                 }
                 else if (entry.State == EntityState.Modified)
                 {
-                    entry.Entity.ModifiedOn = DateTime.UtcNow;
-                    entry.Entity.ModifiedBy = "system"; // Replace with actual user context
+                    auditable.ModifiedOn = now;
+                    auditable.ModifiedBy = userId;
                 }
             }
 
@@ -61,9 +76,10 @@ namespace NiveshX.Infrastructure.Data
 
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
-                if (auditableEntityType.IsAssignableFrom(entityType.ClrType))
+                var clrType = entityType.ClrType;
+                if (auditableEntityType.IsAssignableFrom(clrType))
                 {
-                    var builder = modelBuilder.Entity(entityType.ClrType);
+                    var builder = modelBuilder.Entity(clrType);
 
                     builder.Property(nameof(AuditableEntity.Id))
                            .HasDefaultValueSql("NEWID()");
@@ -74,12 +90,27 @@ namespace NiveshX.Infrastructure.Data
                     builder.Property(nameof(AuditableEntity.IsDeleted))
                            .HasDefaultValue(false);
 
+                    // Prefer setting CreatedOn in SaveChangesAsync; keep DB default only if you need external inserts.
                     builder.Property(nameof(AuditableEntity.CreatedOn))
                            .HasDefaultValueSql("GETUTCDATE()");
 
                     builder.Property(nameof(AuditableEntity.CreatedBy))
                            .HasDefaultValue("system");
                 }
+            }
+        }
+
+        private void ApplySoftDeleteQueryFilter(ModelBuilder modelBuilder)
+        {
+            var softDeleteInterface = typeof(ISoftDelete);
+
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes().Where(t => softDeleteInterface.IsAssignableFrom(t.ClrType)))
+            {
+                var clrType = entityType.ClrType;
+                var parameter = Expression.Parameter(clrType, "e");
+                var prop = Expression.PropertyOrField(parameter, nameof(ISoftDelete.IsDeleted));
+                var filter = Expression.Lambda(Expression.Equal(prop, Expression.Constant(false)), parameter);
+                modelBuilder.Entity(clrType).HasQueryFilter(filter);
             }
         }
 
@@ -149,7 +180,6 @@ namespace NiveshX.Infrastructure.Data
 
         private static void SeedUser(ModelBuilder modelBuilder)
         {
-            // Seed admin user
             var passwordHash = "$2a$11$7SacvvnY60SyyWyDD/lmsuNvANz/cR5.763EBaidcDmL.y53UjOXS"; // bcrypt hash of "as"
             modelBuilder.Entity<User>().HasData(new User
             {

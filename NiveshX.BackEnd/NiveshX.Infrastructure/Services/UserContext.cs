@@ -13,9 +13,17 @@ namespace NiveshX.Infrastructure.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public string UserId => _httpContextAccessor.HttpContext?.User.FindFirst("UserId")?.Value ?? "system";
-        public string UserEmail => _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Email)?.Value ?? "system@niveshx.com";
-        public string UserRole => _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Role)?.Value ?? "Guest";
+        private ClaimsPrincipal? User => _httpContextAccessor.HttpContext?.User;
+
+        public string? UserId => User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        public string? UserName => User?.Identity?.Name ?? User?.FindFirst("name")?.Value;
+
+        public string? Email => User?.FindFirst(ClaimTypes.Email)?.Value;
+
+        public IEnumerable<string> Roles => User?.FindAll(ClaimTypes.Role).Select(c => c.Value) ?? Enumerable.Empty<string>();
+
+        public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
     }
 
 }

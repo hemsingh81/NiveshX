@@ -8,9 +8,11 @@ namespace NiveshX.Core.Interfaces.Services
 {
     public interface IUserContext
     {
-        string UserId { get; }
-        string UserEmail { get; }
-        string UserRole { get; }
+        string? UserId { get; }
+        string? UserName { get; }
+        string? Email { get; }
+        IEnumerable<string> Roles { get; }
+        bool IsAuthenticated { get; }
     }
 
 }
