@@ -1,43 +1,39 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.MotivationQuote;
 using NiveshX.Core.Exceptions;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace NiveshX.Infrastructure.Services
 {
-    public class MotivationQuoteService : IMotivationQuoteService
+    public class MotivationQuoteService : BaseService, IMotivationQuoteService
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IUserContext _userContext;
-        private readonly ILogger<MotivationQuoteService> _logger;
-        private readonly IMapper _mapper;
-
-        public MotivationQuoteService(IUnitOfWork unitOfWork, ILogger<MotivationQuoteService> logger, IUserContext userContext, IMapper mapper)
+        public MotivationQuoteService(
+            IUnitOfWork unitOfWork,
+            ILogger<MotivationQuoteService> logger,
+            IUserContext userContext,
+            IMapper mapper)
+            : base(unitOfWork, logger, userContext, mapper)
         {
-            _unitOfWork = unitOfWork;
-            _userContext = userContext;
-            _logger = logger;
-            _mapper = mapper;
         }
 
         public async Task<IEnumerable<MotivationQuoteResponse>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                _logger.LogInformation("Fetching all motivation quotes");
-                var quotes = await _unitOfWork.MotivationQuotes.GetAllAsync(cancellationToken);
-                return _mapper.Map<IEnumerable<MotivationQuoteResponse>>(quotes);
+                Logger.LogInformation("Fetching all motivation quotes");
+                var quotes = await UnitOfWork.MotivationQuotes.GetAllAsync(cancellationToken);
+                return Mapper.Map<IEnumerable<MotivationQuoteResponse>>(quotes);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching motivation quotes");
+                Logger.LogError(ex, "Error fetching motivation quotes");
                 throw;
             }
         }
@@ -46,13 +42,13 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Fetching all motivation quotes");
-                var quotes = await _unitOfWork.MotivationQuotes.GetAllActiveAsync(cancellationToken);
-                return _mapper.Map<IEnumerable<MotivationQuoteResponse>>(quotes);
+                Logger.LogInformation("Fetching all active motivation quotes");
+                var quotes = await UnitOfWork.MotivationQuotes.GetAllActiveAsync(cancellationToken);
+                return Mapper.Map<IEnumerable<MotivationQuoteResponse>>(quotes);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching motivation quotes");
+                Logger.LogError(ex, "Error fetching active motivation quotes");
                 throw;
             }
         }
@@ -61,13 +57,13 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Fetching motivation quote with ID: {QuoteId}", id);
-                var quote = await _unitOfWork.MotivationQuotes.GetByIdAsync(id, cancellationToken);
-                return quote == null ? null : _mapper.Map<MotivationQuoteResponse>(quote);
+                Logger.LogInformation("Fetching motivation quote with ID: {QuoteId}", id);
+                var quote = await UnitOfWork.MotivationQuotes.GetByIdAsync(id, cancellationToken);
+                return quote == null ? null : Mapper.Map<MotivationQuoteResponse>(quote);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching motivation quote with ID: {QuoteId}", id);
+                Logger.LogError(ex, "Error fetching motivation quote with ID: {QuoteId}", id);
                 throw;
             }
         }
@@ -76,27 +72,26 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Creating motivation quote by author: {Author}", request.Author);
+                Logger.LogInformation("Creating motivation quote by author: {Author}", request.Author);
 
-                var exists = await _unitOfWork.MotivationQuotes.ExistsAsync(request.Quote, cancellationToken);
+                var exists = await UnitOfWork.MotivationQuotes.ExistsAsync(request.Quote, cancellationToken);
                 if (exists)
                     throw new DuplicateEntityException("A motivation quote with the same text already exists.");
 
-                var quote = _mapper.Map<MotivationQuote>(request);
-                quote.Id = Guid.NewGuid();
-                quote.IsActive = true;
-                quote.CreatedOn = DateTime.UtcNow;
-                quote.CreatedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
+                var quote = Mapper.Map<MotivationQuote>(request);
 
-                await _unitOfWork.MotivationQuotes.AddAsync(quote, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                // populate audit fields via BaseService helper
+                SetCreatedAudit(quote);
 
-                _logger.LogInformation("Motivation quote created: {QuoteId}", quote.Id);
-                return _mapper.Map<MotivationQuoteResponse>(quote);
+                await UnitOfWork.MotivationQuotes.AddAsync(quote, cancellationToken);
+                await UnitOfWork.SaveChangesAsync(cancellationToken);
+
+                Logger.LogInformation("Motivation quote created: {QuoteId}", quote.Id);
+                return Mapper.Map<MotivationQuoteResponse>(quote);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating motivation quote by author: {Author}", request.Author);
+                Logger.LogError(ex, "Error creating motivation quote by author: {Author}", request.Author);
                 throw;
             }
         }
@@ -105,32 +100,29 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Updating motivation quote with ID: {QuoteId}", id);
-                var quote = await _unitOfWork.MotivationQuotes.GetByIdAsync(id, cancellationToken);
+                Logger.LogInformation("Updating motivation quote with ID: {QuoteId}", id);
+                var quote = await UnitOfWork.MotivationQuotes.GetByIdAsync(id, cancellationToken);
                 if (quote == null)
-                {
-                    _logger.LogWarning("Motivation quote not found: {QuoteId}", id);
-                    return null;
-                }
+                    throw new NotFoundException($"Motivation quote not found for update: {id}.");
 
-                var duplicate = await _unitOfWork.MotivationQuotes.ExistsAsync(request.Quote, excludeId: id, cancellationToken);
+                var duplicate = await UnitOfWork.MotivationQuotes.ExistsAsync(request.Quote, excludeId: id, cancellationToken);
                 if (duplicate)
                     throw new DuplicateEntityException("A motivation quote with the same text already exists.");
 
-                _mapper.Map(request, quote);
+                Mapper.Map(request, quote);
 
-                quote.ModifiedOn = DateTime.UtcNow;
-                quote.ModifiedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
+                // set audit info
+                SetModifiedAudit(quote);
 
-                await _unitOfWork.MotivationQuotes.UpdateAsync(quote, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await UnitOfWork.MotivationQuotes.UpdateAsync(quote, cancellationToken);
+                await UnitOfWork.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Motivation quote updated: {QuoteId}", id);
-                return _mapper.Map<MotivationQuoteResponse>(quote);
+                Logger.LogInformation("Motivation quote updated: {QuoteId}", id);
+                return Mapper.Map<MotivationQuoteResponse>(quote);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating motivation quote with ID: {QuoteId}", id);
+                Logger.LogError(ex, "Error updating motivation quote with ID: {QuoteId}", id);
                 throw;
             }
         }
@@ -139,23 +131,24 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Attempting to delete motivation quote with ID: {QuoteId}", id);
-                var success = await _unitOfWork.MotivationQuotes.DeleteAsync(id, cancellationToken);
-                if (success)
-                {
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-                    _logger.LogInformation("Motivation quote deleted: {QuoteId}", id);
-                }
-                else
-                {
-                    _logger.LogWarning("Motivation quote not found for deletion: {QuoteId}", id);
-                }
+                Logger.LogInformation("Attempting to delete motivation quote with ID: {QuoteId}", id);
 
-                return success;
+                var quote = await UnitOfWork.MotivationQuotes.GetByIdAsync(id, cancellationToken)
+                            ?? throw new NotFoundException($"Motivation quote not found for deletion: {id}.");
+
+                // soft-delete and set audit fields
+                quote.IsDeleted = true;
+                SetModifiedAudit(quote);
+
+                await UnitOfWork.MotivationQuotes.UpdateAsync(quote, cancellationToken);
+                await UnitOfWork.SaveChangesAsync(cancellationToken);
+
+                Logger.LogInformation("Motivation quote deleted: {QuoteId}", id);
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting motivation quote with ID: {QuoteId}", id);
+                Logger.LogError(ex, "Error deleting motivation quote with ID: {QuoteId}", id);
                 throw;
             }
         }

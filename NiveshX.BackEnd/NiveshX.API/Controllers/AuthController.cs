@@ -61,10 +61,13 @@ namespace NiveshX.API.Controllers
         [ProducesResponseType(typeof(UserProfileResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public Task<ActionResult<UserProfileResponse>> GetProfile(CancellationToken cancellationToken) =>
-            this.ExecuteAsync<UserProfileResponse>(async () =>
+        public Task<ActionResult<UserProfileResponse>> GetProfile(CancellationToken cancellationToken)
+        {
+            var userId = GetUserIdFromClaims();
+            var userIdForLog = userId?.ToString() ?? "unknown";
+
+            return this.ExecuteAsync<UserProfileResponse>(async () =>
             {
-                var userId = GetUserIdFromClaims();
                 if (userId == null)
                 {
                     _logger.LogWarning("Invalid or missing user ID claim");
@@ -73,7 +76,8 @@ namespace NiveshX.API.Controllers
 
                 var profile = await _authService.GetUserProfileAsync(userId.Value, cancellationToken);
                 return profile is not null ? Ok(profile) : NotFound("User not found");
-            }, _logger, "Unhandled exception while retrieving profile for userId: {UserId}", GetUserIdFromClaims());
+            }, _logger, "Unhandled exception while retrieving profile for userId: {UserId}", userIdForLog);
+        }
 
         [HttpPut("profile")]
         [Authorize]
@@ -85,9 +89,11 @@ namespace NiveshX.API.Controllers
             if (!ModelState.IsValid)
                 return Task.FromResult<ActionResult>(BadRequest(ModelState));
 
+            var userId = GetUserIdFromClaims();
+            var userIdForLog = userId?.ToString() ?? "unknown";
+
             return this.ExecuteAsync(async () =>
             {
-                var userId = GetUserIdFromClaims();
                 if (userId == null)
                 {
                     _logger.LogWarning("Invalid or missing user ID claim");
@@ -98,9 +104,9 @@ namespace NiveshX.API.Controllers
                 if (!success)
                     return BadRequest("User not found or update failed");
 
-                _logger.LogInformation("Profile updated for user: {UserId}", userId);
+                _logger.LogInformation("Profile updated for user: {UserId}", userIdForLog);
                 return Ok("Profile updated successfully");
-            }, _logger, "Unhandled exception while updating profile for userId: {UserId}", GetUserIdFromClaims());
+            }, _logger, "Unhandled exception while updating profile for userId: {UserId}", userIdForLog);
         }
 
         [HttpPost("profile/image")]
@@ -110,17 +116,19 @@ namespace NiveshX.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public Task<ActionResult> UploadProfileImage(IFormFile file, CancellationToken cancellationToken)
         {
+            var userId = GetUserIdFromClaims();
+            var userIdForLog = userId?.ToString() ?? "unknown";
+
             return this.ExecuteAsync(async () =>
             {
-                _logger.LogInformation("Profile image upload started");
+                _logger.LogInformation("Profile image upload started for user: {UserId}", userIdForLog);
 
                 if (file == null || file.Length == 0)
                 {
-                    _logger.LogWarning("No file uploaded");
+                    _logger.LogWarning("No file uploaded for user: {UserId}", userIdForLog);
                     return BadRequest("No file uploaded");
                 }
 
-                var userId = GetUserIdFromClaims();
                 if (userId == null)
                 {
                     _logger.LogWarning("Missing user ID claim");
@@ -131,15 +139,15 @@ namespace NiveshX.API.Controllers
                 var imagePath = await SaveProfileImageAsync(userId.Value, file, cancellationToken);
                 if (imagePath == null)
                 {
-                    _logger.LogWarning("Unsupported file type: {FileName}", file.FileName);
+                    _logger.LogWarning("Unsupported file type: {FileName} for user: {UserId}", file.FileName, userIdForLog);
                     return BadRequest("Unsupported file type");
                 }
 
                 await _authService.UpdateProfilePictureAsync(userId.Value, imagePath, cancellationToken);
-                _logger.LogInformation("Profile image updated for user: {UserId}", userId);
+                _logger.LogInformation("Profile image updated for user: {UserId}", userIdForLog);
 
                 return Ok(new { imageUrl = imagePath });
-            }, _logger, "Unhandled exception during profile image upload for userId: {UserId}", GetUserIdFromClaims());
+            }, _logger, "Unhandled exception during profile image upload for userId: {UserId}", userIdForLog);
         }
 
         [HttpPost("change-password")]
@@ -152,9 +160,11 @@ namespace NiveshX.API.Controllers
             if (!ModelState.IsValid)
                 return Task.FromResult<ActionResult>(BadRequest(ModelState));
 
+            var userId = GetUserIdFromClaims();
+            var userIdForLog = userId?.ToString() ?? "unknown";
+
             return this.ExecuteAsync(async () =>
             {
-                var userId = GetUserIdFromClaims();
                 if (userId == null)
                 {
                     _logger.LogWarning("Invalid or missing user ID claim");
@@ -164,13 +174,13 @@ namespace NiveshX.API.Controllers
                 var success = await _authService.ChangePasswordAsync(userId.Value, request, cancellationToken);
                 if (!success)
                 {
-                    _logger.LogWarning("Password change failed for user: {UserId}", userId);
+                    _logger.LogWarning("Password change failed for user: {UserId}", userIdForLog);
                     return BadRequest("Current password is incorrect or user not found");
                 }
 
-                _logger.LogInformation("Password changed successfully for user: {UserId}", userId);
+                _logger.LogInformation("Password changed successfully for user: {UserId}", userIdForLog);
                 return Ok("Password changed successfully");
-            }, _logger, "Error changing password for userId: {UserId}", GetUserIdFromClaims());
+            }, _logger, "Error changing password for userId: {UserId}", userIdForLog);
         }
 
         /// <summary>

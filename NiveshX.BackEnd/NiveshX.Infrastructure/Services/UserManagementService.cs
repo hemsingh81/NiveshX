@@ -1,48 +1,40 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.User;
 using NiveshX.Core.Exceptions;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace NiveshX.Infrastructure.Services
 {
-    public class UserManagementService : IUserManagementService
+    public class UserManagementService : BaseService, IUserManagementService
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IUserContext _userContext;
-        private readonly ILogger<UserManagementService> _logger;
-        private readonly IMapper _mapper;
-
         public UserManagementService(
             IUnitOfWork unitOfWork,
             ILogger<UserManagementService> logger,
-             IUserContext userContext,
+            IUserContext userContext,
             IMapper mapper)
+            : base(unitOfWork, logger, userContext, mapper)
         {
-            _unitOfWork = unitOfWork;
-            _logger = logger;
-            _userContext = userContext;
-            _mapper = mapper;
         }
 
         public async Task<IEnumerable<UserResponse>> GetAllUsersAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                _logger.LogInformation("Retrieving all users");
-                var users = await _unitOfWork.Users.GetAllAsync(cancellationToken);
-                return users.Select(u => _mapper.Map<UserResponse>(u));
+                Logger.LogInformation("Retrieving all users");
+                var users = await UnitOfWork.Users.GetAllAsync(cancellationToken);
+                return users.Select(u => Mapper.Map<UserResponse>(u));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving all users");
+                Logger.LogError(ex, "Error retrieving all users");
                 throw;
             }
         }
@@ -51,13 +43,13 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Retrieving user by ID: {UserId}", id);
-                var user = await _unitOfWork.Users.GetByIdAsync(id, cancellationToken);
-                return user == null ? null : _mapper.Map<UserResponse>(user);
+                Logger.LogInformation("Retrieving user by ID: {UserId}", id);
+                var user = await UnitOfWork.Users.GetByIdAsync(id, cancellationToken);
+                return user == null ? null : Mapper.Map<UserResponse>(user);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving user with ID: {UserId}", id);
+                Logger.LogError(ex, "Error retrieving user with ID: {UserId}", id);
                 throw;
             }
         }
@@ -66,37 +58,38 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Creating user: {Email}", request.Email);
+                Logger.LogInformation("Creating user: {Email}", request.Email);
 
                 var normalizedEmail = request.Email.Trim().ToLowerInvariant();
 
                 // uniqueness check
-                var exists = await _unitOfWork.Users.ExistsByEmailAsync(normalizedEmail, cancellationToken);
+                var exists = await UnitOfWork.Users.ExistsByEmailAsync(normalizedEmail, cancellationToken);
                 if (exists)
                     throw new DuplicateEntityException($"A user with the email '{request.Email}' already exists.");
 
-                var user = _mapper.Map<User>(request);
+                var user = Mapper.Map<User>(request);
 
                 // explicit lifecycle & security wiring
                 user.Id = Guid.NewGuid();
+                user.Email = normalizedEmail;
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
                 user.IsEmailConfirmed = true;
                 user.IsPhoneConfirmed = true;
                 user.IsLockedOut = false;
                 user.IsActive = true;
                 user.FailedLoginAttempts = 0;
-                user.CreatedOn = DateTime.UtcNow;
-                user.CreatedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
 
-                await _unitOfWork.Users.AddAsync(user, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                SetCreatedAudit(user);
 
-                _logger.LogInformation("User created: {Email}", request.Email);
-                return _mapper.Map<UserResponse>(user);
+                await UnitOfWork.Users.AddAsync(user, cancellationToken);
+                await UnitOfWork.SaveChangesAsync(cancellationToken);
+
+                Logger.LogInformation("User created: {Email}", request.Email);
+                return Mapper.Map<UserResponse>(user);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating user: {Email}", request.Email);
+                Logger.LogError(ex, "Error creating user: {Email}", request.Email);
                 throw;
             }
         }
@@ -105,41 +98,36 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Updating user with ID: {UserId}", id);
-                var user = await _unitOfWork.Users.GetByIdAsync(id, cancellationToken);
-                if (user == null)
-                {
-                    _logger.LogWarning("User not found for update: {UserId}", id);
-                    return null;
-                }
+                Logger.LogInformation("Updating user with ID: {UserId}", id);
+                var user = await UnitOfWork.Users.GetByIdAsync(id, cancellationToken)
+                           ?? throw new NotFoundException($"User not found for update: {id}.");
 
                 // If email is being changed (or provided), validate and check uniqueness
                 if (!string.IsNullOrWhiteSpace(request.Email))
                 {
                     var normalizedEmail = request.Email.Trim().ToLowerInvariant();
 
-                    var duplicate = await _unitOfWork.Users.ExistsByEmailAsync(normalizedEmail, excludeId: id, cancellationToken);
+                    var duplicate = await UnitOfWork.Users.ExistsByEmailAsync(normalizedEmail, excludeId: id, cancellationToken);
                     if (duplicate)
                         throw new DuplicateEntityException($"A user with the email '{request.Email}' already exists.");
 
                     user.Email = normalizedEmail;
                 }
 
-                _mapper.Map(request, user);
+                Mapper.Map(request, user);
 
                 // explicit audit wiring
-                user.ModifiedOn = DateTime.UtcNow;
-                user.ModifiedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
+                SetModifiedAudit(user);
 
-                await _unitOfWork.Users.UpdateAsync(user, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await UnitOfWork.Users.UpdateAsync(user, cancellationToken);
+                await UnitOfWork.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("User updated: {UserId}", id);
-                return _mapper.Map<UserResponse>(user);
+                Logger.LogInformation("User updated: {UserId}", id);
+                return Mapper.Map<UserResponse>(user);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating user with ID: {UserId}", id);
+                Logger.LogError(ex, "Error updating user with ID: {UserId}", id);
                 throw;
             }
         }
@@ -148,23 +136,24 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Deleting user with ID: {UserId}", id);
-                var success = await _unitOfWork.Users.DeleteAsync(id, cancellationToken);
-                if (success)
-                {
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-                    _logger.LogInformation("User deleted: {UserId}", id);
-                }
-                else
-                {
-                    _logger.LogWarning("User not found for deletion: {UserId}", id);
-                }
+                Logger.LogInformation("Deleting user with ID: {UserId}", id);
 
-                return success;
+                var user = await UnitOfWork.Users.GetByIdAsync(id, cancellationToken)
+                           ?? throw new NotFoundException($"User not found for deletion: {id}.");
+
+                // soft-delete and set audit info
+                user.IsDeleted = true;
+                SetModifiedAudit(user);
+
+                await UnitOfWork.Users.UpdateAsync(user, cancellationToken);
+                await UnitOfWork.SaveChangesAsync(cancellationToken);
+
+                Logger.LogInformation("User deleted: {UserId}", id);
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting user with ID: {UserId}", id);
+                Logger.LogError(ex, "Error deleting user with ID: {UserId}", id);
                 throw;
             }
         }

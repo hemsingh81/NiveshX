@@ -2,10 +2,25 @@
 
 namespace NiveshX.Core.Models
 {
+
+    public interface IAuditable
+    {
+        DateTime CreatedOn { get; set; }
+        string CreatedBy { get; set; }
+        DateTime? ModifiedOn { get; set; }
+        string? ModifiedBy { get; set; }
+        bool IsActive { get; set; }
+    }
+
+    public interface ISoftDelete
+    {
+        bool IsDeleted { get; set; }
+    }
+
     /// <summary>
     /// Base class for entities that require audit tracking.
     /// </summary>
-    public abstract class AuditableEntity
+    public abstract class AuditableEntity : IAuditable, ISoftDelete
     {
         [Key]
         public Guid Id { get; set; } = Guid.NewGuid();

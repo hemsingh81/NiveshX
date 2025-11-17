@@ -1,48 +1,40 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.Extensions.Logging;
 using NiveshX.Core.DTOs.ClassificationTag;
 using NiveshX.Core.Exceptions;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
 using NiveshX.Core.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace NiveshX.Infrastructure.Services
 {
-    public class ClassificationTagService : IClassificationTagService
+    public class ClassificationTagService : BaseService, IClassificationTagService
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IUserContext _userContext;
-        private readonly ILogger<ClassificationTagService> _logger;
-        private readonly IMapper _mapper;
-
         public ClassificationTagService(
             IUnitOfWork unitOfWork,
             ILogger<ClassificationTagService> logger,
             IUserContext userContext,
             IMapper mapper)
+            : base(unitOfWork, logger, userContext, mapper)
         {
-            _unitOfWork = unitOfWork;
-            _logger = logger;
-            _userContext = userContext;
-            _mapper = mapper;
         }
 
         public async Task<IEnumerable<ClassificationTagResponse>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                _logger.LogInformation("Fetching all classification tags");
-                var tags = await _unitOfWork.ClassificationTags.GetAllAsync(cancellationToken);
-                return tags.Select(t => _mapper.Map<ClassificationTagResponse>(t));
+                Logger.LogInformation("Fetching all classification tags");
+                var tags = await UnitOfWork.ClassificationTags.GetAllAsync(cancellationToken);
+                return tags.Select(t => Mapper.Map<ClassificationTagResponse>(t));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching classification tags");
+                Logger.LogError(ex, "Error fetching classification tags");
                 throw;
             }
         }
@@ -51,13 +43,13 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Fetching classification tag with ID: {TagId}", id);
-                var tag = await _unitOfWork.ClassificationTags.GetByIdAsync(id, cancellationToken);
-                return tag == null ? null : _mapper.Map<ClassificationTagResponse>(tag);
+                Logger.LogInformation("Fetching classification tag with ID: {TagId}", id);
+                var tag = await UnitOfWork.ClassificationTags.GetByIdAsync(id, cancellationToken);
+                return tag == null ? null : Mapper.Map<ClassificationTagResponse>(tag);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching classification tag with ID: {TagId}", id);
+                Logger.LogError(ex, "Error fetching classification tag with ID: {TagId}", id);
                 throw;
             }
         }
@@ -66,29 +58,27 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Creating classification tag: {Name}", request.Name);
+                Logger.LogInformation("Creating classification tag: {Name}", request.Name);
 
                 // uniqueness check
-                var exists = await _unitOfWork.ClassificationTags.ExistsAsync(request.Name, cancellationToken);
+                var exists = await UnitOfWork.ClassificationTags.ExistsAsync(request.Name, cancellationToken);
                 if (exists)
                     throw new DuplicateEntityException($"A classification tag with the name '{request.Name}' already exists.");
 
-                var tag = _mapper.Map<ClassificationTag>(request);
+                var tag = Mapper.Map<ClassificationTag>(request);
 
-                tag.Id = Guid.NewGuid();
-                tag.IsActive = true;
-                tag.CreatedOn = DateTime.UtcNow;
-                tag.CreatedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
+                // populate audit fields using BaseService helper
+                SetCreatedAudit(tag);
 
-                await _unitOfWork.ClassificationTags.AddAsync(tag, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await UnitOfWork.ClassificationTags.AddAsync(tag, cancellationToken);
+                await UnitOfWork.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Classification tag created successfully: {TagId}", tag.Id);
-                return _mapper.Map<ClassificationTagResponse>(tag);
+                Logger.LogInformation("Classification tag created successfully: {TagId}", tag.Id);
+                return Mapper.Map<ClassificationTagResponse>(tag);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating classification tag: {Name}", request.Name);
+                Logger.LogError(ex, "Error creating classification tag: {Name}", request.Name);
                 throw;
             }
         }
@@ -97,33 +87,30 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Updating classification tag with ID: {TagId}", id);
-                var tag = await _unitOfWork.ClassificationTags.GetByIdAsync(id, cancellationToken);
+                Logger.LogInformation("Updating classification tag with ID: {TagId}", id);
+                var tag = await UnitOfWork.ClassificationTags.GetByIdAsync(id, cancellationToken);
                 if (tag == null)
-                {
-                    _logger.LogWarning("Classification tag not found for update: {TagId}", id);
-                    return null;
-                }
+                    throw new NotFoundException($"Classification tag not found for update: {id}.");
 
                 // uniqueness check excluding current id
-                var duplicate = await _unitOfWork.ClassificationTags.ExistsAsync(request.Name, id, cancellationToken);
+                var duplicate = await UnitOfWork.ClassificationTags.ExistsAsync(request.Name, id, cancellationToken);
                 if (duplicate)
                     throw new DuplicateEntityException($"A classification tag with the name '{request.Name}' already exists.");
 
-                _mapper.Map(request, tag);
+                Mapper.Map(request, tag);
 
-                tag.ModifiedOn = DateTime.UtcNow;
-                tag.ModifiedBy = string.IsNullOrWhiteSpace(_userContext.UserId) ? "system" : _userContext.UserId;
+                // set audit info
+                SetModifiedAudit(tag);
 
-                await _unitOfWork.ClassificationTags.UpdateAsync(tag, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await UnitOfWork.ClassificationTags.UpdateAsync(tag, cancellationToken);
+                await UnitOfWork.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Classification tag updated successfully: {TagId}", id);
-                return _mapper.Map<ClassificationTagResponse>(tag);
+                Logger.LogInformation("Classification tag updated successfully: {TagId}", id);
+                return Mapper.Map<ClassificationTagResponse>(tag);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating classification tag with ID: {TagId}", id);
+                Logger.LogError(ex, "Error updating classification tag with ID: {TagId}", id);
                 throw;
             }
         }
@@ -132,23 +119,24 @@ namespace NiveshX.Infrastructure.Services
         {
             try
             {
-                _logger.LogInformation("Deleting classification tag with ID: {TagId}", id);
-                var success = await _unitOfWork.ClassificationTags.DeleteAsync(id, cancellationToken);
-                if (success)
-                {
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-                    _logger.LogInformation("Classification tag deleted: {TagId}", id);
-                }
-                else
-                {
-                    _logger.LogWarning("Classification tag not found for deletion: {TagId}", id);
-                }
+                Logger.LogInformation("Deleting classification tag with ID: {TagId}", id);
 
-                return success;
+                var tag = await UnitOfWork.ClassificationTags.GetByIdAsync(id, cancellationToken)
+                          ?? throw new NotFoundException($"Classification tag not found for deletion: {id}.");
+
+                // mark soft-deleted and set audit info
+                tag.IsDeleted = true;
+                SetModifiedAudit(tag);
+
+                await UnitOfWork.ClassificationTags.UpdateAsync(tag, cancellationToken);
+                await UnitOfWork.SaveChangesAsync(cancellationToken);
+
+                Logger.LogInformation("Classification tag deleted: {TagId}", id);
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting classification tag with ID: {TagId}", id);
+                Logger.LogError(ex, "Error deleting classification tag with ID: {TagId}", id);
                 throw;
             }
         }
