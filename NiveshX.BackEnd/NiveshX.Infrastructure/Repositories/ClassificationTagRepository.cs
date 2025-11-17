@@ -12,7 +12,7 @@ namespace NiveshX.Infrastructure.Repositories
         public ClassificationTagRepository(AppDbContext context) => _context = context;
 
         public async Task<IEnumerable<ClassificationTag>> GetAllAsync(CancellationToken cancellationToken = default)
-            => await _context.ClassificationTags.Where(t => !t.IsDeleted).ToListAsync(cancellationToken);
+            => await _context.ClassificationTags.AsNoTracking().Where(t => !t.IsDeleted).ToListAsync(cancellationToken);
 
         public async Task<ClassificationTag?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
             => await _context.ClassificationTags.FindAsync(new object[] { id }, cancellationToken);

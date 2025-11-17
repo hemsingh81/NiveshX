@@ -17,7 +17,7 @@ namespace NiveshX.Infrastructure.Repositories
         public MotivationQuoteRepository(AppDbContext context) => _context = context;
 
         public async Task<IEnumerable<MotivationQuote>> GetAllAsync(CancellationToken cancellationToken = default)
-            => await _context.MotivationQuotes.Where(q => !q.IsDeleted).ToListAsync(cancellationToken);
+            => await _context.MotivationQuotes.AsNoTracking().Where(q => !q.IsDeleted).ToListAsync(cancellationToken);
 
         public async Task<IEnumerable<MotivationQuote>> GetAllActiveAsync(CancellationToken cancellationToken = default)
             => await _context.MotivationQuotes.Where(q => !q.IsDeleted && q.IsActive).ToListAsync(cancellationToken);

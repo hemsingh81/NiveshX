@@ -15,7 +15,7 @@ namespace NiveshX.Infrastructure.Repositories
 
         public async Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            return await _context.Users
+            return await _context.Users.AsNoTracking()
                 .Where(u => !u.IsDeleted && u.Role != Core.Config.UserRole.Admin)
                 .ToListAsync(cancellationToken);
         }

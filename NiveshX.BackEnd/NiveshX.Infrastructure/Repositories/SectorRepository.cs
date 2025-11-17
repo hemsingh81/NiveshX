@@ -12,7 +12,7 @@ namespace NiveshX.Infrastructure.Repositories
         public SectorRepository(AppDbContext context) => _context = context;
 
         public async Task<IEnumerable<Sector>> GetAllAsync(CancellationToken cancellationToken = default)
-            => await _context.Sectors.Where(s => !s.IsDeleted).ToListAsync(cancellationToken);
+            => await _context.Sectors.AsNoTracking().Where(s => !s.IsDeleted).ToListAsync(cancellationToken);
 
         public async Task<Sector?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
             => await _context.Sectors.FindAsync(new object[] { id }, cancellationToken);

@@ -12,7 +12,7 @@ namespace NiveshX.Infrastructure.Repositories
         public CountryRepository(AppDbContext context) => _context = context;
 
         public async Task<IEnumerable<Country>> GetAllAsync(CancellationToken cancellationToken = default)
-            => await _context.Countries.Where(c => !c.IsDeleted).ToListAsync(cancellationToken);
+            => await _context.Countries.AsNoTracking().Where(c => !c.IsDeleted).ToListAsync(cancellationToken);
 
         public async Task<Country?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
             => await _context.Countries.FindAsync(new object[] { id }, cancellationToken);
