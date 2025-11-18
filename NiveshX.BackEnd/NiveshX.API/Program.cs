@@ -41,7 +41,7 @@ builder.Services.AddAutoMapper(cfg => cfg.AddProfile<ClassificationTagProfile>()
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<SectorProfile>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MotivationQuoteProfile>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<UserProfile>());
-builder.Services.AddAutoMapper(cfg => cfg.AddProfile<StockMarketProfile>());
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<ExchangeProfile>());
 
 
 // ---- Application services / repositories ----
@@ -53,7 +53,7 @@ builder.Services.AddScoped<ICountryService, CountryService>();
 builder.Services.AddScoped<IIndustryService, IndustryService>();
 builder.Services.AddScoped<ISectorService, SectorService>();
 builder.Services.AddScoped<IClassificationTagService, ClassificationTagService>();
-builder.Services.AddScoped<IStockMarketService, StockMarketService>();
+builder.Services.AddScoped<IExchangeService, ExchangeService>();
 
 // ---- Authentication (JWT) ----
 builder.Services.AddAuthentication("Bearer")

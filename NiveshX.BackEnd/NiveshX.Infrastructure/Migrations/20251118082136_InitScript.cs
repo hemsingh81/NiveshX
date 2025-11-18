@@ -140,7 +140,7 @@ namespace NiveshX.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "StockMarkets",
+                name: "Exchanges",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
@@ -157,9 +157,9 @@ namespace NiveshX.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_StockMarkets", x => x.Id);
+                    table.PrimaryKey("PK_Exchanges", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_StockMarkets_Countries_CountryId",
+                        name: "FK_Exchanges_Countries_CountryId",
                         column: x => x.CountryId,
                         principalTable: "Countries",
                         principalColumn: "Id",
@@ -191,8 +191,8 @@ namespace NiveshX.Infrastructure.Migrations
                 values: new object[] { new Guid("11111111-1111-1111-1111-111111111111"), "system", new DateTime(2025, 11, 8, 0, 0, 0, 0, DateTimeKind.Utc), "admin@niveshx.com", 0, true, true, false, false, null, null, null, "Hem Singh", "$2a$11$7SacvvnY60SyyWyDD/lmsuNvANz/cR5.763EBaidcDmL.y53UjOXS", null, null, "", new DateTime(2025, 12, 8, 0, 0, 0, 0, DateTimeKind.Utc), 1 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_StockMarkets_CountryId",
-                table: "StockMarkets",
+                name: "IX_Exchanges_CountryId",
+                table: "Exchanges",
                 column: "CountryId");
 
             migrationBuilder.CreateIndex(
@@ -209,6 +209,9 @@ namespace NiveshX.Infrastructure.Migrations
                 name: "ClassificationTags");
 
             migrationBuilder.DropTable(
+                name: "Exchanges");
+
+            migrationBuilder.DropTable(
                 name: "Industries");
 
             migrationBuilder.DropTable(
@@ -216,9 +219,6 @@ namespace NiveshX.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Sectors");
-
-            migrationBuilder.DropTable(
-                name: "StockMarkets");
 
             migrationBuilder.DropTable(
                 name: "Users");

@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace NiveshX.Core.DTOs.StockMarket
+namespace NiveshX.Core.DTOs.Exchange
 {
-    public class UpdateStockMarketRequest
+    public class UpdateExchangeRequest
     {
         [Required]
         public string Name { get; set; } = string.Empty;

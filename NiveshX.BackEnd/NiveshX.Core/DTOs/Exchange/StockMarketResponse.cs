@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NiveshX.Core.DTOs.StockMarket
+namespace NiveshX.Core.DTOs.Exchange
 {
-    public class StockMarketResponse
+    public class ExchangeResponse
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;

@@ -12,5 +12,5 @@ export { default as CountryManagement } from './admin/country/CountryManagement'
 export { default as IndustryManagement } from './admin/industry/IndustryManagement';
 export { default as SectorManagement } from './admin/sector/SectorManagement';
 export { default as ClassificationTagManagement } from './admin/classificationTag/ClassificationTagManagement';
-export { default as StockMarketManagement } from './admin/stock-market/StockMarketManagement';
+export { default as ExchangeManagement } from './admin/exchange/ExchangeManagement';
 export { default as AdminLayout } from './admin/components/AdminLayout';

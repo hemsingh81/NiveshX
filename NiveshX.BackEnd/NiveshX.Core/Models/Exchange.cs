@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace NiveshX.Core.DTOs.StockMarket
+namespace NiveshX.Core.Models
 {
-    public class CreateStockMarketRequest
+    public class Exchange : AuditableEntity
     {
         [Required]
         public string Name { get; set; } = string.Empty;
@@ -12,7 +13,12 @@ namespace NiveshX.Core.DTOs.StockMarket
 
         public string Description { get; set; } = string.Empty;
 
+        // Relationship to Country
         [Required]
-        public Guid? CountryId { get; set; }
+        public Guid CountryId { get; set; }
+
+        [ForeignKey(nameof(CountryId))]
+        public Country? Country { get; set; }
+
     }
 }

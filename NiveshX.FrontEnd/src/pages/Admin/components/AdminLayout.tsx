@@ -57,9 +57,9 @@ const MENU: MenuItem[] = [
     Icon: MdLocalOffer,
   },
   {
-    key: "stockMarkets",
-    to: "/admin/stock-market",
-    label: "Stock Markets",
+    key: "exchanges",
+    to: "/admin/exchange",
+    label: "Exchanges",
     Icon: MdShowChart,
   },
 ];

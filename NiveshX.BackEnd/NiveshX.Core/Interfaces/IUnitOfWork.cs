@@ -13,7 +13,7 @@ namespace NiveshX.Core.Interfaces
         IIndustryRepository Industries { get; }
         ISectorRepository Sectors { get; }
         IClassificationTagRepository ClassificationTags { get; }
-        IStockMarketRepository StockMarkets { get; }
+        IExchangeRepository Exchanges { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

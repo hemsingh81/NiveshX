@@ -5,48 +5,48 @@ using NiveshX.Infrastructure.Data;
 
 namespace NiveshX.Infrastructure.Repositories
 {
-    public class StockMarketRepository : IStockMarketRepository
+    public class ExchangeRepository : IExchangeRepository
     {
         private readonly AppDbContext _appDbContext; // replace with your actual DbContext type
 
-        public StockMarketRepository(AppDbContext appDbContext)
+        public ExchangeRepository(AppDbContext appDbContext)
         {
             _appDbContext = appDbContext;
         }
 
-        public IQueryable<StockMarket> Query() => _appDbContext.Set<StockMarket>().AsQueryable();
+        public IQueryable<Exchange> Query() => _appDbContext.Set<Exchange>().AsQueryable();
 
-        public async Task<IEnumerable<StockMarket>> GetAllAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Exchange>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            return await _appDbContext.Set<StockMarket>()
+            return await _appDbContext.Set<Exchange>()
                 .Include(sm => sm.Country)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<StockMarket?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<Exchange?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _appDbContext.Set<StockMarket>()
+            return await _appDbContext.Set<Exchange>()
                 .Include(sm => sm.Country)
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         }
 
-        public async Task AddAsync(StockMarket entity, CancellationToken cancellationToken = default)
+        public async Task AddAsync(Exchange entity, CancellationToken cancellationToken = default)
         {
-            await _appDbContext.Set<StockMarket>().AddAsync(entity, cancellationToken);
+            await _appDbContext.Set<Exchange>().AddAsync(entity, cancellationToken);
         }
 
-        public Task UpdateAsync(StockMarket entity, CancellationToken cancellationToken = default)
+        public Task UpdateAsync(Exchange entity, CancellationToken cancellationToken = default)
         {
-            _appDbContext.Set<StockMarket>().Update(entity);
+            _appDbContext.Set<Exchange>().Update(entity);
             return Task.CompletedTask;
         }
 
         public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var entity = await _appDbContext.Set<StockMarket>().FindAsync(new object[] { id }, cancellationToken);
+            var entity = await _appDbContext.Set<Exchange>().FindAsync(new object[] { id }, cancellationToken);
             if (entity == null) return false;
-            _appDbContext.Set<StockMarket>().Remove(entity);
+            _appDbContext.Set<Exchange>().Remove(entity);
             return true;
         }
 
@@ -59,7 +59,7 @@ namespace NiveshX.Infrastructure.Repositories
             var normalizedName = name?.Trim().ToLowerInvariant() ?? string.Empty;
             var normalizedCode = code?.Trim().ToLowerInvariant() ?? string.Empty;
 
-            var q = _appDbContext.StockMarkets
+            var q = _appDbContext.Exchanges
                 .AsNoTracking()
                 .Where(s => !s.IsDeleted && s.CountryId == countryId);
 

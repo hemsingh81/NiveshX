@@ -6,4 +6,4 @@ export * from "./motivationQuoteService";
 export * from "./countryService";
 export * from "./classificationTagService";
 export * from "./authService";
-export * from "./stockMarketService";
+export * from "./exchangeService";

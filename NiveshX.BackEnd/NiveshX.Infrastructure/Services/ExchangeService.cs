@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
-using NiveshX.Core.DTOs.StockMarket;
+using NiveshX.Core.DTOs.Exchange;
 using NiveshX.Core.Exceptions;
 using NiveshX.Core.Interfaces;
 using NiveshX.Core.Interfaces.Services;
@@ -12,30 +12,30 @@ using NiveshX.Core.Models;
 
 namespace NiveshX.Infrastructure.Services
 {
-    public class StockMarketService : BaseService, IStockMarketService
+    public class ExchangeService : BaseService, IExchangeService
     {
-        public StockMarketService(
+        public ExchangeService(
             IUnitOfWork unitOfWork,
-            ILogger<StockMarketService> logger,
+            ILogger<ExchangeService> logger,
             IUserContext userContext,
             IMapper mapper)
             : base(unitOfWork, logger, userContext, mapper)
         {
         }
 
-        public async Task<IEnumerable<StockMarketResponse>> GetAllAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<ExchangeResponse>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var models = await UnitOfWork.StockMarkets.GetAllAsync(cancellationToken);
-            return Mapper.Map<IEnumerable<StockMarketResponse>>(models);
+            var models = await UnitOfWork.Exchanges.GetAllAsync(cancellationToken);
+            return Mapper.Map<IEnumerable<ExchangeResponse>>(models);
         }
 
-        public async Task<StockMarketResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<ExchangeResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var model = await UnitOfWork.StockMarkets.GetByIdAsync(id, cancellationToken);
-            return model == null ? null : Mapper.Map<StockMarketResponse>(model);
+            var model = await UnitOfWork.Exchanges.GetByIdAsync(id, cancellationToken);
+            return model == null ? null : Mapper.Map<ExchangeResponse>(model);
         }
 
-        public async Task<StockMarketResponse> CreateAsync(CreateStockMarketRequest request, CancellationToken cancellationToken = default)
+        public async Task<ExchangeResponse> CreateAsync(CreateExchangeRequest request, CancellationToken cancellationToken = default)
         {
             // validate country exists
             if (request.CountryId == null || request.CountryId == Guid.Empty)
@@ -45,29 +45,29 @@ namespace NiveshX.Infrastructure.Services
                           ?? throw new NotFoundException($"Country not found: {request.CountryId}");
 
             // uniqueness check: same Name or Code in same Country
-            var exists = await UnitOfWork.StockMarkets.ExistsAsync(request.Name, request.Code, request.CountryId.Value, cancellationToken);
+            var exists = await UnitOfWork.Exchanges.ExistsAsync(request.Name, request.Code, request.CountryId.Value, cancellationToken);
             if (exists)
                 throw new DuplicateEntityException("A stock market with the same name or code already exists for the selected country");
 
-            var entity = Mapper.Map<StockMarket>(request);
+            var entity = Mapper.Map<Exchange>(request);
             entity.Country = country;
 
             // populate audit fields
             SetCreatedAudit(entity);
 
-            await UnitOfWork.StockMarkets.AddAsync(entity, cancellationToken);
+            await UnitOfWork.Exchanges.AddAsync(entity, cancellationToken);
             await UnitOfWork.SaveChangesAsync(cancellationToken);
 
             // reload to include navigation if needed
-            var created = await UnitOfWork.StockMarkets.GetByIdAsync(entity.Id, cancellationToken)
+            var created = await UnitOfWork.Exchanges.GetByIdAsync(entity.Id, cancellationToken)
                          ?? throw new InvalidOperationException("Failed to retrieve created stock market.");
 
-            return Mapper.Map<StockMarketResponse>(created);
+            return Mapper.Map<ExchangeResponse>(created);
         }
 
-        public async Task<StockMarketResponse?> UpdateAsync(Guid id, UpdateStockMarketRequest request, CancellationToken cancellationToken = default)
+        public async Task<ExchangeResponse?> UpdateAsync(Guid id, UpdateExchangeRequest request, CancellationToken cancellationToken = default)
         {
-            var entity = await UnitOfWork.StockMarkets.GetByIdAsync(id, cancellationToken)
+            var entity = await UnitOfWork.Exchanges.GetByIdAsync(id, cancellationToken)
                          ?? throw new NotFoundException($"Stock market not found: {id}");
 
             // validate country exists
@@ -75,7 +75,7 @@ namespace NiveshX.Infrastructure.Services
                           ?? throw new NotFoundException($"Country not found: {request.CountryId}");
 
             // uniqueness check excluding current id
-            var duplicate = await UnitOfWork.StockMarkets.ExistsAsync(request.Name, request.Code, request.CountryId, excludeId: id, cancellationToken);
+            var duplicate = await UnitOfWork.Exchanges.ExistsAsync(request.Name, request.Code, request.CountryId, excludeId: id, cancellationToken);
             if (duplicate)
                 throw new DuplicateEntityException("A stock market with the same name or code already exists for the selected country");
 
@@ -85,25 +85,25 @@ namespace NiveshX.Infrastructure.Services
             // set audit info
             SetModifiedAudit(entity);
 
-            await UnitOfWork.StockMarkets.UpdateAsync(entity, cancellationToken);
+            await UnitOfWork.Exchanges.UpdateAsync(entity, cancellationToken);
             await UnitOfWork.SaveChangesAsync(cancellationToken);
 
-            var updated = await UnitOfWork.StockMarkets.GetByIdAsync(id, cancellationToken)
+            var updated = await UnitOfWork.Exchanges.GetByIdAsync(id, cancellationToken)
                           ?? throw new InvalidOperationException("Failed to retrieve updated stock market.");
 
-            return Mapper.Map<StockMarketResponse>(updated);
+            return Mapper.Map<ExchangeResponse>(updated);
         }
 
         public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var entity = await UnitOfWork.StockMarkets.GetByIdAsync(id, cancellationToken)
+            var entity = await UnitOfWork.Exchanges.GetByIdAsync(id, cancellationToken)
                          ?? throw new NotFoundException($"Stock market not found: {id}");
 
             // soft-delete and set audit fields
             entity.IsDeleted = true;
             SetModifiedAudit(entity);
 
-            await UnitOfWork.StockMarkets.UpdateAsync(entity, cancellationToken);
+            await UnitOfWork.Exchanges.UpdateAsync(entity, cancellationToken);
             await UnitOfWork.SaveChangesAsync(cancellationToken);
 
             return true;

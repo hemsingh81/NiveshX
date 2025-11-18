@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NiveshX.API.Utils;
-using NiveshX.Core.DTOs.StockMarket;
+using NiveshX.Core.DTOs.Exchange;
 using NiveshX.Core.Interfaces.Services;
 
 namespace NiveshX.API.Controllers
@@ -9,21 +9,21 @@ namespace NiveshX.API.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "Admin")]
-    public class StockMarketController : ControllerBase
+    public class ExchangeController : ControllerBase
     {
-        private readonly IStockMarketService _service;
-        private readonly ILogger<StockMarketController> _logger;
+        private readonly IExchangeService _service;
+        private readonly ILogger<ExchangeController> _logger;
 
-        public StockMarketController(IStockMarketService service, ILogger<StockMarketController> logger)
+        public ExchangeController(IExchangeService service, ILogger<ExchangeController> logger)
         {
             _service = service;
             _logger = logger;
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<StockMarketResponse>), StatusCodes.Status200OK)]
-        public Task<ActionResult<IEnumerable<StockMarketResponse>>> GetAll(CancellationToken cancellationToken) =>
-            this.ExecuteAsync<IEnumerable<StockMarketResponse>>(async () =>
+        [ProducesResponseType(typeof(IEnumerable<ExchangeResponse>), StatusCodes.Status200OK)]
+        public Task<ActionResult<IEnumerable<ExchangeResponse>>> GetAll(CancellationToken cancellationToken) =>
+            this.ExecuteAsync<IEnumerable<ExchangeResponse>>(async () =>
             {
                 _logger.LogInformation("Fetching all stock markets");
                 var list = await _service.GetAllAsync(cancellationToken);
@@ -31,25 +31,25 @@ namespace NiveshX.API.Controllers
             }, _logger, "Error occurred while fetching stock markets");
 
         [HttpGet("{id:guid}")]
-        [ProducesResponseType(typeof(StockMarketResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExchangeResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public Task<ActionResult<StockMarketResponse>> GetById(Guid id, CancellationToken cancellationToken) =>
-            this.ExecuteAsync<StockMarketResponse>(async () =>
+        public Task<ActionResult<ExchangeResponse>> GetById(Guid id, CancellationToken cancellationToken) =>
+            this.ExecuteAsync<ExchangeResponse>(async () =>
             {
-                _logger.LogInformation("Fetching stock market with ID: {StockMarketId}", id);
+                _logger.LogInformation("Fetching stock market with ID: {ExchangeId}", id);
                 var item = await _service.GetByIdAsync(id, cancellationToken);
                 return item is not null ? Ok(item) : NotFound(new { message = "Stock market not found" });
-            }, _logger, "Error occurred while fetching stock market with ID: {StockMarketId}", id);
+            }, _logger, "Error occurred while fetching stock market with ID: {ExchangeId}", id);
 
         [HttpPost]
-        [ProducesResponseType(typeof(StockMarketResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ExchangeResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public Task<ActionResult<StockMarketResponse>> Create([FromBody] CreateStockMarketRequest request, CancellationToken cancellationToken)
+        public Task<ActionResult<ExchangeResponse>> Create([FromBody] CreateExchangeRequest request, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
-                return Task.FromResult<ActionResult<StockMarketResponse>>(BadRequest(ModelState));
+                return Task.FromResult<ActionResult<ExchangeResponse>>(BadRequest(ModelState));
 
-            return this.ExecuteAsync<StockMarketResponse>(async () =>
+            return this.ExecuteAsync<ExchangeResponse>(async () =>
             {
                 _logger.LogInformation("Creating new stock market: {Name}", request.Name);
                 var created = await _service.CreateAsync(request, cancellationToken);
@@ -58,20 +58,20 @@ namespace NiveshX.API.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        [ProducesResponseType(typeof(StockMarketResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExchangeResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public Task<ActionResult<StockMarketResponse>> Update(Guid id, [FromBody] UpdateStockMarketRequest request, CancellationToken cancellationToken)
+        public Task<ActionResult<ExchangeResponse>> Update(Guid id, [FromBody] UpdateExchangeRequest request, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
-                return Task.FromResult<ActionResult<StockMarketResponse>>(BadRequest(ModelState));
+                return Task.FromResult<ActionResult<ExchangeResponse>>(BadRequest(ModelState));
 
-            return this.ExecuteAsync<StockMarketResponse>(async () =>
+            return this.ExecuteAsync<ExchangeResponse>(async () =>
             {
-                _logger.LogInformation("Updating stock market with ID: {StockMarketId}", id);
+                _logger.LogInformation("Updating stock market with ID: {ExchangeId}", id);
                 var updated = await _service.UpdateAsync(id, request, cancellationToken);
                 return updated is not null ? Ok(updated) : NotFound(new { message = "Stock market not found" });
-            }, _logger, "Error occurred while updating stock market with ID: {StockMarketId}", id);
+            }, _logger, "Error occurred while updating stock market with ID: {ExchangeId}", id);
         }
 
         [HttpDelete("{id:guid}")]
@@ -80,9 +80,9 @@ namespace NiveshX.API.Controllers
         public Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
             this.ExecuteAsync(async () =>
             {
-                _logger.LogInformation("Attempting to delete stock market with ID: {StockMarketId}", id);
+                _logger.LogInformation("Attempting to delete stock market with ID: {ExchangeId}", id);
                 var success = await _service.DeleteAsync(id, cancellationToken);
                 return success ? NoContent() : NotFound(new { message = "Stock market not found" });
-            }, _logger, "Error occurred while deleting stock market with ID: {StockMarketId}", id);
+            }, _logger, "Error occurred while deleting stock market with ID: {ExchangeId}", id);
     }
 }

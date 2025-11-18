@@ -4,18 +4,18 @@ import FormDialogWrapper from "../../../controls/FormDialogWrapper";
 import FormField from "../../../controls/FormField";
 import useServerErrors from "../../../hooks/useServerErrors";
 import {
-  CreateStockMarketRequest,
-  UpdateStockMarketRequest,
-  StockMarketResponse,
+  CreateExchangeRequest,
+  UpdateExchangeRequest,
+  ExchangeResponse,
   getAllCountries,
 } from "../../../services";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateStockMarketRequest | UpdateStockMarketRequest) => Promise<void>;
+  onSubmit: (data: CreateExchangeRequest | UpdateExchangeRequest) => Promise<void>;
   mode: "add" | "edit";
-  stockMarket?: StockMarketResponse;
+  exchange?: ExchangeResponse;
 }
 
 interface FormModel {
@@ -34,7 +34,7 @@ const defaultModel = (): FormModel => ({
   isActive: true,
 });
 
-const StockMarketFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode, stockMarket }) => {
+const ExchangeFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode, exchange }) => {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<FormModel>(defaultModel());
   const [countries, setCountries] = useState<{ id: string; name: string }[]>([]);
@@ -65,20 +65,20 @@ const StockMarketFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode,
       return;
     }
 
-    if (mode === "edit" && stockMarket) {
+    if (mode === "edit" && exchange) {
       setForm({
-        name: stockMarket.name,
-        code: stockMarket.code,
-        description: stockMarket.description ?? "",
-        countryId: stockMarket.country?.id ?? undefined,
-        isActive: stockMarket.isActive,
+        name: exchange.name,
+        code: exchange.code,
+        description: exchange.description ?? "",
+        countryId: exchange.country?.id ?? undefined,
+        isActive: exchange.isActive,
       });
     } else {
       setForm(defaultModel());
     }
 
     clearErrors();
-  }, [open, mode, stockMarket, clearErrors]);
+  }, [open, mode, exchange, clearErrors]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type, checked } = e.target as any;
@@ -90,7 +90,7 @@ const StockMarketFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode,
     try {
       setSubmitting(true);
       if (mode === "add") {
-        const payload: CreateStockMarketRequest = {
+        const payload: CreateExchangeRequest = {
           name: form.name,
           code: form.code,
           description: form.description || undefined,
@@ -98,14 +98,14 @@ const StockMarketFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode,
         };
         await onSubmit(payload);
       } else {
-        const payload: UpdateStockMarketRequest = {
+        const payload: UpdateExchangeRequest = {
           name: form.name,
           code: form.code,
           description: form.description || undefined,
           countryId: form.countryId ?? "",
           isActive: form.isActive,
         };
-        if (!stockMarket) throw new Error("Missing stock market id");
+        if (!exchange) throw new Error("Missing exchange id");
         await onSubmit(payload);
       }
       onClose();
@@ -212,7 +212,7 @@ const StockMarketFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode,
   return (
     <FormDialogWrapper
       open={open}
-      title={mode === "add" ? "Add Stock Market" : "Edit Stock Market"}
+      title={mode === "add" ? "Add Exchange" : "Edit Exchange"}
       submitting={submitting}
       mode={mode}
       onClose={onClose}
@@ -225,4 +225,4 @@ const StockMarketFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode,
   );
 };
 
-export default StockMarketFormDialog;
+export default ExchangeFormDialog;

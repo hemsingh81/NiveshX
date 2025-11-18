@@ -16,7 +16,7 @@ import {
   ServerError,
   SectorManagement,
   ClassificationTagManagement,
-  StockMarketManagement,
+  ExchangeManagement,
   MotivationQuotesManagement,
 } from "./pages";
 import ProtectedRoute from "./ProtectedRoute";
@@ -82,8 +82,8 @@ const ROUTES: ProtectedRouteConfig[] = [
     requireAuth: true,
   },
   {
-    path: "/admin/stock-market",
-    element: makeAdmin(<StockMarketManagement />),
+    path: "/admin/exchange",
+    element: makeAdmin(<ExchangeManagement />),
     allowedRoles: ["Admin"],
     requireAuth: true,
   },
