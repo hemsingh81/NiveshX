@@ -62,6 +62,12 @@ const MENU: MenuItem[] = [
     label: "Exchanges",
     Icon: MdShowChart,
   },
+  {
+    key: "market-calendar",
+    to: "/admin/market-calendar",
+    label: "Market Calendar",
+    Icon: MdShowChart,
+  },
 ];
 
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {

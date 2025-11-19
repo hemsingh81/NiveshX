@@ -1,3 +1,4 @@
+// src/utils/validationMapper.ts
 export type ServerErrorPayload =
   | {
       type?: string;

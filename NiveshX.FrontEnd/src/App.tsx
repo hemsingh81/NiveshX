@@ -21,6 +21,7 @@ import {
 } from "./pages";
 import ProtectedRoute from "./ProtectedRoute";
 import { ToasterControl } from "./components";
+import MarketCalendarManagement from "./pages/admin/marketCalendar/MarketCalendarManagement";
 
 type StoredUser = {
   name: string;
@@ -84,6 +85,12 @@ const ROUTES: ProtectedRouteConfig[] = [
   {
     path: "/admin/exchange",
     element: makeAdmin(<ExchangeManagement />),
+    allowedRoles: ["Admin"],
+    requireAuth: true,
+  },
+  {
+    path: "/admin/market-calendar",
+    element: makeAdmin(<MarketCalendarManagement />),
     allowedRoles: ["Admin"],
     requireAuth: true,
   },

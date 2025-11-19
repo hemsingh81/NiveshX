@@ -1,3 +1,4 @@
+//src/pages/admin/exchange/ExchangeManagement.tsx
 import React, { useMemo, useCallback } from "react";
 import Layout from "../../../components/Layout";
 import GenericCrudManagement from "../../../controls/GenericCrudManagement";

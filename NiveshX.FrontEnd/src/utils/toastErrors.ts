@@ -3,13 +3,6 @@ import toast from "react-hot-toast";
 import mapServerErrorsToFieldErrors from "./validationMapper";
 import { humanizeFieldKey } from "./stringUtils";
 
-/**
- * Produce a single error message where each server error is on its own line.
- * Example toast content:
- * Name is required.
- * Code is required.
- * Country is required.
- */
 export function showServerErrorsAsSingleToast(err: any) {
   const errors = mapServerErrorsToFieldErrors(err);
   if (!errors || Object.keys(errors).length === 0) {
@@ -61,10 +54,6 @@ export function showServerErrorsAsSingleToast(err: any) {
   });
 }
 
-/**
- * Older utility kept for compatibility: collapse messages with bullet separators.
- * Not used by default but available if you prefer bullets instead of newline.
- */
 export function showCollapsedServerErrors(err: any) {
   const errors = mapServerErrorsToFieldErrors(err);
   if (!errors || Object.keys(errors).length === 0) {
