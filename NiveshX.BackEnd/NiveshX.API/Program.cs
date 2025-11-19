@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NiveshX.API.Middlewares;
@@ -35,6 +36,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ---- AutoMapper - register profiles ----
+// ---- AutoMapper - register all profiles by scanning assemblies ----
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<CountryProfile>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<IndustryProfile>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<ClassificationTagProfile>());
@@ -42,10 +44,12 @@ builder.Services.AddAutoMapper(cfg => cfg.AddProfile<SectorProfile>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MotivationQuoteProfile>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<UserProfile>());
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<ExchangeProfile>());
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MarketCalendarProfile>());
 
 
 // ---- Application services / repositories ----
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IMotivationQuoteService, MotivationQuoteService>();
@@ -54,6 +58,7 @@ builder.Services.AddScoped<IIndustryService, IndustryService>();
 builder.Services.AddScoped<ISectorService, SectorService>();
 builder.Services.AddScoped<IClassificationTagService, ClassificationTagService>();
 builder.Services.AddScoped<IExchangeService, ExchangeService>();
+builder.Services.AddScoped<IMarketCalendarService, MarketCalendarService>();
 
 // ---- Authentication (JWT) ----
 builder.Services.AddAuthentication("Bearer")
@@ -219,6 +224,20 @@ app.UseWhen(
         branch.UseMiddleware<ExceptionMiddleware>();
     }
 );
+
+// Health check endpoint (simple)
+app.MapGet("/health", (IHostEnvironment env) =>
+{
+    return Results.Ok(new
+    {
+        status = "healthy",
+        environment = env.EnvironmentName,
+        timestamp = DateTimeOffset.UtcNow
+    });
+})
+.WithName("HealthCheck")
+.Produces(StatusCodes.Status200OK);
+
 
 app.MapControllers();
 

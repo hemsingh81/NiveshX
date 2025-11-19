@@ -14,6 +14,7 @@ namespace NiveshX.Core.Interfaces
         ISectorRepository Sectors { get; }
         IClassificationTagRepository ClassificationTags { get; }
         IExchangeRepository Exchanges { get; }
+        IMarketCalendarRepository MarketCalendars { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

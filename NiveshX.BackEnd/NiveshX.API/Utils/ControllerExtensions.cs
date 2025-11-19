@@ -1,25 +1,11 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.AspNetCore.Mvc;
 using NiveshX.Core.Exceptions;
+using System.ComponentModel.DataAnnotations;
 
 namespace NiveshX.API.Utils
 {
-    /// <summary>
-    /// Helper extensions for controllers to centralize try/catch, logging and consistent error responses.
-    /// Place this file under NiveshX.API/Utils.
-    /// </summary>
     public static class ControllerExtensions
     {
-        
-
-        /// <summary>
-        /// Execute an async work item that returns an IActionResult and centralize exception handling.
-        /// Use this for actions that return plain IActionResult (NoContent, Ok, NotFound, etc.).
-        /// </summary>
         public static async Task<ActionResult> ExecuteAsync(
             this ControllerBase controller,
             Func<Task<IActionResult>> work,
@@ -81,6 +67,33 @@ namespace NiveshX.API.Utils
                 };
                 return controller.Conflict(pd);
             }
+            catch (ConcurrencyException concEx)
+            {
+                logger.LogWarning(concEx, "Concurrency conflict: {Message}", concEx.Message);
+                var pd = new ProblemDetails
+                {
+                    Title = "Conflict",
+                    Detail = concEx.Message,
+                    Status = StatusCodes.Status409Conflict
+                };
+                return controller.Conflict(pd);
+            }
+            catch (ValidationException valEx)
+            {
+                logger.LogWarning(valEx, "Validation failed: {Message}", valEx.Message);
+                var pd = new ProblemDetails
+                {
+                    Title = "Validation failed",
+                    Detail = valEx.Message,
+                    Status = StatusCodes.Status400BadRequest
+                };
+                return controller.BadRequest(pd);
+            }
+            catch (UnauthorizedAccessException uaEx)
+            {
+                logger.LogWarning(uaEx, "Unauthorized access: {Message}", uaEx.Message);
+                return controller.Forbid();
+            }
             catch (Exception ex)
             {
                 if (args?.Length > 0)
@@ -99,10 +112,6 @@ namespace NiveshX.API.Utils
             }
         }
 
-        /// <summary>
-        /// Execute an async work item that returns ActionResult<T> and centralize exception handling.
-        /// Use this for actions that return typed responses (ActionResult<T>).
-        /// </summary>
         public static async Task<ActionResult<T>> ExecuteAsync<T>(
             this ControllerBase controller,
             Func<Task<ActionResult<T>>> work,
@@ -163,6 +172,33 @@ namespace NiveshX.API.Utils
                     Status = StatusCodes.Status409Conflict
                 };
                 return controller.Conflict(pd);
+            }
+            catch (ConcurrencyException concEx)
+            {
+                logger.LogWarning(concEx, "Concurrency conflict: {Message}", concEx.Message);
+                var pd = new ProblemDetails
+                {
+                    Title = "Conflict",
+                    Detail = concEx.Message,
+                    Status = StatusCodes.Status409Conflict
+                };
+                return controller.Conflict(pd);
+            }
+            catch (ValidationException valEx)
+            {
+                logger.LogWarning(valEx, "Validation failed: {Message}", valEx.Message);
+                var pd = new ProblemDetails
+                {
+                    Title = "Validation failed",
+                    Detail = valEx.Message,
+                    Status = StatusCodes.Status400BadRequest
+                };
+                return controller.BadRequest(pd);
+            }
+            catch (UnauthorizedAccessException uaEx)
+            {
+                logger.LogWarning(uaEx, "Unauthorized access: {Message}", uaEx.Message);
+                return controller.Forbid();
             }
             catch (Exception ex)
             {

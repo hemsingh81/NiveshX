@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace NiveshX.Infrastructure.Repositories
 {
+
     public class UnitOfWork : IUnitOfWork
     {
         private readonly AppDbContext _context;
@@ -17,6 +18,7 @@ namespace NiveshX.Infrastructure.Repositories
         public ISectorRepository Sectors { get; }
         public IClassificationTagRepository ClassificationTags { get; }
         public IExchangeRepository Exchanges { get; }
+        public IMarketCalendarRepository MarketCalendars { get; }
 
         public UnitOfWork(AppDbContext context)
         {
@@ -28,6 +30,7 @@ namespace NiveshX.Infrastructure.Repositories
             Sectors = new SectorRepository(context);
             ClassificationTags = new ClassificationTagRepository(context);
             Exchanges = new ExchangeRepository(context);
+            MarketCalendars = new MarketCalendarRepository(context);
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

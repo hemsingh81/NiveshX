@@ -2,12 +2,13 @@
 using NiveshX.Core.Interfaces.Repositories;
 using NiveshX.Core.Models;
 using NiveshX.Infrastructure.Data;
+using System.Data;
 
 namespace NiveshX.Infrastructure.Repositories
 {
     public class ExchangeRepository : IExchangeRepository
     {
-        private readonly AppDbContext _appDbContext; // replace with your actual DbContext type
+        private readonly AppDbContext _appDbContext;
 
         public ExchangeRepository(AppDbContext appDbContext)
         {
@@ -54,6 +55,7 @@ namespace NiveshX.Infrastructure.Repositories
         {
             return await ExistsAsync(name, code, countryId, null, cancellationToken);
         }
+
         public async Task<bool> ExistsAsync(string name, string code, Guid countryId, Guid? excludeId = null, CancellationToken cancellationToken = default)
         {
             var normalizedName = name?.Trim().ToLowerInvariant() ?? string.Empty;
@@ -72,5 +74,4 @@ namespace NiveshX.Infrastructure.Repositories
                 cancellationToken);
         }
     }
-
 }

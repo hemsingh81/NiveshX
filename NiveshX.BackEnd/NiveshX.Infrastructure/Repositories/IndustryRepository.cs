@@ -12,7 +12,7 @@ namespace NiveshX.Infrastructure.Repositories
         public IndustryRepository(AppDbContext context) => _context = context;
 
         public async Task<IEnumerable<Industry>> GetAllAsync(CancellationToken cancellationToken = default)
-            => await _context.Industries.AsNoTracking().Where(i => !i.IsDeleted).ToListAsync(cancellationToken);
+            => await _context.Industries.Where(i => !i.IsDeleted).AsNoTracking().ToListAsync(cancellationToken);
 
         public async Task<Industry?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
             => await _context.Industries.FindAsync(new object[] { id }, cancellationToken);
@@ -47,8 +47,8 @@ namespace NiveshX.Infrastructure.Repositories
             var normalized = (name ?? string.Empty).Trim().ToLowerInvariant();
 
             var query = _context.Industries
-                .AsNoTracking()
-                .Where(i => !i.IsDeleted && i.Name.ToLower() == normalized);
+                .Where(i => !i.IsDeleted && i.Name.ToLower() == normalized)
+                .AsNoTracking();
 
             if (excludeId.HasValue)
                 query = query.Where(i => i.Id != excludeId.Value);

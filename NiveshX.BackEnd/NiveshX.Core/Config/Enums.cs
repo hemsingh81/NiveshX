@@ -24,4 +24,20 @@ namespace NiveshX.Core.Config
         [Display(Name = "Viewer")]
         Viewer
     }
+
+    public enum AssetType
+    {
+        [Display(Name = "Equity")]
+        Equity,
+
+        [Display(Name = "Futures")] 
+        Futures,
+
+        [Display(Name = "Options")]
+        Options,
+
+        [Display(Name = "Forex")]
+        Forex
+    }
+
 }

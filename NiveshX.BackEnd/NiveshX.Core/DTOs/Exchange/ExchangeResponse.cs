@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace NiveshX.Core.DTOs.Exchange
 {
+
     public class ExchangeResponse
     {
         public Guid Id { get; set; }

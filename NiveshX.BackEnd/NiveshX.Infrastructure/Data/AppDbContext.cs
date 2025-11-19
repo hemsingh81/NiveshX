@@ -23,6 +23,7 @@ namespace NiveshX.Infrastructure.Data
         public DbSet<Sector> Sectors => Set<Sector>();
         public DbSet<ClassificationTag> ClassificationTags => Set<ClassificationTag>();
         public DbSet<Exchange> Exchanges => Set<Exchange>();
+        public DbSet<MarketCalendar> MarketCalendars => Set<MarketCalendar>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options, IUserContext userContext)
             : base(options)
@@ -102,15 +103,20 @@ namespace NiveshX.Infrastructure.Data
 
         private void ApplySoftDeleteQueryFilter(ModelBuilder modelBuilder)
         {
-            var softDeleteInterface = typeof(ISoftDelete);
-
-            foreach (var entityType in modelBuilder.Model.GetEntityTypes().Where(t => softDeleteInterface.IsAssignableFrom(t.ClrType)))
+            // Apply soft-delete filter to all entities implementing ISoftDelete
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 var clrType = entityType.ClrType;
-                var parameter = Expression.Parameter(clrType, "e");
-                var prop = Expression.PropertyOrField(parameter, nameof(ISoftDelete.IsDeleted));
-                var filter = Expression.Lambda(Expression.Equal(prop, Expression.Constant(false)), parameter);
-                modelBuilder.Entity(clrType).HasQueryFilter(filter);
+                if (typeof(ISoftDelete).IsAssignableFrom(clrType))
+                {
+                    // Build expression: (T e) => !e.IsDeleted
+                    var parameter = Expression.Parameter(clrType, "e");
+                    var prop = Expression.PropertyOrField(parameter, nameof(ISoftDelete.IsDeleted));
+                    var notDeleted = Expression.Equal(prop, Expression.Constant(false));
+                    var lambda = Expression.Lambda(notDeleted, parameter);
+
+                    modelBuilder.Entity(clrType).HasQueryFilter(lambda);
+                }
             }
         }
 
