@@ -166,6 +166,39 @@ namespace NiveshX.Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "MarketCalendars",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    ExchangeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RegularOpenTime = table.Column<TimeSpan>(type: "time", nullable: true),
+                    RegularCloseTime = table.Column<TimeSpan>(type: "time", nullable: true),
+                    PreMarketOpen = table.Column<TimeSpan>(type: "time", nullable: true),
+                    PreMarketClose = table.Column<TimeSpan>(type: "time", nullable: true),
+                    PostMarketOpen = table.Column<TimeSpan>(type: "time", nullable: true),
+                    PostMarketClose = table.Column<TimeSpan>(type: "time", nullable: true),
+                    HolidayDatesJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SessionRulesJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false, defaultValue: "system"),
+                    ModifiedOn = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MarketCalendars", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MarketCalendars_Exchanges_ExchangeId",
+                        column: x => x.ExchangeId,
+                        principalTable: "Exchanges",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.InsertData(
                 table: "Countries",
                 columns: new[] { "Id", "Code", "CreatedBy", "CreatedOn", "IsActive", "ModifiedBy", "ModifiedOn", "Name" },
@@ -196,6 +229,11 @@ namespace NiveshX.Infrastructure.Migrations
                 column: "CountryId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_MarketCalendars_ExchangeId",
+                table: "MarketCalendars",
+                column: "ExchangeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",
                 table: "Users",
                 column: "Email",
@@ -209,10 +247,10 @@ namespace NiveshX.Infrastructure.Migrations
                 name: "ClassificationTags");
 
             migrationBuilder.DropTable(
-                name: "Exchanges");
+                name: "Industries");
 
             migrationBuilder.DropTable(
-                name: "Industries");
+                name: "MarketCalendars");
 
             migrationBuilder.DropTable(
                 name: "MotivationQuotes");
@@ -222,6 +260,9 @@ namespace NiveshX.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Exchanges");
 
             migrationBuilder.DropTable(
                 name: "Countries");

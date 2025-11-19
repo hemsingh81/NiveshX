@@ -300,6 +300,11 @@ namespace NiveshX.Infrastructure.Migrations
                     b.Property<TimeSpan?>("RegularOpenTime")
                         .HasColumnType("time");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.Property<string>("SessionRulesJson")
                         .HasColumnType("nvarchar(max)");
 

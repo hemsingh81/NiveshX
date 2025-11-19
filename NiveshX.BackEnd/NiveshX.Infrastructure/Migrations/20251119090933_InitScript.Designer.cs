@@ -12,7 +12,7 @@ using NiveshX.Infrastructure.Data;
 namespace NiveshX.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251118082136_InitScript")]
+    [Migration("20251119090933_InitScript")]
     partial class InitScript
     {
         /// <inheritdoc />
@@ -243,6 +243,79 @@ namespace NiveshX.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Industries");
+                });
+
+            modelBuilder.Entity("NiveshX.Core.Models.MarketCalendar", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("system");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<Guid>("ExchangeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HolidayDatesJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<TimeSpan?>("PostMarketClose")
+                        .HasColumnType("time");
+
+                    b.Property<TimeSpan?>("PostMarketOpen")
+                        .HasColumnType("time");
+
+                    b.Property<TimeSpan?>("PreMarketClose")
+                        .HasColumnType("time");
+
+                    b.Property<TimeSpan?>("PreMarketOpen")
+                        .HasColumnType("time");
+
+                    b.Property<TimeSpan?>("RegularCloseTime")
+                        .HasColumnType("time");
+
+                    b.Property<TimeSpan?>("RegularOpenTime")
+                        .HasColumnType("time");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SessionRulesJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExchangeId");
+
+                    b.ToTable("MarketCalendars");
                 });
 
             modelBuilder.Entity("NiveshX.Core.Models.MotivationQuote", b =>
@@ -484,6 +557,17 @@ namespace NiveshX.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Country");
+                });
+
+            modelBuilder.Entity("NiveshX.Core.Models.MarketCalendar", b =>
+                {
+                    b.HasOne("NiveshX.Core.Models.Exchange", "Exchange")
+                        .WithMany()
+                        .HasForeignKey("ExchangeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exchange");
                 });
 #pragma warning restore 612, 618
         }
