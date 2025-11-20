@@ -52,7 +52,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
       onClick={onClick}
       className={cn(
         fullWidth ? "w-full" : "w-auto",
-        "py-3 px-6 rounded transition duration-200 flex items-center justify-center",
+        "py-2 px-10 rounded transition duration-200 flex items-center justify-center",
         loading ? styles.loading : styles.base,
         className
       )}

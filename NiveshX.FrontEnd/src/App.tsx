@@ -22,6 +22,8 @@ import {
 import ProtectedRoute from "./ProtectedRoute";
 import { ToasterControl } from "./components";
 import MarketCalendarManagement from "./pages/admin/marketCalendar/MarketCalendarManagement";
+import { ThemeProvider } from "@mui/material/styles";
+import { theme } from "./utils/theme";
 
 type StoredUser = {
   name: string;
@@ -139,16 +141,19 @@ const App: React.FC = () => {
 
   return (
     <>
-      <ToasterControl
-        position="bottom-right"
-        maxWidth="480px"
-        duration={8000}
-      />
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login />} />
-        {renderedRoutes}
-      </Routes>
+      <ThemeProvider theme={theme}>
+        <ToasterControl
+          position="bottom-right"
+          maxWidth="480px"
+          duration={8000}
+        />
+
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          {renderedRoutes}
+        </Routes>
+      </ThemeProvider>
     </>
   );
 };

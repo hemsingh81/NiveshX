@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import {
   MdBusiness,
+  MdCalendarMonth,
   MdDomain,
   MdFormatQuote,
   MdGroup,
@@ -66,7 +67,7 @@ const MENU: MenuItem[] = [
     key: "market-calendar",
     to: "/admin/market-calendar",
     label: "Market Calendar",
-    Icon: MdShowChart,
+    Icon: MdCalendarMonth,
   },
 ];
 

@@ -42,35 +42,82 @@ const FormDialogWrapper: React.FC<Props> = ({
     <Dialog
       open={open}
       onClose={(e, reason) => {
-        if (submitting && (reason === "backdropClick" || reason === "escapeKeyDown")) return;
+        if (
+          submitting &&
+          (reason === "backdropClick" || reason === "escapeKeyDown")
+        )
+          return;
         onClose();
       }}
       fullWidth
       maxWidth="sm"
       aria-labelledby="form-dialog-title"
+      PaperProps={{
+        sx: {
+          display: "flex",
+          flexDirection: "column",
+          maxHeight: "90vh",
+          overflow: "hidden", // prevent full-dialog scroll; only body scrolls
+        },
+      }}
     >
-      <DialogTitle id="form-dialog-title" sx={{ pb: 1, px: 3, backgroundColor: (t) => t.palette.grey[100] }}>
+      {/* Header (fixed) */}
+      <DialogTitle
+        id="form-dialog-title"
+        sx={{ pb: 1, px: 3, backgroundColor: (t) => t.palette.grey[100] }}
+      >
         {title}
       </DialogTitle>
-
       <Divider sx={{ borderColor: "divider", my: 0 }} />
 
-      <Box sx={{ px: 3, py: 2 }}>
-        <ErrorDisplay errors={errors ?? {}} showFieldLevel={showFieldLevel} />
-      </Box>
-
+      {/* Body (scrollable only) */}
       <form
         onSubmit={async (e) => {
           e.preventDefault();
           await onSubmit();
         }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          flexGrow: 1,
+          minHeight: 0,
+        }}
       >
-        <DialogContent>{renderBody()}</DialogContent>
+        <DialogContent
+          sx={{
+            flexGrow: 1,
+            minHeight: 0, // allow flex child to shrink and enable scroll
+            overflowY: "auto", // the only scrolling area
+            px: 3,
+            py: 2,
+          }}
+        >
+          {errors && Object.keys(errors).length > 0 && (
+            <Box sx={{ px: 3, py: 2, flex: "0 0 auto" }}>
+              <ErrorDisplay errors={errors} showFieldLevel={showFieldLevel} />
+            </Box>
+          )}
+          {renderBody()}
+        </DialogContent>
 
         <Divider sx={{ borderColor: "divider" }} />
 
-        <DialogActions sx={{ p: 2, px: 3, backgroundColor: (t) => t.palette.grey[50] }}>
-          <CustomButton loading={false} label="Cancel" type="button" color="gray" onClick={onClose} />
+        {/* Footer (fixed) */}
+        <DialogActions
+          sx={{
+            p: 2,
+            px: 3,
+            backgroundColor: (t) => t.palette.grey[50],
+            flex: "0 0 auto",
+          }}
+        >
+          <CustomButton
+            loading={false}
+            label="Cancel"
+            type="button"
+            color="gray"
+            onClick={onClose}
+          />
           <CustomButton
             loading={submitting}
             label={mode === "add" ? addLabel : editLabel}

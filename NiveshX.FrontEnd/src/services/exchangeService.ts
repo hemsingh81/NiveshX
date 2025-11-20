@@ -48,7 +48,6 @@ export const createExchange = async (payload: CreateExchangeRequest): Promise<Ex
   const res = await withToast(() => axiosInstance.post<ExchangeResponse>(`${API_URL}`, payload), {
     loading: "Creating Exchange...",
     success: "Exchange created!",
-    collapseServerErrors: true,
   });
   return res.data;
 };
@@ -57,7 +56,6 @@ export const updateExchange = async (id: string, payload: UpdateExchangeRequest)
   const res = await withToast(() => axiosInstance.put<ExchangeResponse>(`${API_URL}/${id}`, payload), {
     loading: "Updating exchange...",
     success: "Exchange updated!",
-    collapseServerErrors: true,
   });
   return res.data;
 };

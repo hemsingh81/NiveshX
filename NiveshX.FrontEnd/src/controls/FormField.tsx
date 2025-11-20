@@ -7,14 +7,28 @@ type Props = TextFieldProps & {
   inputRefFn?: (el: HTMLInputElement | null) => void;
 };
 
-const FormField: React.FC<Props> = ({ name, helper, inputRefFn, inputRef, ...rest }) => {
+const FormField: React.FC<Props> = ({
+  name,
+  helper,
+  inputRefFn,
+  helperText,
+  inputRef,
+  required,
+  ...rest
+}) => {
+  const mergedHelper = helper != null ? helper : helperText;
+
   return (
     <TextField
       {...rest}
       name={name}
-      helperText={helper}
-      inputRef={(el: any) => {
-        if (typeof inputRef === "function") (inputRef as any)(el);
+      required={required}
+      inputProps={{ "aria-required": required, ...(rest.inputProps || {}) }}
+      helperText={mergedHelper}
+      inputRef={(el: HTMLInputElement | null) => {
+        if (typeof inputRef === "function") {
+          (inputRef as (instance: HTMLInputElement | null) => void)(el);
+        }
         if (inputRefFn) inputRefFn(el);
       }}
     />

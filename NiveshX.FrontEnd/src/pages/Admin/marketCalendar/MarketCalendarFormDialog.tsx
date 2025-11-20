@@ -14,7 +14,12 @@ import {
 } from "@mui/material";
 import FormDialogWrapper from "../../../controls/FormDialogWrapper";
 import FormField from "../../../controls/FormField";
-import { useForm, Controller, useFieldArray, SubmitHandler } from "react-hook-form";
+import {
+  useForm,
+  Controller,
+  useFieldArray,
+  SubmitHandler,
+} from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import useServerErrors from "../../../hooks/useServerErrors";
@@ -119,7 +124,9 @@ const parseJsonArrayOrObject = <T extends { [k: string]: any }>(
   try {
     const parsed = JSON.parse(s);
     if (Array.isArray(parsed)) {
-      return parsed.map((p: any) => mapFn(p.key ?? p.date, p.value ?? p.reason));
+      return parsed.map((p: any) =>
+        mapFn(p.key ?? p.date, p.value ?? p.reason)
+      );
     }
     if (typeof parsed === "object" && parsed !== null) {
       return Object.entries(parsed).map(([k, v]) => mapFn(k, v));
@@ -138,8 +145,14 @@ const validateTimeRange = (
   const openMin = toMinutes(open);
   const closeMin = toMinutes(close);
   if (openMin != null && closeMin != null && openMin > closeMin) {
-    setError(fieldNames[0], { type: "manual", message: `${label} Open must be earlier than Close.` });
-    setError(fieldNames[1], { type: "manual", message: `${label} Close must be later than Open.` });
+    setError(fieldNames[0], {
+      type: "manual",
+      message: `${label} Open must be earlier than Close.`,
+    });
+    setError(fieldNames[1], {
+      type: "manual",
+      message: `${label} Close must be later than Open.`,
+    });
     return `${label} times are inconsistent.`;
   }
   return null;
@@ -155,7 +168,15 @@ const TimeField: React.FC<{
   errorHelper: (key: string) => string | undefined;
   clearCrossField: () => void;
   clearFieldError: (name: string) => void;
-}> = ({ name, label, control, bindRef, errorHelper, clearCrossField, clearFieldError }) => (
+}> = ({
+  name,
+  label,
+  control,
+  bindRef,
+  errorHelper,
+  clearCrossField,
+  clearFieldError,
+}) => (
   <Controller
     name={name as any}
     control={control}
@@ -182,17 +203,25 @@ const TimeField: React.FC<{
   />
 );
 
-const RowActionDelete: React.FC<{ onClick: () => void; ariaLabel: string }> = ({ onClick, ariaLabel }) => (
-  <IconButton aria-label={ariaLabel} size="small" onClick={onClick} sx={{ p: 0.25, minWidth: 28 }}>
+const RowActionDelete: React.FC<{ onClick: () => void; ariaLabel: string }> = ({
+  onClick,
+  ariaLabel,
+}) => (
+  <IconButton
+    aria-label={ariaLabel}
+    size="small"
+    onClick={onClick}
+    sx={{ p: 0.25, minWidth: 28 }}
+  >
     <MdDelete />
   </IconButton>
 );
 
-const HolidayRow: React.FC<{ index: number; control: any; remove: (i: number) => void }> = ({
-  index,
-  control,
-  remove,
-}) => (
+const HolidayRow: React.FC<{
+  index: number;
+  control: any;
+  remove: (i: number) => void;
+}> = ({ index, control, remove }) => (
   <Box sx={{ display: "flex", gap: 2, alignItems: "center", mb: 0.25 }}>
     <Controller
       name={`holidays.${index}.date`}
@@ -229,11 +258,11 @@ const HolidayRow: React.FC<{ index: number; control: any; remove: (i: number) =>
   </Box>
 );
 
-const SessionRow: React.FC<{ index: number; control: any; remove: (i: number) => void }> = ({
-  index,
-  control,
-  remove,
-}) => (
+const SessionRow: React.FC<{
+  index: number;
+  control: any;
+  remove: (i: number) => void;
+}> = ({ index, control, remove }) => (
   <Box sx={{ display: "flex", gap: 2, alignItems: "center", mb: 0.25 }}>
     <Controller
       name={`sessionRules.${index}.key`}
@@ -274,7 +303,9 @@ const SessionRow: React.FC<{ index: number; control: any; remove: (i: number) =>
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateMarketCalendarRequest | UpdateMarketCalendarRequest) => Promise<void>;
+  onSubmit: (
+    data: CreateMarketCalendarRequest | UpdateMarketCalendarRequest
+  ) => Promise<void>;
   mode: "add" | "edit";
   item?: MarketCalendarEntry;
   exchangeOptions: { id: string; name: string }[];
@@ -308,7 +339,9 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
     reValidateMode: "onBlur",
   });
 
-  const [crossFieldMessage, setCrossFieldMessage] = useState<string | null>(null);
+  const [crossFieldMessage, setCrossFieldMessage] = useState<string | null>(
+    null
+  );
 
   const {
     fields: holidayFields,
@@ -331,15 +364,21 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
     }
 
     if (mode === "edit" && item) {
-      const parsedHolidays = parseJsonArrayOrObject(item.holidayDatesJson ?? "[]", (k, v) => ({
-        date: String(k ?? ""),
-        reason: typeof v === "string" ? v : JSON.stringify(v ?? ""),
-      })).filter((h) => h.date || h.reason);
+      const parsedHolidays = parseJsonArrayOrObject(
+        item.holidayDatesJson ?? "[]",
+        (k, v) => ({
+          date: String(k ?? ""),
+          reason: typeof v === "string" ? v : JSON.stringify(v ?? ""),
+        })
+      ).filter((h) => h.date || h.reason);
 
-      const parsedSessions = parseJsonArrayOrObject(item.sessionRulesJson ?? "{}", (k, v) => ({
-        key: String(k ?? ""),
-        value: typeof v === "string" ? v : JSON.stringify(v ?? ""),
-      })).filter((s) => s.key && s.value);
+      const parsedSessions = parseJsonArrayOrObject(
+        item.sessionRulesJson ?? "{}",
+        (k, v) => ({
+          key: String(k ?? ""),
+          value: typeof v === "string" ? v : JSON.stringify(v ?? ""),
+        })
+      ).filter((s) => s.key && s.value);
 
       reset({
         exchangeId: item.exchangeId,
@@ -371,7 +410,10 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
     } catch {}
     Object.entries(fieldErrors).forEach(([key, msgs]) => {
       if (key === "__global") return;
-      setError(key as any, { type: "server", message: msgs[0] ?? msgs.join("; ") });
+      setError(key as any, {
+        type: "server",
+        message: msgs[0] ?? msgs.join("; "),
+      });
     });
   }, [fieldErrors, setError, clearRHFErrors]);
 
@@ -392,9 +434,27 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
       } catch {}
 
       const messages: (string | null)[] = [
-        validateTimeRange(values.preMarketOpen, values.preMarketClose, setError, ["preMarketOpen", "preMarketClose"], "Pre"),
-        validateTimeRange(values.regularOpenTime, values.regularCloseTime, setError, ["regularOpenTime", "regularCloseTime"], "Regular"),
-        validateTimeRange(values.postMarketOpen, values.postMarketClose, setError, ["postMarketOpen", "postMarketClose"], "Post"),
+        validateTimeRange(
+          values.preMarketOpen,
+          values.preMarketClose,
+          setError,
+          ["preMarketOpen", "preMarketClose"],
+          "Pre"
+        ),
+        validateTimeRange(
+          values.regularOpenTime,
+          values.regularCloseTime,
+          setError,
+          ["regularOpenTime", "regularCloseTime"],
+          "Regular"
+        ),
+        validateTimeRange(
+          values.postMarketOpen,
+          values.postMarketClose,
+          setError,
+          ["postMarketOpen", "postMarketClose"],
+          "Post"
+        ),
       ];
       const firstMessage = messages.find((m) => !!m);
       if (firstMessage) {
@@ -402,14 +462,20 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
         return;
       }
 
-      const holidaysObject = values.holidays?.reduce<Record<string, string>>((acc, cur) => {
-        if (cur?.date) acc[cur.date] = cur.reason;
-        return acc;
-      }, {});
-      const sessionObject = values.sessionRules?.reduce<Record<string, string>>((acc, cur) => {
-        if (cur?.key) acc[cur.key] = cur.value;
-        return acc;
-      }, {});
+      const holidaysObject = values.holidays?.reduce<Record<string, string>>(
+        (acc, cur) => {
+          if (cur?.date) acc[cur.date] = cur.reason;
+          return acc;
+        },
+        {}
+      );
+      const sessionObject = values.sessionRules?.reduce<Record<string, string>>(
+        (acc, cur) => {
+          if (cur?.key) acc[cur.key] = cur.value;
+          return acc;
+        },
+        {}
+      );
 
       const normalized = {
         exchangeId: values.exchangeId,
@@ -420,9 +486,13 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
         postMarketOpen: normalizeTimes(values.postMarketOpen),
         postMarketClose: normalizeTimes(values.postMarketClose),
         holidayDatesJson:
-          holidaysObject && Object.keys(holidaysObject).length > 0 ? JSON.stringify(holidaysObject) : "[]",
+          holidaysObject && Object.keys(holidaysObject).length > 0
+            ? JSON.stringify(holidaysObject)
+            : "[]",
         sessionRulesJson:
-          sessionObject && Object.keys(sessionObject).length > 0 ? JSON.stringify(sessionObject) : "{}",
+          sessionObject && Object.keys(sessionObject).length > 0
+            ? JSON.stringify(sessionObject)
+            : "{}",
         isActive: values.isActive ?? true,
         rowVersion: values.rowVersion ?? undefined,
       };
@@ -494,7 +564,11 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
         <DialogContent sx={{ py: 0.5 }}>
           <Stack spacing={1}>
             <Box sx={{ display: "flex", gap, flexWrap: "wrap" }}>
-              <Controller name="rowVersion" control={control} render={() => <></>} />
+              <Controller
+                name="rowVersion"
+                control={control}
+                render={() => <></>}
+              />
 
               <Box sx={{ flex: colFlex, minWidth: colMin }}>
                 <Controller
@@ -504,10 +578,13 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
                     <FormField
                       select
                       fullWidth
+                      required
                       label="Exchange"
                       {...field}
                       value={field.value ?? ""}
-                      onChange={(e) => field.onChange((e.target as HTMLInputElement).value)}
+                      onChange={(e) =>
+                        field.onChange((e.target as HTMLInputElement).value)
+                      }
                       error={!!fieldState.error}
                       helper={getFieldErrorString("exchangeId")}
                       helperText={getFieldErrorString("exchangeId")}
@@ -528,16 +605,23 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
                 />
               </Box>
 
-              <Box sx={{ width: "100%" }}>
-                {crossFieldMessage ? (
+              {crossFieldMessage ? (
+                <Box sx={{ width: "100%" }}>
                   <Typography color="error" variant="caption" sx={{ mb: 0.5 }}>
                     {crossFieldMessage}
                   </Typography>
-                ) : null}
-              </Box>
+                </Box>
+              ) : null}
 
               {/* times - Pre -> Regular -> Post */}
-              <Box sx={{ display: "flex", gap: gap - 1, flexWrap: "wrap", width: "100%" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: gap - 1,
+                  flexWrap: "wrap",
+                  width: "100%",
+                }}
+              >
                 {[
                   { name: "preMarketOpen", label: "Pre Open" },
                   { name: "preMarketClose", label: "Pre Close" },
@@ -553,7 +637,9 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
                       control={control}
                       bindRef={bindRef}
                       errorHelper={getFieldErrorString}
-                      clearCrossField={() => crossFieldMessage && setCrossFieldMessage(null)}
+                      clearCrossField={() =>
+                        crossFieldMessage && setCrossFieldMessage(null)
+                      }
                       clearFieldError={(n) => clearRHFErrors(n as any)}
                     />
                   </Box>
@@ -571,7 +657,12 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
                 }}
               >
                 <Box sx={{ flex: "1 1 420px", minWidth: 220 }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.25}>
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={0.25}
+                  >
                     <Typography variant="subtitle2" sx={{ lineHeight: 1.1 }}>
                       Holidays (Date & Reason)
                     </Typography>
@@ -579,7 +670,9 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
                       <Tooltip title="Add holiday">
                         <IconButton
                           size="small"
-                          onClick={() => appendHoliday({ date: "", reason: "" } as any)}
+                          onClick={() =>
+                            appendHoliday({ date: "", reason: "" } as any)
+                          }
                           sx={{ p: 0.25, minWidth: 36 }}
                         >
                           <MdAdd />
@@ -589,18 +682,32 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
                   </Box>
 
                   {holidayFields.length === 0 ? (
-                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.25 }}>
+                    <Typography
+                      variant="caption"
+                      color="textSecondary"
+                      sx={{ mt: 0.25 }}
+                    >
                       No holidays. Click + to add.
                     </Typography>
                   ) : (
                     holidayFields.map((_, i) => (
-                      <HolidayRow key={holidayFields[i].id} index={i} control={control} remove={removeHoliday} />
+                      <HolidayRow
+                        key={holidayFields[i].id}
+                        index={i}
+                        control={control}
+                        remove={removeHoliday}
+                      />
                     ))
                   )}
                 </Box>
 
                 <Box sx={{ flex: "1 1 420px", minWidth: 220 }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.25}>
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={0.25}
+                  >
                     <Typography variant="subtitle2" sx={{ lineHeight: 1.1 }}>
                       Session Rules
                     </Typography>
@@ -608,7 +715,9 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
                       <Tooltip title="Add session rule">
                         <IconButton
                           size="small"
-                          onClick={() => appendSession({ key: "", value: "" } as any)}
+                          onClick={() =>
+                            appendSession({ key: "", value: "" } as any)
+                          }
                           sx={{ p: 0.25, minWidth: 36 }}
                         >
                           <MdAdd />
@@ -618,25 +727,40 @@ const MarketCalendarFormDialog: React.FC<Props> = ({
                   </Box>
 
                   {sessionFields.length === 0 ? (
-                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.25 }}>
+                    <Typography
+                      variant="caption"
+                      color="textSecondary"
+                      sx={{ mt: 0.25 }}
+                    >
                       No session rules. Click + to add.
                     </Typography>
                   ) : (
                     sessionFields.map((_, i) => (
-                      <SessionRow key={sessionFields[i].id} index={i} control={control} remove={removeSession} />
+                      <SessionRow
+                        key={sessionFields[i].id}
+                        index={i}
+                        control={control}
+                        remove={removeSession}
+                      />
                     ))
                   )}
                 </Box>
               </Box>
 
-              <Box sx={{ flex: colFlex, display: "flex", alignItems: "center" }}>
+              <Box
+                sx={{ flex: colFlex, display: "flex", alignItems: "center" }}
+              >
                 <Controller
                   name="isActive"
                   control={control}
                   render={({ field }) => (
                     <FormControlLabel
                       control={
-                        <Checkbox checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} size="small" />
+                        <Checkbox
+                          checked={!!field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                          size="small"
+                        />
                       }
                       label="Active"
                       sx={{ ml: 0 }}

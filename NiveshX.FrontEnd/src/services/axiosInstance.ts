@@ -1,5 +1,5 @@
 // src/services/axiosInstance.ts
-import axios, { AxiosError, AxiosRequestConfig } from "axios";
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import toast from "react-hot-toast";
 import { logoutUser, refreshToken } from "./authService";
 import { store } from "../store";
@@ -9,37 +9,47 @@ interface CustomAxiosRequestConfig extends AxiosRequestConfig {
   _retry?: boolean;
 }
 
-const axiosInstance = axios.create({
+// --- Configuration: toggle debug diagnostics here ---
+const ENABLE_INIT_DIAGNOSTICS = true;
+
+// --- create axios instance once ---
+const axiosInstance: AxiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL,
+  // timeout: 30000,
 });
 
-// Attach token from store
-axiosInstance.interceptors.request.use((config) => {
-  const token = store.getState().user?.token;
-  if (token) {
-    config.headers = config.headers ?? {};
-    (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// debug interceptor — place before other response interceptors
-axiosInstance.interceptors.response.use(
-  (r) => r,
-  (err) => {
+// --- Helper: stable stringify for dedupe key ---
+const stableStringify = (v: any) => {
+  try {
+    if (v == null) return "";
+    if (typeof v === "string") return v;
+    if (typeof v === "object") {
+      if (Array.isArray(v)) return JSON.stringify(v);
+      const keys = Object.keys(v).sort();
+      const ordered: Record<string, any> = {};
+      for (const k of keys) ordered[k] = v[k];
+      return JSON.stringify(ordered);
+    }
+    return String(v);
+  } catch {
     try {
-      console.error("AXIOS ERROR URL:", err.config?.url, "METHOD:", err.config?.method, "STATUS:", err.response?.status);
-      console.error("REQUEST BODY:", err.config?.data);
-      console.error("RESPONSE BODY:", err.response?.data);
-    } catch (e) {}
-    return Promise.reject(err);
+      return JSON.stringify(v);
+    } catch {
+      return String(v);
+    }
   }
-);
+};
 
+const makeRequestKey = (config: AxiosRequestConfig) =>
+  `${(config.method || "get").toLowerCase()}|${String(config.url || "")}|${stableStringify(
+    config.params ?? null
+  )}|${stableStringify(config.data ?? null)}`;
 
-// Refresh-in-flight singleton to dedupe concurrent refresh attempts
+// In-flight dedupe map (GET/HEAD) - stores AxiosResponse promises
+const inFlightRequests = new Map<string, Promise<AxiosResponse<any>>>();
+
+// --- refresh token singleton ---
 let refreshPromise: Promise<string | null> | null = null;
-
 async function doRefresh(refreshTokenValue: string): Promise<string | null> {
   try {
     const res = await refreshToken(refreshTokenValue);
@@ -49,105 +59,174 @@ async function doRefresh(refreshTokenValue: string): Promise<string | null> {
     if (newToken) {
       try {
         sessionStorage.setItem("token", newToken);
-      } catch {
-        // ignore storage write errors
-      }
+      } catch {}
       store.dispatch(setAuthToken(newToken));
     }
 
-    // optional refreshToken rotation
     if (resAny?.refreshToken) {
       try {
         sessionStorage.setItem("refreshToken", resAny.refreshToken);
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
 
     return newToken;
-  } catch {
+  } catch (e) {
+    console.error("[AUTH REFRESH] refresh failed", e);
     return null;
   }
 }
 
-axiosInstance.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
-    const originalRequest = (error.config || {}) as CustomAxiosRequestConfig;
-    const status = error.response?.status;
-    const requestUrl = originalRequest?.url ?? "";
-    const isLoginRequest = typeof requestUrl === "string" && requestUrl.includes("/auth/login");
+// --- Idempotent interceptor attachment ---
+// Mark on the instance so repeated imports don't attach again.
+if (!(axiosInstance as any).__interceptorsAttached) {
+  // Diagnostic: where this file was initialized (stack trace)
+  if (ENABLE_INIT_DIAGNOSTICS) {
+    try {
+      // Capture a stack trace to help identify duplicate initializations
+      const err = new Error("axiosInstance init stack");
+      const stack = (err.stack || "").split("\n").slice(1, 6).map((s) => s.trim());
+      console.info("[AXIOS INIT] axiosInstance initialized. Stack (top frames):", stack);
+    } catch {}
+  }
 
-    if (status === 401 && !originalRequest._retry && !isLoginRequest) {
-      originalRequest._retry = true;
+  // Attach token header on each request
+  axiosInstance.interceptors.request.use((config) => {
+    try {
+      const token = store.getState().user?.token;
+      if (token) {
+        config.headers = config.headers ?? {};
+        (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
+      }
+    } catch {}
+    return config;
+  });
 
-      const refresh = sessionStorage.getItem("refreshToken");
-      if (!refresh) {
-        toast.error("Session expired. Please log in again.");
-        logoutUser();
+  // Main response error handler (consolidated)
+  axiosInstance.interceptors.response.use(
+    (response) => response,
+    async (error: AxiosError) => {
+      const originalRequest = (error.config || {}) as CustomAxiosRequestConfig;
+      const status = error.response?.status;
+      const requestUrl = originalRequest?.url ?? "<unknown>";
+      const method = originalRequest?.method ?? "<unknown>";
+
+      // Rich console logging for debugging
+      try {
+        console.error("[AXIOS] Request failed:", method, requestUrl);
+        console.error("  request headers:", originalRequest.headers);
+        console.error("  request data:", originalRequest.data);
+        console.error("  response status:", error.response?.status);
+        console.error("  response headers:", error.response?.headers);
+        console.error("  response data:", error.response?.data);
+      } catch (e) {
+        console.error("[AXIOS] failed to print debug info", e);
+      }
+
+      // No response
+      if (!error.response) {
+        const netMsg =
+          error.message && error.message.includes("Network Error")
+            ? "Network error. Check your connection or API server."
+            : `No response from server. ${String(error.message || "")}`;
+        toast.error(netMsg);
         return Promise.reject(error);
       }
 
-      try {
-        if (!refreshPromise) {
-          refreshPromise = doRefresh(refresh);
-        }
-        const newToken = await refreshPromise;
-        refreshPromise = null;
+      // 401 refresh flow
+      const isLoginRequest = String(requestUrl).includes("/auth/login");
+      if (status === 401 && !originalRequest._retry && !isLoginRequest) {
+        originalRequest._retry = true;
 
-        if (newToken) {
-          originalRequest.headers = originalRequest.headers ?? {};
-          (originalRequest.headers as Record<string, string>).Authorization = `Bearer ${newToken}`;
-          return axiosInstance(originalRequest);
-        } else {
+        const refresh = sessionStorage.getItem("refreshToken");
+        if (!refresh) {
           toast.error("Session expired. Please log in again.");
           logoutUser();
           return Promise.reject(error);
         }
-      } catch {
-        refreshPromise = null;
-        toast.error("Session expired. Please log in again.");
-        logoutUser();
-        return Promise.reject(error);
+
+        try {
+          if (!refreshPromise) refreshPromise = doRefresh(refresh);
+          const newToken = await refreshPromise;
+          refreshPromise = null;
+
+          if (newToken) {
+            originalRequest.headers = originalRequest.headers ?? {};
+            (originalRequest.headers as Record<string, string>).Authorization = `Bearer ${newToken}`;
+            return axiosInstance(originalRequest);
+          } else {
+            toast.error("Session expired. Please log in again.");
+            logoutUser();
+            return Promise.reject(error);
+          }
+        } catch (e) {
+          refreshPromise = null;
+          toast.error("Session expired. Please log in again.");
+          logoutUser();
+          return Promise.reject(error);
+        }
       }
-    }
 
-    // Normalize headers to check skip-toaster flag safely
-    const headers = ((originalRequest?.headers as Record<string, any>) || {});
-    const normalizedHeaders: Record<string, any> = {};
-    Object.entries(headers).forEach(([k, v]) => (normalizedHeaders[k.toLowerCase()] = v));
-    const skipToast = normalizedHeaders["x-skip-error-toaster"] === "true";
+      // skip-toaster header check (case-insensitive)
+      const headers = ((originalRequest?.headers as Record<string, any>) || {});
+      const normalizedHeaders: Record<string, any> = {};
+      Object.entries(headers).forEach(([k, v]) => (normalizedHeaders[k.toLowerCase()] = v));
+      const skipToast = normalizedHeaders["x-skip-error-toaster"] === "true";
+      if (skipToast) return Promise.reject(error);
 
-    if (!skipToast) {
       const data = error.response?.data as any;
 
-      // ModelState style validation
-      if (data?.errors && typeof data.errors === "object") {
+      if (Array.isArray(data)) {
+        if (data.length === 0) {
+          toast.error(`Server returned an empty list for ${requestUrl} (status ${status}).`);
+        } else {
+          toast.error(`Server returned array response for ${requestUrl}: ${JSON.stringify(data)}`);
+        }
+        return Promise.reject(error);
+      }
+
+      if (data?.errors && typeof data.errors === "object" && !Array.isArray(data.errors)) {
         const validationMessages = Object.entries(data.errors).flatMap(([field, messages]) =>
           (Array.isArray(messages) ? messages : [messages]).map((m) => `${field}: ${String(m)}`)
         );
-        toast.error(validationMessages.join("\n"), {
-          duration: 8000,
-          style: { whiteSpace: "pre-line" },
-        });
+        toast.error(validationMessages.join("\n"), { duration: 8000, style: { whiteSpace: "pre-line" } });
         return Promise.reject(error);
       }
 
-      const message =
-        data?.message ||
+      if (data?.message) {
+        toast.error(String(data.message));
+        return Promise.reject(error);
+      }
+
+      if (typeof data === "string" && data.trim().length > 0) {
+        toast.error(data);
+        return Promise.reject(error);
+      }
+
+      if (typeof data === "object" && data !== null) {
+        const bodyPreview = JSON.stringify(data).slice(0, 500);
+        toast.error(`Error ${status} for ${requestUrl}: ${bodyPreview}`);
+        return Promise.reject(error);
+      }
+
+      const fallback =
         (status === 400 && "Bad request.") ||
         (status === 401 && "Unauthorized.") ||
         (status === 403 && "Forbidden.") ||
         (status === 404 && "Resource not found.") ||
         (status === 409 && "Conflict occurred. Please refresh and try again.") ||
         (status === 500 && "Server error. Please try again later.") ||
-        "Unexpected error occurred.";
+        null;
 
-      toast.error(String(message));
+      if (fallback) toast.error(fallback);
+      else toast.error(`Unexpected error occurred (${status}) for ${requestUrl}`);
+
+      return Promise.reject(error);
     }
+  );
 
-    return Promise.reject(error);
-  }
-);
+  // Mark as attached so subsequent imports don't reattach
+  (axiosInstance as any).__interceptorsAttached = true;
+}
 
+// Export instance as before
 export default axiosInstance;

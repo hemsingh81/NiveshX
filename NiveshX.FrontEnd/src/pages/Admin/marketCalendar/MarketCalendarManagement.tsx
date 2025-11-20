@@ -119,18 +119,6 @@ const MarketCalendarManagement: React.FC = () => {
         },
       },
       {
-        field: "regularOpenTime",
-        headerName: "Regular Open",
-        width: 120,
-        valueFormatter: (params: any) => fmtTime(params),
-      },
-      {
-        field: "regularCloseTime",
-        headerName: "Regular Close",
-        width: 120,
-        valueFormatter: (params: any) => fmtTime(params),
-      },
-      {
         field: "preMarketOpen",
         headerName: "Pre Open",
         width: 120,
@@ -139,6 +127,18 @@ const MarketCalendarManagement: React.FC = () => {
       {
         field: "preMarketClose",
         headerName: "Pre Close",
+        width: 120,
+        valueFormatter: (params: any) => fmtTime(params),
+      },
+      {
+        field: "regularOpenTime",
+        headerName: "Regular Open",
+        width: 120,
+        valueFormatter: (params: any) => fmtTime(params),
+      },
+      {
+        field: "regularCloseTime",
+        headerName: "Regular Close",
         width: 120,
         valueFormatter: (params: any) => fmtTime(params),
       },

@@ -1,67 +1,82 @@
 // src/utils/toastUtils.ts
 import toast from "react-hot-toast";
+import axiosInstance from "../services/axiosInstance"; // adjust path if needed
 import showServerErrorsAsSingleToast from "./toastErrors";
 
 export interface ToastOptions {
   loading?: string;
   success?: string;
-  error?: string; // legacy generic text
-  showGenericError?: boolean; // if true, show a simple generic error toast in addition (rare)
-  collapseServerErrors?: boolean; // not used here; we use single multiline toast by default
-  suppressGlobalError?:boolean;
+  error?: string;
+  showGenericError?: boolean;
+  suppressGlobalError?: boolean;
 }
+
+// counter to support concurrent withToast calls
+let _withToastCounter = 0;
 
 export const withToast = async <T>(
   request: () => Promise<T>,
   options: ToastOptions = {}
 ): Promise<T> => {
-  const { loading, success, error: genericErrorText, showGenericError } = options;
-  const shouldShowGeneric = !!showGenericError;
+  const {
+    loading = "Processing...",
+    success = "Success",
+    error: genericErrorText = "Something went wrong",
+    showGenericError = false,
+  } = options;
 
-  const wrappedRequest = async () => {
+  // mark that a withToast call is in-flight (instruct interceptor to skip toasts)
+  _withToastCounter += 1;
+  if (_withToastCounter === 1 && axiosInstance) {
     try {
-      return await request();
-    } catch (err: any) {
-      // Respect per-request header to skip toast if present
+      (axiosInstance.defaults.headers as any).common = {
+        ...(axiosInstance.defaults.headers as any).common,
+        "x-skip-error-toaster": "true",
+      };
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const loadingToastId = `with-toast-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  toast.loading(loading, { id: loadingToastId });
+
+  try {
+    const result = await request();
+
+    // replace loading with success (update by id)
+    toast.success(success, { id: loadingToastId });
+    return result;
+  } catch (err: any) {
+    // show mapped server error toast once
+    try {
+      showServerErrorsAsSingleToast(err);
+    } catch {
+      if (showGenericError) {
+        toast.error(genericErrorText, { id: loadingToastId });
+      } else {
+        // replace loading with a generic error toast if mapping isn't available
+        toast.error(genericErrorText, { id: loadingToastId });
+      }
+    }
+
+    // ensure we return a rejected promise so callers can handle errors
+    throw err;
+  } finally {
+    // cleanup header flag only when no other withToast is running
+    _withToastCounter = Math.max(0, _withToastCounter - 1);
+    if (_withToastCounter === 0 && axiosInstance) {
       try {
-        const reqConfig = (err?.config ?? {}) as Record<string, any>;
-        const skipHeader = reqConfig?.headers?.["x-skip-error-toaster"] ?? reqConfig?.headers?.["X-Skip-Error-Toaster"];
-        if (skipHeader === "true" || skipHeader === true) {
-          throw err; // do nothing, rethrow
+        const common = (axiosInstance.defaults.headers as any).common || {};
+        if (common["x-skip-error-toaster"]) {
+          const { ["x-skip-error-toaster"]: _, ...rest } = common;
+          (axiosInstance.defaults.headers as any).common = rest;
         }
       } catch {
-        // ignore and continue
+        /* ignore */
       }
-
-      // Remove any existing error toasts to avoid duplicates
-      try {
-        toast.dismiss(); // dismiss all toasts (or use a custom id strategy if you prefer)
-      } catch {
-        // swallow
-      }
-
-      // Show the single multiline server error toast (this is the only toast you will see)
-      try {
-        showServerErrorsAsSingleToast(err);
-      } catch {
-        // fallback: show a simple generic toast if mapping fails or something else goes wrong
-        if (shouldShowGeneric) toast.error(genericErrorText ?? "Something went wrong.");
-        else toast.error("Something went wrong.");
-      }
-
-      // Optionally show an extra generic toast if explicitly asked (rare)
-      if (shouldShowGeneric) {
-        toast.error(genericErrorText ?? "Something went wrong.");
-      }
-
-      throw err;
     }
-  };
-
-  // Ensure toast.promise does not produce its own error toast — pass empty string when we don't want it.
-  return toast.promise(wrappedRequest(), {
-    loading: loading ?? "Processing...",
-    success: success ?? "Success!",
-    error: "", // crucial: suppress toast.promise's error toast (we show server toast manually)
-  }) as Promise<T>;
+  }
 };
+
+export default withToast;
