@@ -90,7 +90,7 @@ const SectorFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode, sect
 
   const renderBody = () => (
     <DialogContent>
-      <Box display="flex" gap={2}>
+      <Box display="flex" gap={0}>
         <FormField
           autoFocus
           fullWidth
@@ -111,6 +111,7 @@ const SectorFormDialog: React.FC<Props> = ({ open, onClose, onSubmit, mode, sect
             ) : undefined
           }
           inputRefFn={bindRef("name")}
+          highlightLeft
         />
       </Box>
 
