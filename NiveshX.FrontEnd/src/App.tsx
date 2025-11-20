@@ -1,3 +1,4 @@
+// src/App.tsx
 import React, { useEffect, useMemo } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -24,6 +25,7 @@ import { ToasterControl } from "./components";
 import MarketCalendarManagement from "./pages/admin/marketCalendar/MarketCalendarManagement";
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "./utils/theme";
+import { toasterConfig } from "./utils/toasterConfig";
 
 type StoredUser = {
   name: string;
@@ -110,6 +112,7 @@ const ROUTES: ProtectedRouteConfig[] = [
 const App: React.FC = () => {
   const dispatch = useDispatch();
 
+  // restore user state from session storage on app mount
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     const rawUser = sessionStorage.getItem("user");
@@ -124,6 +127,45 @@ const App: React.FC = () => {
       console.warn("Invalid user object in sessionStorage");
     }
   }, [dispatch]);
+
+  // Allow runtime overrides for toaster behavior via env vars (optional)
+  // Example env vars:
+  // REACT_APP_TOASTER_SUCCESS_CREATE=false
+  // REACT_APP_TOASTER_LOADING_CREATE=false
+  // REACT_APP_TOASTER_MAPPED_ERROR=true
+  useEffect(() => {
+    try {
+      const env = process.env as Record<string, string | undefined>;
+
+      const bool = (v?: string) => {
+        if (!v) return undefined;
+        return /^(1|true|yes)$/i.test(v);
+      };
+
+      const sCreate = bool(env.REACT_APP_TOASTER_SUCCESS_CREATE);
+      if (typeof sCreate !== "undefined") toasterConfig.success.create = sCreate;
+
+      const lCreate = bool(env.REACT_APP_TOASTER_LOADING_CREATE);
+      if (typeof lCreate !== "undefined") toasterConfig.loading.create = lCreate;
+
+      const sUpdate = bool(env.REACT_APP_TOASTER_SUCCESS_UPDATE);
+      if (typeof sUpdate !== "undefined") toasterConfig.success.update = sUpdate;
+
+      const lUpdate = bool(env.REACT_APP_TOASTER_LOADING_UPDATE);
+      if (typeof lUpdate !== "undefined") toasterConfig.loading.update = lUpdate;
+
+      const sDelete = bool(env.REACT_APP_TOASTER_SUCCESS_DELETE);
+      if (typeof sDelete !== "undefined") toasterConfig.success.delete = sDelete;
+
+      const lDelete = bool(env.REACT_APP_TOASTER_LOADING_DELETE);
+      if (typeof lDelete !== "undefined") toasterConfig.loading.delete = lDelete;
+
+      const mapped = bool(env.REACT_APP_TOASTER_MAPPED_ERROR);
+      if (typeof mapped !== "undefined") toasterConfig.mappedError = mapped;
+    } catch {
+      // ignore errors modifying toasterConfig
+    }
+  }, []);
 
   const renderedRoutes = useMemo(
     () =>
@@ -142,11 +184,7 @@ const App: React.FC = () => {
   return (
     <>
       <ThemeProvider theme={theme}>
-        <ToasterControl
-          position="bottom-right"
-          maxWidth="480px"
-          duration={8000}
-        />
+        <ToasterControl position="bottom-right" maxWidth="480px" duration={8000} />
 
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />

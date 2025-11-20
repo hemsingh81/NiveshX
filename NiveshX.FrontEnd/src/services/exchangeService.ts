@@ -30,39 +30,63 @@ export interface UpdateExchangeRequest {
 }
 
 export const getAllExchanges = async (): Promise<ExchangeResponse[]> => {
-  const res = await withToast(() => axiosInstance.get<ExchangeResponse[]>(`${API_URL}`), {
-    loading: "Loading exchanges..",
-    success: "Exchanges loaded!",
-  });
+  const res = await axiosInstance.get<ExchangeResponse[]>(`${API_URL}`);
   return res.data;
 };
 
 export const getExchange = async (id: string): Promise<ExchangeResponse> => {
-  const res = await withToast(() => axiosInstance.get<ExchangeResponse>(`${API_URL}/${id}`), {
-    loading: "Loading...",
-  });
+  const res = await axiosInstance.get<ExchangeResponse>(`${API_URL}/${id}`);
   return res.data;
 };
 
-export const createExchange = async (payload: CreateExchangeRequest): Promise<ExchangeResponse> => {
-  const res = await withToast(() => axiosInstance.post<ExchangeResponse>(`${API_URL}`, payload), {
-    loading: "Creating Exchange...",
-    success: "Exchange created!",
-  });
+export const createExchange = async (
+  payload: CreateExchangeRequest
+): Promise<ExchangeResponse> => {
+  const res = await withToast(
+    () =>
+      axiosInstance.post<ExchangeResponse>(`${API_URL}`, payload, {
+        headers: { "x-skip-error-toaster": "true" },
+      }),
+    {
+      operationType: "create",
+      // optional: override messages here
+      // loading: "Creating Exchange...",
+      // success: "Exchange created!",
+    }
+  );
   return res.data;
 };
 
-export const updateExchange = async (id: string, payload: UpdateExchangeRequest): Promise<ExchangeResponse> => {
-  const res = await withToast(() => axiosInstance.put<ExchangeResponse>(`${API_URL}/${id}`, payload), {
-    loading: "Updating exchange...",
-    success: "Exchange updated!",
-  });
+export const updateExchange = async (
+  id: string,
+  payload: UpdateExchangeRequest
+): Promise<ExchangeResponse> => {
+  const res = await withToast(
+    () =>
+      axiosInstance.put<ExchangeResponse>(`${API_URL}/${id}`, payload, {
+        headers: { "x-skip-error-toaster": "true" },
+      }),
+    {
+      operationType: "update",
+      // optional: override messages here
+      // loading: "Updating exchange...",
+      // success: "Exchange updated!",
+    }
+  );
   return res.data;
 };
 
 export const deleteExchange = async (id: string): Promise<void> => {
-  await withToast(() => axiosInstance.delete(`${API_URL}/${id}`), {
-    loading: "Deleting exchange...",
-    success: "Exchange deleted!",
-  });
+  await withToast(
+    () =>
+      axiosInstance.delete(`${API_URL}/${id}`, {
+        headers: { "x-skip-error-toaster": "true" },
+      }),
+    {
+      operationType: "delete",
+      // optional: override messages here
+      // loading: "Deleting exchange...",
+      // success: "Exchange deleted!",
+    }
+  );
 };

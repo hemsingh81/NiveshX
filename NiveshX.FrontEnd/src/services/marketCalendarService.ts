@@ -23,7 +23,6 @@ export type MarketCalendarEntry = {
   createdAt?: string;
   updatedAt?: string;
 
-  // RowVersion as base64 string (server sends byte[] -> JSON base64)
   rowVersion?: string | null;
 };
 
@@ -41,7 +40,6 @@ export type CreateMarketCalendarRequest = {
 };
 
 export type UpdateMarketCalendarRequest = {
-  // RowVersion required by server: provide base64 string
   rowVersion: string;
   exchangeId: string;
   regularOpenTime?: string | null;
@@ -66,24 +64,48 @@ export const getMarketCalendarById = async (id: string) => {
 };
 
 export const createMarketCalendar = async (payload: CreateMarketCalendarRequest) => {
-  const res = await withToast(() => axiosInstance.post<MarketCalendarEntry>(BASE, payload), {
-    loading: "Creating calendar entry...",
-    success: "Calendar entry created!",
-  });
+  const res = await withToast(
+    () =>
+      axiosInstance.post<MarketCalendarEntry>(BASE, payload, {
+        headers: { "x-skip-error-toaster": "true" },
+      }),
+    {
+      operationType: "create",
+      // optional overrides:
+      // loading: "Creating calendar entry...",
+      // success: "Calendar entry created!",
+    }
+  );
   return res.data;
 };
 
 export const updateMarketCalendar = async (id: string, payload: UpdateMarketCalendarRequest) => {
-  const res = await withToast(() => axiosInstance.put<MarketCalendarEntry>(`${BASE}/${id}`, payload), {
-    loading: "Updating calendar entry...",
-    success: "Calendar entry updated!",
-  });
+  const res = await withToast(
+    () =>
+      axiosInstance.put<MarketCalendarEntry>(`${BASE}/${id}`, payload, {
+        headers: { "x-skip-error-toaster": "true" },
+      }),
+    {
+      operationType: "update",
+      // optional overrides:
+      // loading: "Updating calendar entry...",
+      // success: "Calendar entry updated!",
+    }
+  );
   return res.data;
 };
 
 export const deleteMarketCalendar = async (id: string) => {
-  await withToast(() => axiosInstance.delete(`${BASE}/${id}`), {
-    loading: "Deleting entry...",
-    success: "Entry deleted!",
-  });
+  await withToast(
+    () =>
+      axiosInstance.delete(`${BASE}/${id}`, {
+        headers: { "x-skip-error-toaster": "true" },
+      }),
+    {
+      operationType: "delete",
+      // optional overrides:
+      // loading: "Deleting entry...",
+      // success: "Entry deleted!",
+    }
+  );
 };

@@ -23,13 +23,7 @@ export interface UpdateCountryRequest {
 }
 
 export const getAllCountries = async (): Promise<CountryResponse[]> => {
-  const res = await withToast(
-    () => axiosInstance.get<CountryResponse[]>(`${API_URL}`),
-    {
-      loading: "Loading countries...",
-      success: "Countries loaded!",
-    }
-  );
+  const res = await axiosInstance.get<CountryResponse[]>(`${API_URL}`);
   return res.data;
 };
 
@@ -37,10 +31,15 @@ export const createCountry = async (
   payload: CreateCountryRequest
 ): Promise<CountryResponse> => {
   const res = await withToast(
-    () => axiosInstance.post<CountryResponse>(`${API_URL}`, payload),
+    () =>
+      axiosInstance.post<CountryResponse>(`${API_URL}`, payload, {
+        headers: { "x-skip-error-toaster": "true" },
+      }),
     {
-      loading: "Creating country...",
-      success: "Country created!",
+      operationType: "create",
+      // optional overrides:
+      // loading: "Creating country...",
+      // success: "Country created!",
     }
   );
   return res.data;
@@ -51,18 +50,31 @@ export const updateCountry = async (
   payload: UpdateCountryRequest
 ): Promise<CountryResponse> => {
   const res = await withToast(
-    () => axiosInstance.put<CountryResponse>(`${API_URL}/${id}`, payload),
+    () =>
+      axiosInstance.put<CountryResponse>(`${API_URL}/${id}`, payload, {
+        headers: { "x-skip-error-toaster": "true" },
+      }),
     {
-      loading: "Updating country...",
-      success: "Country updated!",
+      operationType: "update",
+      // optional overrides:
+      // loading: "Updating country...",
+      // success: "Country updated!",
     }
   );
   return res.data;
 };
 
 export const deleteCountry = async (id: string): Promise<void> => {
-  await withToast(() => axiosInstance.delete(`${API_URL}/${id}`), {
-    loading: "Deleting country...",
-    success: "Country deleted!",
-  });
+  await withToast(
+    () =>
+      axiosInstance.delete(`${API_URL}/${id}`, {
+        headers: { "x-skip-error-toaster": "true" },
+      }),
+    {
+      operationType: "delete",
+      // optional overrides:
+      // loading: "Deleting country...",
+      // success: "Country deleted!",
+    }
+  );
 };
